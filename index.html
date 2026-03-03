@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script>
+(function(){
+  if(!window.location.search.includes('admin')) return;
+  // Redirect to admin mode - replace page content after load
+  window.ADMIN_MODE = true;
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>flux</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--f:'Source Code Pro',monospace;--or:#e8501a;--wh:#fff;--bk:#111;--gy:#888;--nh:54px}
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--f);background:#1a2a10;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{cursor:pointer;font-family:var(--f);border:none;background:none}
+a{text-decoration:none;font-family:var(--f)}
+img{display:block}
+
+/* LOGO */
+#logo{position:fixed;top:0;left:16px;z-index:9900;height:var(--nh);width:32px;display:flex;align-items:center;justify-content:center;color:var(--wh);transition:color .3s;cursor:pointer}
+#logo.dark{color:var(--bk)}
+#logo svg{transform:translateY(3px)}
+
+/* NAV DESKTOP */
+#navD{display:none;position:fixed;top:0;left:0;right:0;height:var(--nh);z-index:9800;align-items:stretch}
+#navD .nb{height:var(--nh);padding:0 28px;font-size:13px;letter-spacing:.13em;color:var(--wh);white-space:nowrap;transition:color .2s,background .2s;display:flex;align-items:center}
+#navD .nb:hover{color:rgba(255,255,255,.6)}
+#navD .nb.act{background:var(--wh);color:var(--bk)}
+#navD .nb.act:hover{color:var(--bk)}
+#navD .nb-gap{flex:1}
+#navD .nb-logo-gap{width:60px;flex-shrink:0}
+
+/* NAV MOBILE */
+#navM{display:none;position:fixed;top:0;left:0;right:0;height:var(--nh);z-index:9800;overflow:hidden}
+#navMT{display:flex;width:200%;height:100%;transition:transform .42s cubic-bezier(.25,.46,.45,.94)}
+.nmp{width:50%;height:100%;display:flex;align-items:center}
+.nmp1{padding-left:58px;gap:2px}
+.nmp2{justify-content:flex-end;padding-right:16px}
+#navM .nb{height:var(--nh);padding:0 11px;font-size:11.5px;letter-spacing:.10em;color:var(--wh);white-space:nowrap;transition:background .2s,color .2s}
+#navM .nb.act{background:var(--wh);color:var(--bk)}
+
+/* HERO */
+#hero{position:fixed;inset:0;z-index:1;overflow:hidden}
+#bgWrap{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,#4a6a2a,#7a9e4a 35%,#3a6020 65%,#1a2e08)}
+#bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)}
+
+/* BG change label (hover to reveal) */
+#bgBtn{position:absolute;bottom:60px;right:16px;z-index:10;opacity:0;transition:opacity .3s;font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,.65);background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);padding:6px 12px;cursor:pointer;font-family:var(--f)}
+#hero:hover #bgBtn{opacity:1}
+
+/* Hero contacts mobile */
+#hbM{display:none;position:absolute;bottom:26px;left:0;right:0;height:22px;overflow:hidden}
+#hbMT{display:flex;width:200%;transition:transform .42s cubic-bezier(.25,.46,.45,.94)}
+.hbp{width:50%;display:flex;align-items:center;gap:24px;padding:0 20px}
+/* Hero contacts desktop */
+#hbD{display:none;position:absolute;bottom:28px;left:20px;gap:40px}
+.cl{font-size:12px;letter-spacing:.07em;color:var(--or);font-style:italic}
+.cl:hover{opacity:.7}
+
+/* ══════════════════════════════════════════
+   SECTION PANELS
+
+   BUG FIX #1:
+   Panel starts at top:var(--nh) — BELOW nav.
+   Nav (z:9800) always stays fully visible on top.
+   Active nav button = white pill = label for section.
+   Back arrow fixed in nav row, z above nav.
+══════════════════════════════════════════ */
+.sp{
+  position:fixed;
+  top:var(--nh);left:0;right:0;bottom:0;
+  z-index:200;
+  background:var(--wh);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .45s ease;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sp.open{opacity:1;pointer-events:auto}
+
+
+/* ── OBJECTS ── */
+#objOuter{flex:1;position:relative;overflow:hidden}
+#objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
+.obj-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:40px 48px 80px;display:flex;flex-direction:column;align-items:center;touch-action:pan-y}
+.obj-slide::-webkit-scrollbar{width:0}
+.obj-img{width:100%;max-width:760px;background:#eaeaea;overflow:hidden;margin-bottom:28px}
+.obj-img img{width:100%;height:auto}
+.obj-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.obj-title{font-size:28px;font-weight:400;letter-spacing:.03em}
+.obj-pr{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.obj-price{font-size:26px;font-weight:400;letter-spacing:.03em;white-space:nowrap}
+.obj-desc{font-size:13px;letter-spacing:.06em;color:#555;margin-top:10px;line-height:1.85}
+
+/* Annotation */
+.star{font-size:15px;color:var(--or);padding:0 3px;position:relative;top:-2px;transition:opacity .2s}
+.star:hover{opacity:.7}
+.obj-info{width:100%;max-width:760px;position:relative}
+.ann{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;max-height:0;overflow:hidden;transition:max-height .35s ease;border:0 solid rgba(0,0,0,.08);font-size:12px;letter-spacing:.05em;color:#666;line-height:1.85;background:#fafaf8}
+.ann.on{max-height:400px;border-width:1px;padding:13px 17px}
+.ann:empty::before{content:'* здесь будет аннотация';color:#ccc;font-style:italic}
+/* Аннотация paper — определена в блоке .pap-* выше */
+
+/* H arrows */
+.harr{display:none;position:absolute;top:50%;transform:translateY(-50%);font-size:20px;color:var(--or);padding:16px 12px;opacity:.5;transition:opacity .2s;z-index:5}
+.harr:hover{opacity:1}
+.harr.dis{opacity:.15;pointer-events:none}
+.al{left:4px}.ar{right:4px}
+
+/* ── PAPER ── */
+#papOuter{flex:1;position:relative;overflow:hidden}
+#papTrk{display:flex;height:100%;transition:transform .52s cubic-bezier(.77,0,.175,1);touch-action:pan-x}
+.pap-pane{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
+.pap-pane::-webkit-scrollbar{width:0}
+
+/* ── Единая ширина блока: W ──
+   Мобильный:  W = min(88vw, 340px)
+   Десктоп:    картинка W = 260px, текст W = 260px, gap 52px → итого 572px по центру
+*/
+.pap-layout{width:fit-content;padding:48px 0 64px;box-sizing:border-box;margin:auto;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+
+/* мобильный — колонка */
+.pap-row{display:flex;flex-direction:column;align-items:center;gap:24px}
+.pap-img{flex-shrink:0;width:min(88vw,340px);overflow:hidden;background:#e8e8e8}
+.pap-info{width:min(88vw,340px);min-width:0}
+.ann-pap{width:min(88vw,340px);max-height:0;overflow:hidden;transition:max-height .35s ease;border:0 solid rgba(0,0,0,.08);font-size:12px;letter-spacing:.05em;color:#666;line-height:1.85;background:#fafaf8}
+.ann-pap.on{max-height:400px;margin-top:16px;border-width:1px;padding:13px 17px}
+.ann-pap:empty::before{content:'* здесь будет аннотация';color:#ccc;font-style:italic}
+
+/* ориентация — все форматы */
+.pap-img.orient-h{aspect-ratio:210/148}
+.pap-img.orient-v{aspect-ratio:148/210}
+.pap-img.orient-h6{aspect-ratio:148/105}
+.pap-img.orient-v6{aspect-ratio:105/148}
+.pap-img img{width:100%;height:100%;object-fit:cover}
+
+/* десктоп — строка */
+@media(min-width:768px){
+  .pap-layout{padding:60px 0 80px}
+  .pap-row{flex-direction:row;align-items:stretch;gap:52px;width:572px}
+  .pap-img{width:260px;flex-shrink:0}
+  .pap-img.orient-v{aspect-ratio:148/210}
+  .pap-img.orient-v6{aspect-ratio:105/148}
+  .pap-info{width:260px;flex-shrink:0}
+  .ann-pap{width:572px}
+}
+
+.pap-title{font-size:22px;font-weight:400;letter-spacing:.01em;line-height:1.2;margin-bottom:10px}
+@media(min-width:768px){.pap-title{font-size:clamp(18px,1.8vw,28px);white-space:nowrap}}
+.pap-sl{font-size:13px;letter-spacing:.10em;color:var(--or);margin-bottom:28px;display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.pap-sl:hover{opacity:.7}
+.pap-d{font-size:13px;letter-spacing:.06em;color:#555;line-height:1.85;margin-bottom:4px}
+.pap-pr{display:flex;align-items:center;gap:8px;margin-top:28px}
+.pap-price{font-size:clamp(20px,2.2vw,28px);font-weight:400;letter-spacing:.03em}
+
+/* ── DIGITAL ── */
+#digOuter{flex:1;position:relative;overflow:hidden}
+#digTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
+.dig-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative}
+.dig-slide::-webkit-scrollbar{width:0}
+.dig-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.18;pointer-events:none}
+.dig-inner{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:56px 40px 80px}
+.dig-h{font-size:clamp(48px,8vw,88px);font-weight:300;font-style:italic;letter-spacing:-.01em;text-align:center;line-height:.9;margin-bottom:8px}
+.dig-sub{font-size:12px;letter-spacing:.22em;text-align:center;color:#888;margin-bottom:52px}
+.dig-block-text{font-size:14px;letter-spacing:.05em;line-height:2;color:#333;text-align:justify;margin-bottom:32px}
+.dig-block-text p+p{margin-top:16px}
+.dig-block-img{margin-bottom:20px;background:#0a0a0a;padding:12px}
+.dig-block-img img{width:100%;height:auto;display:block}
+.dig-link{display:inline-block;margin-top:16px;font-size:12px;letter-spacing:.15em;color:var(--or);border-bottom:1px solid var(--or);padding-bottom:2px;transition:opacity .2s}
+.dig-link:hover{opacity:.6}
+
+/* ── PAPER SERIES VIEW ── */
+#papSeries{position:absolute;inset:0;background:#fff;transform:translateX(100%);transition:transform .5s cubic-bezier(.77,0,.175,1);overflow:hidden;display:flex;flex-direction:column}
+#papSeries.open{transform:translateX(0)}
+#papSeriesHead{flex-shrink:0;padding:0 32px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(0,0,0,.06);height:var(--nh)}
+.pap-series-name{font-size:13px;letter-spacing:.18em;color:var(--bk)}
+.pap-series-back{font-size:18px;letter-spacing:.12em;color:var(--or);cursor:pointer;background:none;border:none;font-family:var(--f);padding:0 16px 0 0;line-height:1;opacity:.7;transition:opacity .2s}
+.pap-series-back:hover{opacity:1}
+#papSeriesOuter{flex:1;position:relative;overflow:hidden}
+#papSeriesTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
+.pap-series-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.pap-series-slide::-webkit-scrollbar{width:0}
+.pap-series-layout{width:100%;padding:40px 40px 80px;box-sizing:border-box;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+@media(max-width:767px){.pap-series-layout{padding:32px 20px 64px}}
+/* image and info SAME max-width — text aligns to image edges */
+.pap-series-img{width:100%;max-width:480px;background:#eaeaea;overflow:hidden;margin-bottom:28px;flex-shrink:0}
+.pap-series-img.orient-h{aspect-ratio:210/148}
+.pap-series-img.orient-v{aspect-ratio:148/210}
+.pap-series-img.orient-h6{aspect-ratio:148/105}
+.pap-series-img.orient-v6{aspect-ratio:105/148}
+.pap-series-img img{width:100%;height:100%;object-fit:cover}
+/* info row — same as obj-row */
+.pap-series-info{width:100%;max-width:480px;position:relative}
+/* Hide papOuter arrows when series is open */
+#papSeries.open{z-index:10}
+#papSeries.open ~ #papOuter .harr,
+#papOuter:has(~ #papSeries.open) .harr{opacity:0!important;pointer-events:none!important}
+.pap-series-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.pap-series-title{font-size:28px;font-weight:400;letter-spacing:.03em}
+@media(max-width:767px){.pap-series-title{font-size:20px}}
+.pap-series-meta{font-size:13px;letter-spacing:.06em;color:#555;margin-top:10px;line-height:1.85}
+.pap-series-pr{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.pap-series-price{font-size:26px;font-weight:400;letter-spacing:.03em;white-space:nowrap}
+@media(max-width:767px){.pap-series-price{font-size:18px}}
+#staScroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:56px 0 80px}
+#staScroll::-webkit-scrollbar{width:0}
+.sta-body{max-width:680px;margin:0 auto;padding:0 40px 80px;font-size:14px;letter-spacing:.05em;line-height:2;color:#333;text-align:justify}
+.sta-body p+p{margin-top:18px}
+
+
+   - Slides in from right
+   - Continuous horizontal strip of exhibitions
+   - Each exhibition block has its name label at the top-left
+   - Drag to scroll continuously, rubber-bands at edges
+══════════════════════════════════════════ */
+/* ── CV PANEL (desktop: right-side panel) ── */
+@media(min-width:768px){#secCV{left:auto;width:62%;min-width:500px;max-width:760px;box-shadow:-24px 0 80px rgba(0,0,0,.1)}}
+
+/* Content area */
+#stContent{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* Horizontal drag container */
+#stPO{flex:1;overflow:hidden;position:relative;cursor:grab;user-select:none}
+#stPO:active{cursor:grabbing}
+
+/* The continuous strip */
+#stPT{display:flex;height:100%;align-items:stretch;will-change:transform;transition:transform .4s cubic-bezier(.25,.46,.45,.94)}
+#stPT.dragging{transition:none}
+
+/* Each exhibition block */
+.st-ex-block{
+  flex-shrink:0;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  position:relative;
+}
+
+/* Exhibition footer — name + desc at BOTTOM of block */
+.st-ex-footer{
+  flex-shrink:0;
+  order:2;
+  padding:14px 20px 20px;
+  border-top:1px solid rgba(0,0,0,.06);
+}
+.st-ex-name{
+  font-size:17px;
+  letter-spacing:.12em;
+  color:var(--bk);
+  font-family:var(--f);
+  white-space:nowrap;
+  margin-bottom:4px;
+}
+.st-ex-desc{
+  font-size:11px;
+  letter-spacing:.14em;
+  color:var(--gy);
+  font-family:var(--f);
+  white-space:nowrap;
+  font-style:italic;
+}
+
+/* Photo grid inside each exhibition block */
+.st-ex-grid{
+  flex:1;
+  overflow:hidden;
+  padding:8px 8px 0;
+  display:grid;
+  gap:4px;
+  align-content:start;
+  order:1;
+  min-height:0;
+}
+
+/* Tile inside statement */
+.st-tile{
+  background:#e0e0e0;
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
+  transition:opacity .15s;
+}
+.st-tile:active{opacity:.8}
+.st-tile img{width:100%;height:100%;object-fit:cover;pointer-events:none;display:block}
+.st-tile-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:.1em;color:#c0c0c0}
+
+/* Divider between exhibitions */
+.st-ex-divider{
+  width:1px;
+  background:rgba(0,0,0,.08);
+  flex-shrink:0;
+  align-self:stretch;
+  margin:0 12px;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:767px){
+  #navD{display:none!important}
+  #navM{display:block}
+  #hbM{display:block}
+  #hbD{display:none}
+  .harr{display:none}
+  /* bg is always 100vw, no width override needed */
+  .obj-slide{padding:32px 20px 64px}
+  .obj-title{font-size:20px}
+  .obj-price{font-size:18px}
+  .pap-pane{padding:0}
+  .pap-price{font-size:20px}
+  .dig-proj{padding:0 20px 64px}
+}
+@media(min-width:768px){
+  #navD{display:flex}
+  #navM{display:none}
+  #hbM{display:none}
+  #hbD{display:flex}
+  .harr{display:block}
+  /* bg width already 100% */
+}
+*{scrollbar-width:none}
+
+/* ══ ADMIN PANEL ══ */
+
+
+/* admin panel overlay */
+</style>
+</head>
+<body>
+
+<!-- LOGO -->
+<div id="logo" onclick="APP.home()">
+  <svg width="32" height="32" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(0,1024) scale(0.1,-0.1)" fill="currentColor" stroke="none">
+    <path d="M4377 10042 l-88 -3 -20 -45 c-10 -25 -19 -60 -19 -79 0 -18 -7 -49
+    -15 -68 -8 -20 -15 -49 -15 -65 0 -16 -7 -46 -15 -65 -8 -20 -15 -49 -15 -65
+    0 -16 -7 -46 -15 -65 -8 -20 -15 -49 -15 -65 0 -16 -7 -46 -15 -65 -8 -20 -15
+    -50 -15 -67 0 -17 -5 -41 -11 -52 -6 -11 -15 -44 -20 -72 -15 -89 -31 -160
+    -41 -179 -5 -10 -12 -42 -15 -70 -3 -29 -9 -57 -14 -62 -4 -6 -13 -35 -18 -65
+    -14 -77 -30 -149 -43 -190 -7 -19 -15 -55 -19 -80 -14 -79 -31 -154 -40 -175
+    -5 -11 -14 -42 -19 -70 -12 -69 -29 -144 -41 -182 -6 -18 -14 -54 -19 -80 -13
+    -69 -30 -143 -41 -180 -6 -18 -14 -54 -19 -80 -5 -27 -16 -79 -25 -118 -9 -38
+    -19 -85 -22 -103 -3 -18 -10 -36 -17 -40 -6 -4 -669 -5 -1473 -3 l-1462 3 -6
+    -28 c-3 -16 -9 -38 -11 -49 -5 -19 -21 -86 -44 -190 -6 -27 -16 -65 -21 -82
+    -6 -18 -14 -54 -19 -80 -5 -27 -16 -75 -24 -108 -8 -33 -20 -82 -26 -110 -6
+    -27 -15 -57 -19 -65 -5 -9 -12 -40 -16 -70 -4 -30 -10 -59 -14 -65 -3 -5 -11
+    -35 -18 -65 -21 -100 -65 -288 -88 -380 -8 -36 -20 -89 -26 -119 -5 -29 -13
+    -61 -18 -70 -5 -9 -11 -40 -15 -70 -4 -30 -10 -60 -14 -65 -10 -15 -53 -207
+    -71 -312 -5 -28 -13 -60 -19 -70 -5 -11 -13 -43 -17 -71 -4 -29 -11 -55 -16
+    -59 -5 -3 -9 -21 -9 -40 0 -19 -6 -49 -13 -67 -8 -18 -17 -57 -21 -87 -4 -30
+    -11 -59 -15 -65 -5 -5 -11 -31 -14 -57 -4 -26 -12 -56 -18 -66 -32 -51 -112
+    -49 1446 -54 1049 -4 1450 -9 1458 -17 8 -8 7 -20 -5 -44 -9 -17 -26 -61 -38
+    -97 -12 -36 -26 -73 -31 -82 -5 -10 -9 -22 -9 -28 0 -5 -14 -40 -31 -77 -16
+    -38 -37 -84 -46 -103 -8 -19 -19 -42 -24 -50 -5 -8 -11 -21 -14 -27 -15 -37
+    -18 -43 -68 -120 -15 -24 -27 -45 -27 -48 0 -3 -40 -59 -89 -123 -110 -145
+    -447 -489 -551 -562 -31 -22 -81 -65 -129 -110 -9 -9 -36 -32 -61 -51 -25 -20
+    -95 -81 -155 -135 -61 -55 -132 -117 -158 -138 -46 -38 -274 -291 -322 -358
+    -40 -55 -119 -168 -130 -186 -6 -9 -22 -35 -35 -57 -41 -64 -47 -75 -101 -185
+    -28 -58 -58 -117 -65 -132 -8 -14 -14 -33 -14 -41 0 -8 -7 -28 -15 -43 -8 -16
+    -15 -38 -15 -50 0 -11 -4 -24 -10 -30 -5 -5 -14 -30 -19 -54 -6 -25 -15 -65
+    -21 -90 -43 -174 -54 -273 -54 -495 0 -209 15 -409 33 -442 6 -12 11 -39 11
+    -61 0 -22 7 -56 15 -75 8 -20 15 -47 15 -61 0 -13 7 -37 15 -52 8 -16 15 -40
+    15 -54 1 -14 7 -36 15 -50 8 -14 14 -39 15 -57 0 -17 4 -34 9 -37 5 -3 12 -22
+    16 -42 3 -20 10 -44 15 -53 4 -9 32 -89 60 -178 29 -90 60 -169 70 -178 18
+    -16 19 -15 30 24 6 22 15 43 20 46 6 3 10 18 10 33 0 15 7 36 15 46 8 11 15
+    29 15 40 0 12 7 30 15 40 8 11 15 27 15 37 0 9 7 22 15 29 8 7 15 23 15 35 0
+    12 7 28 15 35 8 7 15 17 15 23 0 13 33 79 61 122 10 17 22 37 26 45 71 154
+    331 462 513 608 112 90 259 202 265 202 4 0 13 6 20 13 31 27 44 37 51 37 3 0
+    36 20 73 44 36 24 98 61 136 82 39 20 84 46 100 56 17 10 37 20 45 24 8 3 22
+    10 30 15 8 5 22 12 30 15 8 3 22 10 30 15 8 4 44 20 80 36 36
+    17 79 36 95 43 17 7 54 25 83 39 30 14 58 26 64 26 5 0 24 6 41 14 31 14 109
+    48 152 65 11 5 38 15 60 24 22 8 60 23 85 32 25 9 62 23 83 31 20 8 56 21 80
+    30 23 8 55 22 70 30 16 8 36 14 46 14 9 0 26 7 37 15 10 8 29 15 41 15 12 0
+    24 4 28 9 3 5 20 13 38 17 30 6 43 11 129 48 20 9 41 16 46 16 6 0 23 6 39 14
+    15 8 46 22 68 31 22 9 48 20 57 25 10 6 23 10 29 10 6 0 27 7 47 16 21 8 52
+    22 70 29 81 35 171 77 202 94 8 5 62 32 120 60 142 69 247 127 294 162 22 16
+    45 29 52 29 7 0 14 3 16 8 2 4 21 19 43 34 94 64 167 117 236 173 111 89 321
+    297 413 410 93 114 166 211 166 221 0 3 12 23 28 43 30 41 49 69 59 91 4 8 25
+    47 48 85 22 39 48 88 58 110 10 22 25 53 33 68 8 16 14 37 14 47 0 9 7 23 15
+    30 8 7 15 20 15 29 0 9 7 25 15 35 8 11 15 31 15 45 0 14 7 35 15 45 8 11 15
+    29 15 40 0 12 7 30 15 40 8 11 15 34 15 51 0 17 4 35 10 41 5 5 14 30 19 54
+    13 60 30 127 44 170 6 19 14 55 18 80 14 89 31 165 43 190 l12 25 1496 0 c823
+    0 1499 3 1503 6 3 4 10 28 15 55 5 27 16 79 24 117 35 151 48 205 61 267 7 36
+    21 97 30 135 9 39 21 95 28 125 7 30 15 60 19 65 3 6 9 33 13 60 3 28 10 59
+    15 70 5 11 14 43 20 70 6 28 18 79 26 115 8 36 19 90 25 120 5 30 14 59 20 65
+    5 5 9 21 9 36 0 15 6 49 14 75 17 59 34 130 47 204 5 30 14 59 18 65 5 5 11
+    32 15 59 3 27 10 54 15 60 5 6 12 37 15 68 4 32 12 60 17 63 5 4 9 19 9 34 0
+    16 6 51 14 77 16 53 31 121 47 199 5 28 13 59 18 70 8 19 21 76 40 170 4 22
+    13 50 19 62 7 12 12 33 12 47 l0 26 -217 1 c-120 1 -789 5 -1488 8 l-1270 6 1
+    33 c1 18 6 40 10 50 4 9 13 42 20 72 7 30 20 84 29 120 9 36 21 90 26 120 6
+    30 14 64 18 75 8 20 23 82 41 178 5 26 13 62 19 80 5 17 15 55 21 82 20 91 38
+    169 55 235 8 36 20 88 26 115 5 28 14 59 19 70 5 11 12 40 16 65 3 25 10 50
+    14 55 4 6 10 34 14 63 4 30 11 61 15 70 9 17 22 75 42 182 5 30 14 59 18 65 5
+    5 12 33 16 60 4 28 10 55 15 60 4 6 10 31 13 57 4 26 11 56 16 65 10 19 26 93
+    42 188 5 33 14 68 19 77 6 10 10 29 10 43 0 14 6 40 14 58 7 18 16 53 20 79 7
+    45 6 48 -18 54 -24 6 -2970 2 -3159 -4z"/>
+    </g>
+  </svg>
+</div>
+
+<!-- DESKTOP NAV -->
+<nav id="navD">
+  <span class="nb-logo-gap"></span>
+  <button class="nb" data-s="obj" onclick="APP.toggle('obj')">objects</button>
+  <button class="nb" data-s="pap" onclick="APP.toggle('pap')">paper series</button>
+  <button class="nb" data-s="dig" onclick="APP.toggle('dig')">digital</button>
+  <span class="nb-gap"></span>
+  <button class="nb" data-s="sta" onclick="APP.toggle('sta')">statement</button>
+  <button class="nb" data-s="cv" onclick="APP.toggle('cv')">CV</button>
+</nav>
+
+<!-- MOBILE NAV -->
+<div id="navM">
+  <div id="navMT">
+    <div class="nmp nmp1">
+      <button class="nb" data-s="obj" onclick="APP.toggle('obj')">objects</button>
+      <button class="nb" data-s="pap" onclick="APP.toggle('pap')">paper series</button>
+      <button class="nb" data-s="dig" onclick="APP.toggle('dig')">digital</button>
+    </div>
+    <div class="nmp nmp2">
+      <button class="nb" data-s="sta" onclick="APP.toggle('sta')">statement</button>
+      <button class="nb nb-cv" data-s="cv" onclick="APP.toggle('cv')">CV</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div id="hero">
+  <div id="bgWrap"><img id="bgImg" src="" alt=""></div>
+  <label id="bgBtn" for="bgIn">⬆ сменить фото</label>
+  <input type="file" id="bgIn" accept="image/*" style="display:none">
+  <!-- mobile contacts -->
+  <div id="hbM">
+    <div id="hbMT">
+      <div class="hbp"><a href="mailto:salavatgeorgeman@gmail.com" class="cl">salavatgeorgeman@gmail.com</a></div>
+      <div class="hbp">
+        <a href="https://instagram.com/flux_field" target="_blank" class="cl">inst:@flux_field</a>
+        <a href="https://t.me/salavatflux" target="_blank" class="cl">tg:@salavatflux</a>
+      </div>
+    </div>
+  </div>
+  <!-- desktop contacts -->
+  <div id="hbD">
+    <a href="mailto:salavatgeorgeman@gmail.com" class="cl">salavatgeorgeman@gmail.com</a>
+    <a href="https://instagram.com/flux_field" target="_blank" class="cl">inst:@flux_field</a>
+    <a href="https://t.me/salavatflux" target="_blank" class="cl">tg:@salavatflux</a>
+  </div>
+</div>
+
+<!-- OBJECTS -->
+<div class="sp" id="secObj">
+  <div id="objOuter">
+    <div id="objTrk"></div>
+    <button class="harr al dis" id="oPrev" onclick="APP.mvObj(-1)">←</button>
+    <button class="harr ar" id="oNext" onclick="APP.mvObj(1)">→</button>
+  </div>
+</div>
+
+<!-- PAPER SERIES -->
+<div class="sp" id="secPap">
+  <div id="papOuter">
+    <div id="papTrk"></div>
+    <button class="harr al dis" id="pPrev" onclick="APP.mvPap(-1)">←</button>
+    <button class="harr ar" id="pNext" onclick="APP.mvPap(1)">→</button>
+  </div>
+  <!-- SERIES DETAIL VIEW -->
+  <div id="papSeries">
+    <div id="papSeriesHead">
+      <button class="pap-series-back" onclick="APP.closeSeries()">←</button>
+      <span class="pap-series-name" id="papSeriesName"></span>
+    </div>
+    <div id="papSeriesOuter">
+      <div id="papSeriesTrk"></div>
+      <button class="harr ar" id="sNext" onclick="APP.mvSeries(1)">→</button>
+      <button class="harr al dis" id="sPrev" onclick="APP.mvSeries(-1)">←</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIGITAL -->
+<div class="sp" id="secDig">
+  <div id="digOuter">
+    <div id="digTrk"></div>
+    <button class="harr al dis" id="dPrev" onclick="APP.mvDig(-1)">←</button>
+    <button class="harr ar" id="dNext" onclick="APP.mvDig(1)">→</button>
+  </div>
+</div>
+
+<!-- STATEMENT TEXT -->
+<div class="sp" id="secSta">
+  <div id="staScroll"></div>
+</div>
+
+<!-- STATEMENT CV -->
+<div class="sp" id="secCV">
+  <div id="stContent">
+    <div id="stPO">
+      <div id="stPT"></div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ══ DATA ══ */
+const D = {
+  bg: '',
+  objects: [
+    { image:'', title:'«deconstruction»', price:'120.000₽', ann:'', meta:'бумага 200 г/м², цветные карандаши, гелевая ручка\nформат 210 x 148мм    2023 г.' },
+    { image:'', title:'«object 02»',       price:'90.000₽',  ann:'', meta:'смешанная техника\nформат 300 x 210мм    2024 г.' }
+  ],
+  paper: [
+    { name:'цвета', works:[
+      { image:'', title:'«цвета 23»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши, гелевая ручка', fmt:'формат 210 x 148мм', yr:'2023 г.', price:'40.000₽', ann:'', orient:'h', size:'A5' },
+      { image:'', title:'«цвета 24»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'45.000₽', ann:'', orient:'h', size:'A5' }
+    ]},
+    { name:'argentum', works:[
+      { image:'', title:'«argentum 01»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'35.000₽', ann:'', orient:'v', size:'A5' },
+      { image:'', title:'«argentum 02»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 148 x 105мм', yr:'2024 г.', price:'28.000₽', ann:'', orient:'v', size:'A6' }
+    ]}
+  ],
+  statement: [
+    'Здесь будет текст statement — авторская позиция, художественное кредо.',
+    'Второй абзац statement.'
+  ],
+  digital: [{
+    h:'Argentum', sub:'s e r i e s',
+    bg:'',
+    blocks:[
+      {type:'text', content:'Argentum is a monochrome series of digital graphics, in which the form becomes a way to experience and fix internal states.'},
+      {type:'image', src:''},
+      {type:'text', content:'Each work is an independent structure born of intuitive search and contemplation.\n\nThe series refers to the alchemy of perception: through the interaction of lines and masses, through reflections and conflicts, a new symbolic language is born.'},
+      {type:'image', src:''}
+    ],
+    link:'', linkLabel:'посмотреть серию →'
+  }],
+  /* Tile sizes: S=1×1  M=2×1  L=2×2
+     Click tile to cycle S→M→L→S        */
+  exhibitions: [
+    { name:'exhibition1', desc:'краткое описание выставки — место, год', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'L'}] },
+      { tiles:[{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'M'}] }
+    ]},
+    { name:'paper series 2023', desc:'галерея flux, Москва, 2023', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}] }
+    ]}
+  ]
+};
+
+/* ══ APP ══ */
+const APP=(()=>{
+  const BP=768;
+  let mp=0,oI=0,pI=0,sec=null,stO=false;
+
+  const $=id=>document.getElementById(id);
+  const navMT=$('navMT'),bgWrap=$('bgWrap'),bgImg=$('bgImg'),hbMT=$('hbMT');
+  const stPT=$('stPT');
+
+  function init(){
+    const sv=(()=>{try{return localStorage.getItem('flux_bg')}catch(e){return null}})();
+    if(sv)setImg(sv); else if(D.bg)setImg(D.bg);
+
+    // File input
+    $('bgIn').addEventListener('change',function(){
+      const f=this.files[0]; if(!f)return;
+      const r=new FileReader();
+      r.onload=function(e){
+        const src=e.target.result;
+        bgImg.onload=null; // clear any previous handler
+        bgImg.src=src;
+        bgImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)';
+        try{localStorage.setItem('flux_bg',src)}catch(_){}
+      };
+      r.readAsDataURL(f);
+      // reset AFTER starting the read (not before)
+      setTimeout(()=>{$('bgIn').value=''},100);
+    });
+
+    buildObj(); buildPap(); buildDig(); buildSta(); buildSt();
+    initSwipe(); updLogo();
+  }
+
+  function setImg(s){bgImg.src=s;bgImg.style.display='block'}
+
+  function updLogo(){$('logo').classList.toggle('dark',sec!==null||stO)}
+  /* Mobile swipe */
+  function initSwipe(){
+    let sx=0,sy=0;
+    function sw(el,cb){
+      el.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+      el.addEventListener('touchend',e=>{
+        const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+        if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40)cb(dx>0?-1:1);
+      },{passive:true});
+    }
+    sw($('navM'),d=>setP(mp+d));
+    sw($('hero'),d=>setP(mp+d));
+  }
+  function setP(i){
+    mp=Math.max(0,Math.min(1,i));
+    const t=`translateX(-${mp*50}%)`;
+    navMT.style.transform=t; hbMT.style.transform=t;
+    // Pan bg by shifting object-position: 0%=left half, 100%=right half
+    bgImg.style.objectPosition=mp===0?'center':'right center';
+  }
+
+  /* Sections */
+  const SMAP={obj:'Obj',pap:'Pap',dig:'Dig',sta:'Sta',cv:'CV'};
+  const SORD=['obj','pap','dig','sta','cv']; // swipe order
+
+  function open(n){
+    Object.keys(SMAP).forEach(s=>{
+      $('sec'+SMAP[s]).classList.toggle('open',s===n);
+    });
+    document.querySelectorAll('.nb[data-s]').forEach(b=>b.classList.toggle('act',b.dataset.s===n));
+    sec=n; stO=(n==='cv');
+    if(n==='obj')updOA(); if(n==='pap')updPA();
+    updLogo();
+  }
+  function close(n){
+    $('sec'+SMAP[n]).classList.remove('open');
+    document.querySelectorAll('.nb[data-s]').forEach(b=>b.classList.remove('act'));
+    sec=null;stO=false;updLogo();
+  }
+  function home(){
+    Object.keys(SMAP).forEach(s=>$('sec'+SMAP[s]).classList.remove('open'));
+    document.querySelectorAll('.nb[data-s]').forEach(b=>b.classList.remove('act'));
+    sec=null;stO=false;updLogo();
+  }
+  // Toggle: click active button closes section
+  function toggle(n){
+    const btn=document.querySelector(`.nb[data-s="${n}"]`);
+    if(btn&&btn.classList.contains('act'))home();else open(n);
+  }
+
+  // Navigate to adjacent section from edge swipe
+  function secNav(d){
+    const i=SORD.indexOf(sec);
+    if(i===-1)return;
+    const ni=i+d;
+    if(ni<0){home();return;}
+    if(ni>=SORD.length){home();return;}
+    open(SORD[ni]);
+  }
+
+  /* Statement */
+  function openSt(){open('cv')}
+  function closeSt(s){if(!s){home();}}
+
+  /* Build Statement text */
+  function buildSta(){
+    $('staScroll').innerHTML=`<div class="sta-body">${D.statement.map(p=>`<p>${p}</p>`).join('')}</div>`;
+    hsw($('staScroll'), d=>secNav(d));
+  }
+
+  /* Build Statement — continuous horizontal strip */
+  function buildSt(){
+    const po=$('stPO');
+    const pt=$('stPT');
+
+    let curX=0; // current translateX in px
+    let startX=0,startCurX=0,dragging=false,velX=0,lastX=0,lastT=0;
+
+    function render(x,animate){
+      pt.classList.toggle('dragging',!animate);
+      pt.style.transform=`translateX(${x}px)`;
+    }
+
+    function getTotalWidth(){return pt.scrollWidth - po.offsetWidth}
+
+    function buildContent(){
+      pt.innerHTML='';
+      D.exhibitions.forEach((ex,ei)=>{
+        if(ei>0){
+          const div=document.createElement('div');
+          div.className='st-ex-divider';
+          pt.appendChild(div);
+        }
+
+        const block=document.createElement('div');
+        block.className='st-ex-block';
+
+        // Footer: desc + name at BOTTOM
+        const footer=document.createElement('div');
+        footer.className='st-ex-footer';
+        if(ex.desc){
+          const descEl=document.createElement('div');
+          descEl.className='st-ex-desc';
+          descEl.textContent=ex.desc;
+          footer.appendChild(descEl);
+        }
+        const nameEl=document.createElement('div');
+        nameEl.className='st-ex-name';
+        nameEl.textContent=ex.name;
+        footer.appendChild(nameEl);
+        block.appendChild(footer);
+
+        // Build mosaic grid from all tiles across all panes
+        const allTiles=ex.panes.flatMap(p=>p.tiles);
+
+        // Grid container
+        const grid=document.createElement('div');
+        grid.className='st-ex-grid';
+
+        // Determine grid width based on tile count / composition
+        // Use 4-col grid, block width = 4 * cellSize
+        // We'll set block width dynamically after layout
+        grid.style.gridTemplateColumns='repeat(4,1fr)';
+
+        allTiles.forEach((t,ti)=>{
+          const id=`st-${ei}-${ti}`;
+          const tile=document.createElement('div');
+          tile.className='st-tile';
+          tile.id=id;
+          tile.dataset.sz=t.sz||'S';
+
+          // Helper to apply size styles
+          function applySize(el,sz){
+            if(sz==='M'){el.style.gridColumn='span 2';el.style.gridRow='';el.style.aspectRatio='2'}
+            else if(sz==='L'){el.style.gridColumn='span 2';el.style.gridRow='span 2';el.style.aspectRatio='1'}
+            else{el.style.gridColumn='span 1';el.style.gridRow='';el.style.aspectRatio='1'}
+          }
+          applySize(tile, tile.dataset.sz);
+
+          // Click: cycle size S→M→L→S
+          tile.addEventListener('click',()=>{
+            tile.dataset.sz={S:'M',M:'L',L:'S'}[tile.dataset.sz]||'S';
+            applySize(tile, tile.dataset.sz);
+          });
+
+          if(t.image){
+            const img=document.createElement('img');
+            img.src=t.image;img.alt='';
+            img.onerror=()=>img.remove();
+            tile.appendChild(img);
+          } else {
+            const ph=document.createElement('div');
+            ph.className='st-tile-ph';
+            ph.textContent=t.text||'';
+            tile.appendChild(ph);
+          }
+          grid.appendChild(tile);
+        });
+
+        block.appendChild(grid);
+        pt.appendChild(block);
+      });
+    }
+
+    buildContent();
+
+    // Rebuild on panel open / resize
+    const resizeObs=new ResizeObserver(()=>{
+      const maxX=getTotalWidth();
+      curX=Math.max(-maxX,Math.min(0,curX));
+      render(curX,false);
+    });
+    resizeObs.observe(po);
+
+    function snap(x,vel){
+      const maxX=getTotalWidth();
+      let target=x+vel*8; // momentum
+      // Rubber band at edges
+      if(target>0)target=0;
+      if(target<-maxX)target=-maxX;
+      curX=target;
+      render(curX,true);
+    }
+
+    // Touch
+    po.addEventListener('touchstart',e=>{
+      startX=e.touches[0].clientX;startCurX=curX;
+      lastX=startX;lastT=Date.now();velX=0;
+      pt.classList.add('dragging');
+    },{passive:true});
+    po.addEventListener('touchmove',e=>{
+      const now=Date.now();
+      const dx=e.touches[0].clientX-startX;
+      velX=(e.touches[0].clientX-lastX)/(now-lastT||1)*16;
+      lastX=e.touches[0].clientX;lastT=now;
+      const maxX=getTotalWidth();
+      let nx=startCurX+dx;
+      // Rubber band
+      if(nx>0)nx=nx*0.3;
+      if(nx<-maxX)nx=-maxX+(nx+maxX)*0.3;
+      render(nx,false);
+    },{passive:true});
+    po.addEventListener('touchend',e=>{
+      const cur=parseFloat((pt.style.transform||'').replace('translateX(','').replace('px)',''))||0;
+      snap(cur,velX);
+    },{passive:true});
+
+    // Mouse
+    po.addEventListener('mousedown',e=>{
+      dragging=true;startX=e.clientX;startCurX=curX;
+      lastX=startX;lastT=Date.now();velX=0;
+      pt.classList.add('dragging');
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove',e=>{
+      if(!dragging)return;
+      const now=Date.now();
+      const dx=e.clientX-startX;
+      velX=(e.clientX-lastX)/(now-lastT||1)*16;
+      lastX=e.clientX;lastT=now;
+      const maxX=getTotalWidth();
+      let nx=startCurX+dx;
+      if(nx>0)nx=nx*0.3;
+      if(nx<-maxX)nx=-maxX+(nx+maxX)*0.3;
+      render(nx,false);
+    });
+    window.addEventListener('mouseup',()=>{
+      if(!dragging)return;dragging=false;
+      const cur=parseFloat((pt.style.transform||'').replace('translateX(','').replace('px)',''))||0;
+      snap(cur,velX);
+    });
+  }
+  function mvObj(d){
+    if(d===1&&oI>=D.objects.length-1){secNav(1);return;}
+    if(d===-1&&oI===0){secNav(-1);return;}
+    oI=cl(oI+d,0,D.objects.length-1);$('objTrk').style.transform=`translateX(-${oI*100}%)`;updOA();
+  }
+  function updOA(){$('oPrev').classList.toggle('dis',oI===0);$('oNext').classList.toggle('dis',oI>=D.objects.length-1)}
+
+  /* Paper */
+  function mvPap(d){
+    if(d===1&&pI>=D.paper.length-1){secNav(1);return;}
+    if(d===-1&&pI===0){secNav(-1);return;}
+    pI=cl(pI+d,0,D.paper.length-1);$('papTrk').style.transform=`translateX(-${pI*100}%)`;updPA();
+  }
+  function updPA(){$('pPrev').classList.toggle('dis',pI===0);$('pNext').classList.toggle('dis',pI>=D.paper.length-1)}
+
+  /* Build Objects */
+  function buildObj(){
+    const trk=$('objTrk');
+    // aspect ratios: h=A5 landscape, v=A5 portrait, sq=square
+    const AR={h:'297/210',v:'210/297',sq:'1/1'};
+    trk.style.cssText='display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)';
+    trk.innerHTML=D.objects.map((o,i)=>{
+      const ar=AR[o.orient||'h']||AR.h;
+      return`
+      <div class="obj-slide">
+        <div class="obj-img">${o.image?`<img src="${o.image}" alt="${o.title}">`:`<div style="aspect-ratio:${ar};background:#e4e4e4;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;color:#c0c0c0">изображение</div>`}</div>
+        <div class="obj-info">
+          <div class="obj-row">
+            <div><div class="obj-title">${o.title}</div><div class="obj-desc">${o.meta.replace(/\n/g,'<br>')}</div></div>
+            <div class="obj-pr"><span class="obj-price">${o.price}</span><button class="star" onclick="APP.ann('oa${i}')">*</button></div>
+          </div>
+          <div class="ann" id="oa${i}">${o.ann}</div>
+        </div>
+      </div>`;}).join('');
+    hsw(trk,d=>mvObj(d)); updOA();
+  }
+
+  /* Build Paper */
+  function buildPap(){
+    const trk=$('papTrk');
+    trk.innerHTML=D.paper.map((s,i)=>{
+      const w=s.works[0];
+      const oc=w.size==='A6'?(w.orient==='h'?'orient-h6':'orient-v6'):(w.orient==='h'?'orient-h':'orient-v');
+      return`
+      <div class="pap-pane" id="pp${i}">
+        <div class="pap-layout">
+          <div class="pap-row">
+            <div class="pap-img ${oc}">${w.image?`<img src="${w.image}" alt="${w.title}">`:`<div style="width:100%;height:100%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;color:#c0c0c0">изображение</div>`}</div>
+            <div class="pap-info">
+              <div class="pap-title">${w.title}</div>
+              <a class="pap-sl" onclick="APP.openSeries(${i})">к серии →</a>
+              <div class="pap-d">${w.desc.replace(/\n/g,'<br>')}</div>
+              <div class="pap-d">${w.fmt}</div>
+              <div class="pap-d">${w.yr}</div>
+              <div class="pap-pr"><span class="pap-price">${w.price}</span><button class="star" onclick="APP.ann('pa${i}')">*</button></div>
+            </div>
+          </div>
+          <div class="ann-pap" id="pa${i}">${w.ann}</div>
+        </div>
+      </div>`;}).join('');
+    D.paper.forEach((_,i)=>{const el=$('pp'+i);if(el)hsw(el,d=>mvPap(d))});
+    updPA();
+  }
+
+  /* Series */
+  let sI=0, curSeries=-1;
+  function openSeries(seriesIdx){
+    curSeries=seriesIdx; sI=0;
+    const s=D.paper[seriesIdx];
+    $('papSeriesName').textContent=s.name||'';
+    buildSeriesSlides(s);
+    $('papSeries').classList.add('open');
+    // hide background arrows
+    $('pPrev').style.display='none';
+    $('pNext').style.display='none';
+  }
+  function closeSeries(){
+    $('papSeries').classList.remove('open');
+    $('pPrev').style.display='';
+    $('pNext').style.display='';
+    curSeries=-1;
+  }
+  function buildSeriesSlides(s){
+    const trk=$('papSeriesTrk');
+    trk.style.cssText='display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)';
+    trk.innerHTML=s.works.map((w,wi)=>{
+      const oc=w.size==='A6'?(w.orient==='h'?'orient-h6':'orient-v6'):(w.orient==='h'?'orient-h':'orient-v');
+      const sid=`sr-${curSeries}-${wi}`;
+      return`<div class="pap-series-slide">
+        <div class="pap-series-layout">
+          <div class="pap-series-img ${oc}">${w.image
+            ?`<img src="${w.image}" alt="${w.title}">`
+            :`<div style="width:100%;height:100%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;color:#c0c0c0">изображение</div>`
+          }</div>
+          <div class="pap-series-info">
+            <div class="pap-series-row">
+              <div>
+                <div class="pap-series-title">${w.title}</div>
+                <div class="pap-series-meta">${w.desc.replace(/\n/g,'<br>')}<br>${w.fmt}<br>${w.yr}</div>
+              </div>
+              <div class="pap-series-pr">
+                <span class="pap-series-price">${w.price}</span>
+                <button class="star" onclick="APP.ann('${sid}')">*</button>
+              </div>
+            </div>
+            <div class="ann-pap" id="${sid}">${w.ann||''}</div>
+          </div>
+        </div>
+      </div>`;}).join('');
+    trk.style.transform='translateX(0)';
+    hsw(trk, d=>mvSeries(d));
+    updSA(s);
+  }
+  function mvSeries(d){
+    if(curSeries<0)return;
+    const s=D.paper[curSeries];
+    sI=cl(sI+d,0,s.works.length-1);
+    $('papSeriesTrk').style.transform=`translateX(-${sI*100}%)`;
+    updSA(s);
+  }
+  function updSA(s){
+    $('sPrev').classList.toggle('dis',sI===0);
+    $('sNext').classList.toggle('dis',sI>=s.works.length-1);
+  }
+
+  /* Digital */
+  let dI=0;
+  function mvDig(d){
+    if(d===1&&dI>=D.digital.length-1){secNav(1);return;}
+    if(d===-1&&dI===0){secNav(-1);return;}
+    dI=cl(dI+d,0,D.digital.length-1);
+    $('digTrk').style.transform=`translateX(-${dI*100}%)`;
+    updDA();
+  }
+  function updDA(){
+    $('dPrev').classList.toggle('dis',dI===0);
+    $('dNext').classList.toggle('dis',dI>=D.digital.length-1);
+  }
+
+  /* Build Digital */
+  function buildDig(){
+    const trk=$('digTrk');
+    trk.style.cssText='display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)';
+    trk.innerHTML=D.digital.map((p,pi)=>{
+      const bgStyle=p.bg?`background-image:url('${p.bg}')`:'';
+      const blocksHtml=(p.blocks||[]).map(b=>{
+        if(b.type==='text') return`<div class="dig-block-text">${b.content.split('\n\n').map(t=>`<p>${t}</p>`).join('')}</div>`;
+        if(b.type==='image'&&b.src) return`<div class="dig-block-img"><img src="${b.src}" alt="" onerror="this.parentElement.remove()"></div>`;
+        return'';
+      }).join('');
+      const linkHtml=p.link?`<a class="dig-link" href="${p.link}" target="_blank">${p.linkLabel||'подробнее →'}</a>`:'';
+      return`<div class="dig-slide">
+        ${bgStyle?`<div class="dig-bg" style="${bgStyle}"></div>`:''}
+        <div class="dig-inner">
+          ${p.h?`<div class="dig-h">${p.h}</div>`:''}
+          ${p.sub?`<div class="dig-sub">${p.sub}</div>`:''}
+          ${blocksHtml}
+          ${linkHtml}
+        </div>
+      </div>`;
+    }).join('');
+    hsw(trk, d=>mvDig(d));
+    updDA();
+  }
+
+  function ann(id){const el=document.getElementById(id);if(el)el.classList.toggle('on')}
+
+  function hsw(el,cb){
+    let sx=0,sy=0;
+    el.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+    el.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+      if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40)cb(dx>0?-1:1);
+    },{passive:true});
+  }
+  function cl(v,a,b){return Math.max(a,Math.min(b,v))}
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){if(curSeries>=0)closeSeries();else home();}
+    if(sec==='obj'){if(e.key==='ArrowRight')mvObj(1);if(e.key==='ArrowLeft')mvObj(-1)}
+    if(sec==='pap'){
+      if(curSeries>=0){if(e.key==='ArrowRight')mvSeries(1);if(e.key==='ArrowLeft')mvSeries(-1)}
+      else{if(e.key==='ArrowRight')mvPap(1);if(e.key==='ArrowLeft')mvPap(-1)}
+    }
+  });
+  window.addEventListener('resize',()=>{bgImg.style.objectPosition='center'});
+
+  document.addEventListener('DOMContentLoaded',init);
+  if(document.readyState!=='loading')init();
+
+  return{open,close,home,toggle,openSt,closeSt,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann};
+})();
+</script>
+
+
+<!-- ADMIN PANEL (hidden unless ?admin) -->
+<div id="ADMIN_ROOT" style="display:none;position:fixed;inset:0;z-index:99999;background:#fff;overflow:auto">
+  <style>
+#pass-screen{position:fixed;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:16px}
+#pass-screen h2{color:#fff;font-size:13px;letter-spacing:.25em;font-weight:400;font-family:'Source Code Pro',monospace}
+#pass-screen input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.3);color:#fff;font-family:'Source Code Pro',monospace;font-size:16px;letter-spacing:.15em;padding:8px 4px;width:220px;outline:none;text-align:center}
+#pass-screen input:focus{border-bottom-color:#e8501a}
+#pass-screen button{margin-top:8px;padding:8px 24px;background:#e8501a;border:none;color:#fff;font-family:'Source Code Pro',monospace;font-size:11px;letter-spacing:.15em;cursor:pointer}
+#pass-error{color:#e8501a;font-size:10px;letter-spacing:.15em;font-family:'Source Code Pro',monospace;display:none}
+#app{display:none}
+</style>
+  <div id="pass-screen">
+  <h2>FLUX — ADMIN</h2>
+  <input id="pass-input" type="password" placeholder="пароль" autocomplete="off">
+  <button onclick="checkPassword()">войти</button>
+  <span id="pass-error">неверный пароль</span>
+</div>
+  <div id="app" style="display:none">
+    
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--f:'Source Code Pro',monospace;--or:#e8501a;--bk:#111;--gy:#888;--lt:#f5f5f3;--bd:#e0e0e0}
+body{font-family:var(--f);background:var(--lt);color:var(--bk);min-height:100vh;padding-bottom:80px}
+header{background:var(--bk);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+header h1{font-size:13px;letter-spacing:.2em;font-weight:400}
+.hbtn{padding:7px 15px;font-family:var(--f);font-size:11px;letter-spacing:.12em;cursor:pointer;border:none;background:var(--or);color:#fff;transition:opacity .2s;white-space:nowrap}
+.hbtn:hover{opacity:.8}
+.hbtn.sec{background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.8)}
+#saveStatus{font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-left:auto}
+nav.tabs{display:flex;border-bottom:2px solid var(--bd);background:#fff;padding:0 20px;overflow-x:auto}
+.tab{padding:12px 18px;font-family:var(--f);font-size:11px;letter-spacing:.14em;cursor:pointer;border:none;background:none;color:var(--gy);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s,border-color .2s}
+.tab.on{color:var(--or);border-bottom-color:var(--or)}
+.section{display:none;padding:22px}
+.section.on{display:block}
+.card{background:#fff;border:1px solid var(--bd);margin-bottom:13px}
+.card-head{display:flex;align-items:center;padding:11px 13px;gap:9px;border-bottom:1px solid var(--bd);background:#fafaf8}
+.card-num{font-size:10px;color:var(--gy);letter-spacing:.1em;min-width:18px}
+.card-title{font-size:12px;letter-spacing:.07em;flex:1}
+.card-body{padding:13px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card-body.single{grid-template-columns:1fr}
+@media(max-width:600px){.card-body{grid-template-columns:1fr}}
+label{display:block;font-size:9px;letter-spacing:.15em;color:var(--gy);margin-bottom:4px;text-transform:uppercase}
+input[type=text],textarea,select{width:100%;font-family:var(--f);font-size:12px;letter-spacing:.04em;border:1px solid var(--bd);padding:7px 9px;background:#fff;color:var(--bk);outline:none;transition:border-color .2s;resize:vertical}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--or)}
+textarea{min-height:66px;line-height:1.6}
+.field{display:flex;flex-direction:column;gap:3px}
+/* img upload — contain, no crop */
+.img-upload{border:1px dashed var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;position:relative;overflow:hidden;background:#f8f8f8;transition:border-color .2s;min-height:110px}
+.img-upload:hover{border-color:var(--or)}
+.img-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;touch-action:pinch-zoom}
+.img-upload .img-label{font-size:10px;letter-spacing:.09em;color:var(--gy);position:relative;z-index:1;text-align:center;padding:10px}
+.img-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+.img-upload .img-clear{position:absolute;top:4px;right:4px;z-index:3;background:rgba(0,0,0,.5);color:#fff;border:none;width:20px;height:20px;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
+.img-upload.has-img .img-clear{display:flex}
+.img-upload.has-img .img-label{opacity:0}
+.img-hint{font-size:9px;color:#bbb;letter-spacing:.07em;margin-top:2px;font-style:italic}
+.orient-btns{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px}
+.orient-btn{padding:5px 10px;font-family:var(--f);font-size:9px;letter-spacing:.11em;border:1px solid var(--bd);background:#fff;cursor:pointer;color:var(--gy);transition:all .15s}
+.orient-btn.on{border-color:var(--or);background:var(--or);color:#fff}
+/* digital block editor */
+.block-list{display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
+.block-item{border:1px solid var(--bd);background:#fafaf8;display:flex;align-items:stretch}
+.block-item-side{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px 3px;gap:3px;background:#f0f0ee;border-right:1px solid var(--bd);min-width:26px}
+.block-type-badge{font-size:7px;letter-spacing:.08em;color:var(--gy);writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg)}
+.block-item-body{flex:1;padding:9px}
+.bmv{background:none;border:none;cursor:pointer;font-size:11px;color:var(--gy);padding:1px;line-height:1;transition:color .15s}
+.bmv:hover{color:var(--bk)}
+.bdl{background:none;border:none;cursor:pointer;font-size:13px;color:#ccc;padding:1px;line-height:1;transition:color .15s;margin-top:auto}
+.bdl:hover{color:#c00}
+.add-block-btns{display:flex;gap:6px;flex-wrap:wrap}
+.add-block-btn{padding:6px 13px;font-family:var(--f);font-size:10px;letter-spacing:.11em;border:1px dashed var(--bd);background:none;cursor:pointer;color:var(--gy);transition:all .15s}
+.add-block-btn:hover{border-color:var(--or);color:var(--or)}
+/* tiles */
+.tile-grid-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin:8px 0}
+.tile-item{background:#e4e4e4;position:relative;cursor:pointer;overflow:hidden}
+.tile-item.sz-S{grid-column:span 1;aspect-ratio:1}
+.tile-item.sz-M{grid-column:span 2;aspect-ratio:2}
+.tile-item.sz-L{grid-column:span 2;grid-row:span 2;aspect-ratio:1}
+.tile-item img{width:100%;height:100%;object-fit:cover;display:block}
+.tile-item input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+.tile-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#bbb;pointer-events:none}
+.tile-sz-badge{position:absolute;top:2px;left:2px;background:rgba(0,0,0,.45);color:#fff;font-size:8px;padding:1px 4px;letter-spacing:.07em;font-family:var(--f);z-index:3;cursor:pointer;user-select:none}
+.tile-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.45);color:#fff;border:none;width:17px;height:17px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3}
+.tile-add-btn{grid-column:span 1;aspect-ratio:1;border:1px dashed var(--bd);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc;transition:all .15s;font-family:var(--f)}
+.tile-add-btn:hover{border-color:var(--or);color:var(--or)}
+.add-btn{display:flex;align-items:center;gap:8px;padding:10px 13px;border:1px dashed var(--bd);background:none;cursor:pointer;font-family:var(--f);font-size:10px;letter-spacing:.13em;color:var(--gy);width:100%;transition:all .15s;margin-top:5px}
+.add-btn:hover{border-color:var(--or);color:var(--or)}
+.del-btn{padding:4px 8px;font-family:var(--f);font-size:9px;letter-spacing:.1em;border:1px solid #ddd;background:none;cursor:pointer;color:#bbb;transition:all .15s}
+.del-btn:hover{background:#c00;color:#fff;border-color:#c00}
+.move-btn{padding:4px 7px;font-family:var(--f);font-size:11px;border:1px solid var(--bd);background:none;cursor:pointer;color:var(--gy);transition:all .15s}
+.move-btn:hover{border-color:var(--bk);color:var(--bk)}
+#outputArea{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);overflow:auto}
+.output-box{background:#fff;max-width:660px;margin:36px auto;padding:26px}
+.output-box h2{font-size:12px;letter-spacing:.2em;font-weight:400;margin-bottom:9px}
+.output-box p{font-size:11px;letter-spacing:.04em;color:#666;line-height:1.7;margin-bottom:11px}
+.output-box textarea{width:100%;height:260px;font-size:11px;line-height:1.5;font-family:monospace;border:1px solid var(--bd);padding:9px;resize:none}
+.output-actions{display:flex;gap:9px;margin-top:11px;align-items:center}
+.notice{background:#fff8f0;border-left:3px solid var(--or);padding:9px 13px;font-size:11px;letter-spacing:.04em;line-height:1.7;margin-bottom:16px;color:#555}
+.notice strong{display:block;font-size:9px;letter-spacing:.2em;margin-bottom:2px;color:var(--or)}
+</style>
+</head>
+<body>
+<header>
+  <h1>FLUX — ADMIN</h1>
+  <button class="hbtn" onclick="generateCode()">⬇ сгенерировать код</button>
+  <button class="hbtn sec" onclick="loadFromPortfolio()">⬆ из portfolio.html</button>
+  <span id="saveStatus">авто-сохранение</span>
+</header>
+<nav class="tabs">
+  <button class="tab on" onclick="switchTab('objects',this)">objects</button>
+  <button class="tab" onclick="switchTab('paper',this)">paper series</button>
+  <button class="tab" onclick="switchTab('digital',this)">digital</button>
+  <button class="tab" onclick="switchTab('statement',this)">statement</button>
+  <button class="tab" onclick="switchTab('cv',this)">CV / выставки</button>
+  <button class="tab" onclick="switchTab('bg',this)">фон</button>
+</nav>
+
+<div class="section on" id="sec-objects">
+  <div class="notice"><strong>OBJECTS</strong>Нажмите на серый прямоугольник чтобы загрузить фото. Изображение показывается целиком, не обрезается. На мобильном — два пальца для увеличения. Ориентация задаёт пропорции рамки.</div>
+  <div id="objects-list"></div>
+  <button class="add-btn" onclick="addObject()">+ добавить работу</button>
+</div>
+
+<div class="section" id="sec-paper">
+  <div class="notice"><strong>PAPER SERIES</strong>Укажите ориентацию (вертикаль / горизонталь) и формат (A5 / A6) — это задаёт пропорции рамки изображения.</div>
+  <div id="paper-list"></div>
+  <button class="add-btn" onclick="addPaper()">+ добавить работу</button>
+</div>
+
+<div class="section" id="sec-digital">
+  <div class="notice"><strong>DIGITAL</strong>Каждая серия — отдельный слайд, листается стрелками. Внутри — лента из текстовых блоков и фотографий в любом порядке. Можно задать фоновое изображение (полупрозрачное) и кнопку-ссылку внизу.</div>
+  <div id="digital-list"></div>
+  <button class="add-btn" onclick="addDigital()">+ добавить серию</button>
+</div>
+
+<div class="section" id="sec-statement">
+  <div class="notice"><strong>STATEMENT</strong>Каждое поле = один абзац авторского текста.</div>
+  <div id="statement-list"></div>
+  <button class="add-btn" onclick="addStatementPara()">+ добавить абзац</button>
+</div>
+
+<div class="section" id="sec-cv">
+  <div class="notice"><strong>CV / ВЫСТАВКИ</strong>Нажмите на ячейку чтобы загрузить фото. Нажмите на <b>S / M / L</b> чтобы изменить размер. × — удалить. + — добавить ячейку.</div>
+  <div id="cv-list"></div>
+  <button class="add-btn" onclick="addExhibition()">+ добавить выставку</button>
+</div>
+
+<div class="section" id="sec-bg">
+  <div class="notice"><strong>ФОНОВОЕ ФОТО</strong>Загрузите фото для главного экрана.</div>
+  <div class="card"><div class="card-body single">
+    <div class="field">
+      <label>Изображение</label>
+      <div class="img-upload" id="bg-upload" style="min-height:180px" onclick="document.getElementById('bg-file').click()">
+        <img id="bg-preview" src="" style="display:none">
+        <div class="img-label">нажмите чтобы загрузить</div>
+        <input id="bg-file" type="file" accept="image/*" onchange="loadBg(this)" onclick="event.stopPropagation()" style="display:none">
+        <button class="img-clear" onclick="clearBg(event)">×</button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<div id="outputArea">
+  <div class="output-box">
+    <h2>КОД ДЛЯ ВСТАВКИ В PORTFOLIO_V15.HTML</h2>
+    <p>Найдите строку <code>const D = {</code> и замените весь блок до закрывающей <code>};</code> на этот код:</p>
+    <textarea id="outputCode" readonly></textarea>
+    <div class="output-actions">
+      <button class="hbtn" onclick="copyCode()">📋 копировать</button>
+      <span id="copyMsg" style="font-size:11px;color:green;display:none;letter-spacing:.08em">✓ скопировано</span>
+      <button class="hbtn sec" style="margin-left:auto" onclick="closeOutput()">закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// ПАРОЛЬ — замените на свой хэш.
+// Как сменить: откройте консоль браузера (F12),
+// введите: fluxHash('ваш_новый_пароль') и скопируйте результат сюда.
+// ═══════════════════════════════════════════
+const PASS_HASH = 'b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576b4dd66caca2a3efb'; // пароль: flux2024
+
+async function fluxHash(s){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword(){
+  const input = document.getElementById('pass-input').value;
+  const hash = await fluxHash(input);
+  if(hash === PASS_HASH){
+    document.getElementById('pass-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    sessionStorage.setItem('flux_auth','1');
+    load(); renderAll();
+  } else {
+    document.getElementById('pass-error').style.display='block';
+    document.getElementById('pass-input').value='';
+    document.getElementById('pass-input').focus();
+  }
+}
+
+// Check if already authenticated this session
+window.addEventListener('DOMContentLoaded', ()=>{
+  if(sessionStorage.getItem('flux_auth')==='1'){
+    document.getElementById('pass-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    load(); renderAll();
+  }
+  document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
+});
+let DATA={
+  bg:'',
+  objects:[{image:'',title:'«deconstruction»',price:'120.000₽',ann:'',meta:'бумага 200 г/м², цветные карандаши\nформат 210 x 148мм    2023 г.',orient:'h'}],
+  paper:[{works:[{image:'',title:'«цвета 23»',href:'#',desc:'бумага 200 г/м², цветные карандаши',fmt:'формат 210 x 148мм',yr:'2023 г.',price:'40.000₽',ann:'',orient:'v',size:'A5'}]}],
+  statement:['Здесь будет текст statement.'],
+  digital:[{h:'Argentum',sub:'s e r i e s',bg:'',blocks:[{type:'text',content:'Текст серии.'},{type:'image',src:''}],link:'',linkLabel:'посмотреть серию →'}],
+  exhibitions:[{name:'exhibition1',desc:'место, год',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]}]
+};
+
+function save(){try{localStorage.setItem('flux_admin',JSON.stringify(DATA));const s=document.getElementById('saveStatus');s.textContent='сохранено ✓';setTimeout(()=>s.textContent='авто-сохранение',1800);}catch(e){}}
+function load(){try{const s=localStorage.getItem('flux_admin');if(s)DATA=JSON.parse(s);}catch(e){}}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function switchTab(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('sec-'+id).classList.add('on');btn.classList.add('on');renderAll();}
+function moveItem(arr,i,d){const a=DATA[arr],ni=i+d;if(ni<0||ni>=a.length)return;[a[i],a[ni]]=[a[ni],a[i]];save();renderAll();}
+function deleteItem(arr,i){if(!confirm('Удалить?'))return;DATA[arr].splice(i,1);save();renderAll();}
+
+// OBJECTS
+function renderObjects(){
+  const el=document.getElementById('objects-list');el.innerHTML='';
+  DATA.objects.forEach((o,i)=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(o.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('objects',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('objects',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('objects',${i})">удалить</button></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Изображение</label>
+        <div class="img-upload${o.image?' has-img':''}" onclick="document.getElementById('oi-f-${i}').click()">
+          <img src="${esc(o.image)}" style="${o.image?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить</div>
+          <input type="file" id="oi-f-${i}" accept="image/*" onchange="loadObjImg(${i},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearObjImg(event,${i})">×</button>
+        </div>
+        <div class="img-hint">не обрезается • два пальца для увеличения</div>
+        <div style="margin-top:9px"><label>Ориентация рамки</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(o.orient||'h')==='h'?' on':''}" onclick="setObjOrient(${i},'h')">H горизонт.</button>
+            <button class="orient-btn${o.orient==='v'?' on':''}" onclick="setObjOrient(${i},'v')">V вертикал.</button>
+            <button class="orient-btn${o.orient==='sq'?' on':''}" onclick="setObjOrient(${i},'sq')">□ квадрат</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Название</label><input type="text" value="${esc(o.title)}" oninput="DATA.objects[${i}].title=this.value;save()"></div>
+        <div class="field"><label>Цена</label><input type="text" value="${esc(o.price)}" oninput="DATA.objects[${i}].price=this.value;save()"></div>
+        <div class="field"><label>Материал и формат</label><textarea oninput="DATA.objects[${i}].meta=this.value;save()">${esc(o.meta)}</textarea></div>
+        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.objects[i].image=e.target.result;save();renderObjects();};r.readAsDataURL(f);}
+function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
+function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
+function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
+
+// PAPER
+function renderPaper(){
+  const el=document.getElementById('paper-list');el.innerHTML='';
+  DATA.paper.forEach((s,i)=>{
+    const w=s.works[0];
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(w.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('paper',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('paper',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('paper',${i})">удалить</button></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Изображение</label>
+        <div class="img-upload${w.image?' has-img':''}" onclick="document.getElementById('pi-f-${i}').click()">
+          <img src="${esc(w.image)}" style="${w.image?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить</div>
+          <input type="file" id="pi-f-${i}" accept="image/*" onchange="loadPapImg(${i},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearPapImg(event,${i})">×</button>
+        </div>
+        <div class="img-hint">не обрезается • два пальца для увеличения</div>
+        <div style="margin-top:9px"><label>Ориентация</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(w.orient||'v')==='v'?' on':''}" onclick="setPapOrient(${i},'v')">V вертикаль</button>
+            <button class="orient-btn${w.orient==='h'?' on':''}" onclick="setPapOrient(${i},'h')">H горизонталь</button>
+          </div>
+        </div>
+        <div style="margin-top:7px"><label>Формат</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(w.size||'A5')==='A5'?' on':''}" onclick="setPapSize(${i},'A5')">A5</button>
+            <button class="orient-btn${w.size==='A6'?' on':''}" onclick="setPapSize(${i},'A6')">A6</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Название</label><input type="text" value="${esc(w.title)}" oninput="DATA.paper[${i}].works[0].title=this.value;save()"></div>
+        <div class="field"><label>Ссылка на серию</label><input type="text" value="${esc(w.href)}" oninput="DATA.paper[${i}].works[0].href=this.value;save()"></div>
+        <div class="field"><label>Материал</label><textarea oninput="DATA.paper[${i}].works[0].desc=this.value;save()">${esc(w.desc)}</textarea></div>
+        <div class="field"><label>Формат (текст)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${i}].works[0].fmt=this.value;save()"></div>
+        <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${i}].works[0].yr=this.value;save()"></div>
+        <div class="field"><label>Цена</label><input type="text" value="${esc(w.price)}" oninput="DATA.paper[${i}].works[0].price=this.value;save()"></div>
+        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.paper[${i}].works[0].ann=this.value;save()">${esc(w.ann)}</textarea></div>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.paper[i].works[0].image=e.target.result;save();renderPaper();};r.readAsDataURL(f);}
+function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
+function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
+function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
+function addPaper(){DATA.paper.push({works:[{image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
+
+// DIGITAL
+function renderDigital(){
+  const el=document.getElementById('digital-list');el.innerHTML='';
+  DATA.digital.forEach((d,di)=>{
+    if(!d.blocks)d.blocks=[];
+    const c=document.createElement('div');c.className='card';
+    const blocksHtml=d.blocks.map((b,bi)=>`
+      <div class="block-item">
+        <div class="block-item-side">
+          <span class="block-type-badge">${b.type==='text'?'TXT':'IMG'}</span>
+          <button class="bmv" onclick="moveBlock(${di},${bi},-1)">↑</button>
+          <button class="bmv" onclick="moveBlock(${di},${bi},1)">↓</button>
+          <button class="bdl" onclick="delBlock(${di},${bi})">×</button>
+        </div>
+        <div class="block-item-body">
+          ${b.type==='text'
+            ?`<textarea style="min-height:80px;width:100%" oninput="DATA.digital[${di}].blocks[${bi}].content=this.value;save()">${esc(b.content)}</textarea>`
+            :`<div class="img-upload${b.src?' has-img':''}" onclick="document.getElementById('di-f-${di}-${bi}').click()">
+                <img src="${esc(b.src||'')}" style="${b.src?'':'display:none'}">
+                <div class="img-label">нажмите чтобы загрузить</div>
+                <input type="file" id="di-f-${di}-${bi}" accept="image/*" onchange="loadDigImg(${di},${bi},this)" onclick="event.stopPropagation()">
+                <button class="img-clear" onclick="clearDigImg(event,${di},${bi})">×</button>
+              </div>`
+          }
+        </div>
+      </div>`).join('');
+    c.innerHTML=`<div class="card-head"><span class="card-num">${di+1}</span><span class="card-title">${esc(d.h)||'серия'}</span><button class="del-btn" onclick="deleteItem('digital',${di})">удалить</button></div>
+    <div class="card-body single">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="field"><label>Название (курсив)</label><input type="text" value="${esc(d.h)}" oninput="DATA.digital[${di}].h=this.value;save()"></div>
+        <div class="field"><label>Подзаголовок</label><input type="text" value="${esc(d.sub)}" oninput="DATA.digital[${di}].sub=this.value;save()"></div>
+        <div class="field"><label>Ссылка (URL)</label><input type="text" value="${esc(d.link||'')}" placeholder="https://..." oninput="DATA.digital[${di}].link=this.value;save()"></div>
+        <div class="field"><label>Текст кнопки ссылки</label><input type="text" value="${esc(d.linkLabel||'посмотреть серию →')}" oninput="DATA.digital[${di}].linkLabel=this.value;save()"></div>
+      </div>
+      <div class="field" style="margin-bottom:11px"><label>Фон (полупрозрачный)</label>
+        <div class="img-upload${d.bg?' has-img':''}" style="min-height:70px" onclick="document.getElementById('db-f-${di}').click()">
+          <img src="${esc(d.bg||'')}" style="${d.bg?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить фон</div>
+          <input type="file" id="db-f-${di}" accept="image/*" onchange="loadDigBg(${di},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearDigBg(event,${di})">×</button>
+        </div>
+      </div>
+      <label style="display:block;margin-bottom:7px">ЛЕНТА — чередуйте текст и изображения</label>
+      <div class="block-list">${blocksHtml}</div>
+      <div class="add-block-btns">
+        <button class="add-block-btn" onclick="addBlock(${di},'text')">+ текст</button>
+        <button class="add-block-btn" onclick="addBlock(${di},'image')">+ изображение</button>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].blocks[bi].src=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function clearDigImg(ev,di,bi){ev.stopPropagation();DATA.digital[di].blocks[bi].src='';save();renderDigital();}
+function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].bg=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function clearDigBg(ev,di){ev.stopPropagation();DATA.digital[di].bg='';save();renderDigital();}
+function addBlock(di,type){DATA.digital[di].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});save();renderDigital();}
+function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigital();}
+function moveBlock(di,bi,d){const a=DATA.digital[di].blocks,ni=bi+d;if(ni<0||ni>=a.length)return;[a[bi],a[ni]]=[a[ni],a[bi]];save();renderDigital();}
+function addDigital(){DATA.digital.push({h:'',sub:'',bg:'',blocks:[{type:'text',content:''}],link:'',linkLabel:'посмотреть серию →'});save();renderDigital();}
+
+// STATEMENT
+function renderStatement(){
+  const el=document.getElementById('statement-list');el.innerHTML='';
+  DATA.statement.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">§${i+1}</span><span class="card-title">абзац</span><button class="del-btn" onclick="deleteItem('statement',${i})">удалить</button></div>
+    <div class="card-body single"><textarea style="min-height:90px" oninput="DATA.statement[${i}]=this.value;save()">${esc(p)}</textarea></div>`;
+    el.appendChild(c);
+  });
+}
+function addStatementPara(){DATA.statement.push('');save();renderStatement();}
+
+// CV
+function renderCV(){
+  const el=document.getElementById('cv-list');el.innerHTML='';
+  DATA.exhibitions.forEach((ex,ei)=>{
+    const c=document.createElement('div');c.className='card';
+    const allTiles=ex.panes.flatMap(p=>p.tiles);
+    const tilesHtml=allTiles.map((t,ti)=>`
+      <div class="tile-item sz-${t.sz||'S'}">
+        ${t.image?`<img src="${t.image}">`:''}
+        <div class="tile-ph">${t.image?'':'📷'}</div>
+        <input type="file" accept="image/*" onchange="loadTileImg(${ei},${ti},this)" onclick="event.stopPropagation()">
+        <span class="tile-sz-badge" onclick="cycleTileSz(event,${ei},${ti})">${t.sz||'S'}</span>
+        <button class="tile-del" onclick="deleteTile(event,${ei},${ti})">×</button>
+      </div>`).join('');
+    c.innerHTML=`<div class="card-head"><span class="card-num">${ei+1}</span><span class="card-title">${esc(ex.name)||'выставка'}</span><button class="move-btn" onclick="moveItem('exhibitions',${ei},-1)">↑</button><button class="move-btn" onclick="moveItem('exhibitions',${ei},1)">↓</button><button class="del-btn" onclick="deleteItem('exhibitions',${ei})">удалить</button></div>
+    <div class="card-body single">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px">
+        <div class="field"><label>Название выставки</label><input type="text" value="${esc(ex.name)}" oninput="DATA.exhibitions[${ei}].name=this.value;save()"></div>
+        <div class="field"><label>Описание (место, год)</label><input type="text" value="${esc(ex.desc||'')}" oninput="DATA.exhibitions[${ei}].desc=this.value;save()"></div>
+      </div>
+      <label>Фотографии — клик на ячейку загружает фото • клик на S/M/L меняет размер</label>
+      <div class="tile-grid-preview">${tilesHtml}<button class="tile-add-btn" onclick="addTile(${ei})">+</button></div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=e.target.result;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();};r.readAsDataURL(f);}
+function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
+function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
+function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
+function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
+
+// BG
+function loadBg(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.bg=e.target.result;const p=document.getElementById('bg-preview');p.src=e.target.result;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();};r.readAsDataURL(f);}
+function clearBg(ev){ev.stopPropagation();DATA.bg='';const p=document.getElementById('bg-preview');p.src='';p.style.display='none';document.getElementById('bg-upload').classList.remove('has-img');save();}
+
+function renderAll(){renderObjects();renderPaper();renderDigital();renderStatement();renderCV();if(DATA.bg){document.getElementById('bg-preview').src=DATA.bg;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-upload').classList.add('has-img');}}
+
+function generateCode(){document.getElementById('outputCode').value=`const D = ${JSON.stringify(DATA,null,2)};`;document.getElementById('outputArea').style.display='block';}
+function copyCode(){const ta=document.getElementById('outputCode');ta.select();document.execCommand('copy');const m=document.getElementById('copyMsg');m.style.display='inline';setTimeout(()=>m.style.display='none',2000);}
+function closeOutput(){document.getElementById('outputArea').style.display='none';}
+function loadFromPortfolio(){const inp=document.createElement('input');inp.type='file';inp.accept='.html';inp.onchange=function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const m=e.target.result.match(/const D = (\{[\s\S]*?\});\s*\n/);if(m){try{DATA=JSON.parse(m[1]);save();renderAll();alert('Загружено!');}catch(err){alert('Ошибка: '+err.message);}}else alert('Данные не найдены. Нужен файл portfolio_v15.html');};r.readAsText(f);};inp.click();}
+
+</script>
+
+  </div>
+</div>
+<script>
+
+// ═══════════════════════════════════════════
+// ПАРОЛЬ — замените на свой хэш.
+// Как сменить: откройте консоль браузера (F12),
+// введите: fluxHash('ваш_новый_пароль') и скопируйте результат сюда.
+// ═══════════════════════════════════════════
+const PASS_HASH = 'b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576b4dd66caca2a3efb'; // пароль: flux2024
+
+async function fluxHash(s){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword(){
+  const input = document.getElementById('pass-input').value;
+  const hash = await fluxHash(input);
+  if(hash === PASS_HASH){
+    document.getElementById('pass-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    sessionStorage.setItem('flux_auth','1');
+    load(); renderAll();
+  } else {
+    document.getElementById('pass-error').style.display='block';
+    document.getElementById('pass-input').value='';
+    document.getElementById('pass-input').focus();
+  }
+}
+
+// Check if already authenticated this session
+window.addEventListener('DOMContentLoaded', ()=>{
+  if(sessionStorage.getItem('flux_auth')==='1'){
+    document.getElementById('pass-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    load(); renderAll();
+  }
+  document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
+});
+let DATA={
+  bg:'',
+  objects:[{image:'',title:'«deconstruction»',price:'120.000₽',ann:'',meta:'бумага 200 г/м², цветные карандаши\nформат 210 x 148мм    2023 г.',orient:'h'}],
+  paper:[{works:[{image:'',title:'«цвета 23»',href:'#',desc:'бумага 200 г/м², цветные карандаши',fmt:'формат 210 x 148мм',yr:'2023 г.',price:'40.000₽',ann:'',orient:'v',size:'A5'}]}],
+  statement:['Здесь будет текст statement.'],
+  digital:[{h:'Argentum',sub:'s e r i e s',bg:'',blocks:[{type:'text',content:'Текст серии.'},{type:'image',src:''}],link:'',linkLabel:'посмотреть серию →'}],
+  exhibitions:[{name:'exhibition1',desc:'место, год',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]}]
+};
+
+function save(){try{localStorage.setItem('flux_admin',JSON.stringify(DATA));const s=document.getElementById('saveStatus');s.textContent='сохранено ✓';setTimeout(()=>s.textContent='авто-сохранение',1800);}catch(e){}}
+function load(){try{const s=localStorage.getItem('flux_admin');if(s)DATA=JSON.parse(s);}catch(e){}}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function switchTab(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('sec-'+id).classList.add('on');btn.classList.add('on');renderAll();}
+function moveItem(arr,i,d){const a=DATA[arr],ni=i+d;if(ni<0||ni>=a.length)return;[a[i],a[ni]]=[a[ni],a[i]];save();renderAll();}
+function deleteItem(arr,i){if(!confirm('Удалить?'))return;DATA[arr].splice(i,1);save();renderAll();}
+
+// OBJECTS
+function renderObjects(){
+  const el=document.getElementById('objects-list');el.innerHTML='';
+  DATA.objects.forEach((o,i)=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(o.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('objects',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('objects',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('objects',${i})">удалить</button></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Изображение</label>
+        <div class="img-upload${o.image?' has-img':''}" onclick="document.getElementById('oi-f-${i}').click()">
+          <img src="${esc(o.image)}" style="${o.image?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить</div>
+          <input type="file" id="oi-f-${i}" accept="image/*" onchange="loadObjImg(${i},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearObjImg(event,${i})">×</button>
+        </div>
+        <div class="img-hint">не обрезается • два пальца для увеличения</div>
+        <div style="margin-top:9px"><label>Ориентация рамки</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(o.orient||'h')==='h'?' on':''}" onclick="setObjOrient(${i},'h')">H горизонт.</button>
+            <button class="orient-btn${o.orient==='v'?' on':''}" onclick="setObjOrient(${i},'v')">V вертикал.</button>
+            <button class="orient-btn${o.orient==='sq'?' on':''}" onclick="setObjOrient(${i},'sq')">□ квадрат</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Название</label><input type="text" value="${esc(o.title)}" oninput="DATA.objects[${i}].title=this.value;save()"></div>
+        <div class="field"><label>Цена</label><input type="text" value="${esc(o.price)}" oninput="DATA.objects[${i}].price=this.value;save()"></div>
+        <div class="field"><label>Материал и формат</label><textarea oninput="DATA.objects[${i}].meta=this.value;save()">${esc(o.meta)}</textarea></div>
+        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.objects[i].image=e.target.result;save();renderObjects();};r.readAsDataURL(f);}
+function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
+function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
+function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
+
+// PAPER
+function renderPaper(){
+  const el=document.getElementById('paper-list');el.innerHTML='';
+  DATA.paper.forEach((s,i)=>{
+    const w=s.works[0];
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(w.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('paper',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('paper',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('paper',${i})">удалить</button></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Изображение</label>
+        <div class="img-upload${w.image?' has-img':''}" onclick="document.getElementById('pi-f-${i}').click()">
+          <img src="${esc(w.image)}" style="${w.image?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить</div>
+          <input type="file" id="pi-f-${i}" accept="image/*" onchange="loadPapImg(${i},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearPapImg(event,${i})">×</button>
+        </div>
+        <div class="img-hint">не обрезается • два пальца для увеличения</div>
+        <div style="margin-top:9px"><label>Ориентация</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(w.orient||'v')==='v'?' on':''}" onclick="setPapOrient(${i},'v')">V вертикаль</button>
+            <button class="orient-btn${w.orient==='h'?' on':''}" onclick="setPapOrient(${i},'h')">H горизонталь</button>
+          </div>
+        </div>
+        <div style="margin-top:7px"><label>Формат</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(w.size||'A5')==='A5'?' on':''}" onclick="setPapSize(${i},'A5')">A5</button>
+            <button class="orient-btn${w.size==='A6'?' on':''}" onclick="setPapSize(${i},'A6')">A6</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Название</label><input type="text" value="${esc(w.title)}" oninput="DATA.paper[${i}].works[0].title=this.value;save()"></div>
+        <div class="field"><label>Ссылка на серию</label><input type="text" value="${esc(w.href)}" oninput="DATA.paper[${i}].works[0].href=this.value;save()"></div>
+        <div class="field"><label>Материал</label><textarea oninput="DATA.paper[${i}].works[0].desc=this.value;save()">${esc(w.desc)}</textarea></div>
+        <div class="field"><label>Формат (текст)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${i}].works[0].fmt=this.value;save()"></div>
+        <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${i}].works[0].yr=this.value;save()"></div>
+        <div class="field"><label>Цена</label><input type="text" value="${esc(w.price)}" oninput="DATA.paper[${i}].works[0].price=this.value;save()"></div>
+        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.paper[${i}].works[0].ann=this.value;save()">${esc(w.ann)}</textarea></div>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.paper[i].works[0].image=e.target.result;save();renderPaper();};r.readAsDataURL(f);}
+function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
+function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
+function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
+function addPaper(){DATA.paper.push({works:[{image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
+
+// DIGITAL
+function renderDigital(){
+  const el=document.getElementById('digital-list');el.innerHTML='';
+  DATA.digital.forEach((d,di)=>{
+    if(!d.blocks)d.blocks=[];
+    const c=document.createElement('div');c.className='card';
+    const blocksHtml=d.blocks.map((b,bi)=>`
+      <div class="block-item">
+        <div class="block-item-side">
+          <span class="block-type-badge">${b.type==='text'?'TXT':'IMG'}</span>
+          <button class="bmv" onclick="moveBlock(${di},${bi},-1)">↑</button>
+          <button class="bmv" onclick="moveBlock(${di},${bi},1)">↓</button>
+          <button class="bdl" onclick="delBlock(${di},${bi})">×</button>
+        </div>
+        <div class="block-item-body">
+          ${b.type==='text'
+            ?`<textarea style="min-height:80px;width:100%" oninput="DATA.digital[${di}].blocks[${bi}].content=this.value;save()">${esc(b.content)}</textarea>`
+            :`<div class="img-upload${b.src?' has-img':''}" onclick="document.getElementById('di-f-${di}-${bi}').click()">
+                <img src="${esc(b.src||'')}" style="${b.src?'':'display:none'}">
+                <div class="img-label">нажмите чтобы загрузить</div>
+                <input type="file" id="di-f-${di}-${bi}" accept="image/*" onchange="loadDigImg(${di},${bi},this)" onclick="event.stopPropagation()">
+                <button class="img-clear" onclick="clearDigImg(event,${di},${bi})">×</button>
+              </div>`
+          }
+        </div>
+      </div>`).join('');
+    c.innerHTML=`<div class="card-head"><span class="card-num">${di+1}</span><span class="card-title">${esc(d.h)||'серия'}</span><button class="del-btn" onclick="deleteItem('digital',${di})">удалить</button></div>
+    <div class="card-body single">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="field"><label>Название (курсив)</label><input type="text" value="${esc(d.h)}" oninput="DATA.digital[${di}].h=this.value;save()"></div>
+        <div class="field"><label>Подзаголовок</label><input type="text" value="${esc(d.sub)}" oninput="DATA.digital[${di}].sub=this.value;save()"></div>
+        <div class="field"><label>Ссылка (URL)</label><input type="text" value="${esc(d.link||'')}" placeholder="https://..." oninput="DATA.digital[${di}].link=this.value;save()"></div>
+        <div class="field"><label>Текст кнопки ссылки</label><input type="text" value="${esc(d.linkLabel||'посмотреть серию →')}" oninput="DATA.digital[${di}].linkLabel=this.value;save()"></div>
+      </div>
+      <div class="field" style="margin-bottom:11px"><label>Фон (полупрозрачный)</label>
+        <div class="img-upload${d.bg?' has-img':''}" style="min-height:70px" onclick="document.getElementById('db-f-${di}').click()">
+          <img src="${esc(d.bg||'')}" style="${d.bg?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить фон</div>
+          <input type="file" id="db-f-${di}" accept="image/*" onchange="loadDigBg(${di},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearDigBg(event,${di})">×</button>
+        </div>
+      </div>
+      <label style="display:block;margin-bottom:7px">ЛЕНТА — чередуйте текст и изображения</label>
+      <div class="block-list">${blocksHtml}</div>
+      <div class="add-block-btns">
+        <button class="add-block-btn" onclick="addBlock(${di},'text')">+ текст</button>
+        <button class="add-block-btn" onclick="addBlock(${di},'image')">+ изображение</button>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].blocks[bi].src=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function clearDigImg(ev,di,bi){ev.stopPropagation();DATA.digital[di].blocks[bi].src='';save();renderDigital();}
+function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].bg=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function clearDigBg(ev,di){ev.stopPropagation();DATA.digital[di].bg='';save();renderDigital();}
+function addBlock(di,type){DATA.digital[di].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});save();renderDigital();}
+function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigital();}
+function moveBlock(di,bi,d){const a=DATA.digital[di].blocks,ni=bi+d;if(ni<0||ni>=a.length)return;[a[bi],a[ni]]=[a[ni],a[bi]];save();renderDigital();}
+function addDigital(){DATA.digital.push({h:'',sub:'',bg:'',blocks:[{type:'text',content:''}],link:'',linkLabel:'посмотреть серию →'});save();renderDigital();}
+
+// STATEMENT
+function renderStatement(){
+  const el=document.getElementById('statement-list');el.innerHTML='';
+  DATA.statement.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">§${i+1}</span><span class="card-title">абзац</span><button class="del-btn" onclick="deleteItem('statement',${i})">удалить</button></div>
+    <div class="card-body single"><textarea style="min-height:90px" oninput="DATA.statement[${i}]=this.value;save()">${esc(p)}</textarea></div>`;
+    el.appendChild(c);
+  });
+}
+function addStatementPara(){DATA.statement.push('');save();renderStatement();}
+
+// CV
+function renderCV(){
+  const el=document.getElementById('cv-list');el.innerHTML='';
+  DATA.exhibitions.forEach((ex,ei)=>{
+    const c=document.createElement('div');c.className='card';
+    const allTiles=ex.panes.flatMap(p=>p.tiles);
+    const tilesHtml=allTiles.map((t,ti)=>`
+      <div class="tile-item sz-${t.sz||'S'}">
+        ${t.image?`<img src="${t.image}">`:''}
+        <div class="tile-ph">${t.image?'':'📷'}</div>
+        <input type="file" accept="image/*" onchange="loadTileImg(${ei},${ti},this)" onclick="event.stopPropagation()">
+        <span class="tile-sz-badge" onclick="cycleTileSz(event,${ei},${ti})">${t.sz||'S'}</span>
+        <button class="tile-del" onclick="deleteTile(event,${ei},${ti})">×</button>
+      </div>`).join('');
+    c.innerHTML=`<div class="card-head"><span class="card-num">${ei+1}</span><span class="card-title">${esc(ex.name)||'выставка'}</span><button class="move-btn" onclick="moveItem('exhibitions',${ei},-1)">↑</button><button class="move-btn" onclick="moveItem('exhibitions',${ei},1)">↓</button><button class="del-btn" onclick="deleteItem('exhibitions',${ei})">удалить</button></div>
+    <div class="card-body single">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px">
+        <div class="field"><label>Название выставки</label><input type="text" value="${esc(ex.name)}" oninput="DATA.exhibitions[${ei}].name=this.value;save()"></div>
+        <div class="field"><label>Описание (место, год)</label><input type="text" value="${esc(ex.desc||'')}" oninput="DATA.exhibitions[${ei}].desc=this.value;save()"></div>
+      </div>
+      <label>Фотографии — клик на ячейку загружает фото • клик на S/M/L меняет размер</label>
+      <div class="tile-grid-preview">${tilesHtml}<button class="tile-add-btn" onclick="addTile(${ei})">+</button></div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=e.target.result;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();};r.readAsDataURL(f);}
+function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
+function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
+function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
+function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
+
+// BG
+function loadBg(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.bg=e.target.result;const p=document.getElementById('bg-preview');p.src=e.target.result;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();};r.readAsDataURL(f);}
+function clearBg(ev){ev.stopPropagation();DATA.bg='';const p=document.getElementById('bg-preview');p.src='';p.style.display='none';document.getElementById('bg-upload').classList.remove('has-img');save();}
+
+function renderAll(){renderObjects();renderPaper();renderDigital();renderStatement();renderCV();if(DATA.bg){document.getElementById('bg-preview').src=DATA.bg;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-upload').classList.add('has-img');}}
+
+function generateCode(){document.getElementById('outputCode').value=`const D = ${JSON.stringify(DATA,null,2)};`;document.getElementById('outputArea').style.display='block';}
+function copyCode(){const ta=document.getElementById('outputCode');ta.select();document.execCommand('copy');const m=document.getElementById('copyMsg');m.style.display='inline';setTimeout(()=>m.style.display='none',2000);}
+function closeOutput(){document.getElementById('outputArea').style.display='none';}
+function loadFromPortfolio(){const inp=document.createElement('input');inp.type='file';inp.accept='.html';inp.onchange=function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const m=e.target.result.match(/const D = (\{[\s\S]*?\});\s*\n/);if(m){try{DATA=JSON.parse(m[1]);save();renderAll();alert('Загружено!');}catch(err){alert('Ошибка: '+err.message);}}else alert('Данные не найдены. Нужен файл portfolio_v15.html');};r.readAsText(f);};inp.click();}
+
+
+
+const NETLIFY_TOKEN='nfp_ccWZ4EqbwPToZC4hD7rEVRMxozUxoX7Y225f';
+const NETLIFY_SITE_ID='vocal-gumption-47b6f3';
+async function generateAndPublish(){
+  const status=document.getElementById('publish-status');
+  status.textContent='публикуем...';
+  status.style.color='rgba(255,255,255,.6)';
+  try{
+    const res=await fetch('/');
+    const html=await res.text();
+    const newData='const D = '+JSON.stringify(DATA,null,2)+';';
+    const updated=html.replace(/const D = \{[\s\S]*?\};/,newData);
+    const encoder=new TextEncoder();
+    const data=encoder.encode(updated);
+    const hashBuffer=await crypto.subtle.digest('SHA-256',data);
+    const sha=Array.from(new Uint8Array(hashBuffer)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const deployRes=await fetch('https://api.netlify.com/api/v1/sites/'+NETLIFY_SITE_ID+'/deploys',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+NETLIFY_TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({files:{'/index.html':sha},async:false})
+    });
+    const deploy=await deployRes.json();
+    if(!deploy.id) throw new Error(deploy.message||'Ошибка');
+    const uploadRes=await fetch('https://api.netlify.com/api/v1/deploys/'+deploy.id+'/files/index.html',{
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+NETLIFY_TOKEN,'Content-Type':'application/octet-stream'},
+      body:data
+    });
+    if(uploadRes.ok){
+      status.textContent='✓ сайт обновлён!';
+      status.style.color='#4ade80';
+      setTimeout(()=>status.textContent='',4000);
+    } else throw new Error('Ошибка загрузки');
+  }catch(e){
+    status.textContent='✗ '+e.message;
+    status.style.color='#f87171';
+  }
+}
+
+// Show admin if ?admin in URL
+if(window.ADMIN_MODE){
+  document.addEventListener('DOMContentLoaded',function(){
+    document.getElementById('ADMIN_ROOT').style.display='block';
+    if(sessionStorage.getItem('flux_auth')==='1'){
+      document.getElementById('pass-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+      load(); renderAll();
+    } else {
+      document.getElementById('pass-screen').style.display='flex';
+      setTimeout(function(){
+        var inp=document.getElementById('pass-input');
+        if(inp) inp.focus();
+      },100);
+    }
+  });
+}
+</script>
+<script>
+(function(){
+var SB="https://aqmsvdkerzbivglcqixa.supabase.co",SK="sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY";
+async function load(){
+  try{
+    var r=await fetch(SB+"/rest/v1/site_data?id=eq.content&select=value",{headers:{"apikey":SK,"Authorization":"Bearer "+SK}});
+    var j=await r.json();
+    if(j&&j[0]&&j[0].value&&Object.keys(j[0].value).length>0){
+      var v=j[0].value;
+      if(v.objects)D.objects=v.objects;
+      if(v.paper)D.paper=v.paper;
+      if(v.digital)D.digital=v.digital;
+      if(v.statement)D.statement=v.statement;
+      if(v.exhibitions)D.exhibitions=v.exhibitions;
+      if(v.bg)D.bg=v.bg;
+    }
+  }catch(e){console.log("load error",e);}
+  if(typeof APP!=="undefined"){
+    APP.home();
+    if(D.bg){var img=document.getElementById("bgImg");if(img)img.src=D.bg;}
+  }
+}
+window.addEventListener("load",function(){setTimeout(load,200);});
+})();
+</script>
+</body>
+</html>
