@@ -95,6 +95,7 @@ textarea{min-height:66px;line-height:1.6}
 .notice{background:#fff8f0;border-left:3px solid var(--or);padding:9px 13px;font-size:11px;letter-spacing:.04em;line-height:1.7;margin-bottom:16px;color:#555}
 .notice strong{display:block;font-size:9px;letter-spacing:.2em;margin-bottom:2px;color:var(--or)}
 .hbtn:disabled{opacity:.4;pointer-events:none}
+.work-card{border:1px solid var(--bd);margin-bottom:10px;background:#fafaf8}
 </style>
 </head>
 <body>
@@ -128,9 +129,9 @@ textarea{min-height:66px;line-height:1.6}
 </div>
 
 <div class="section" id="sec-paper">
-  <div class="notice"><strong>PAPER SERIES</strong>Укажите ориентацию (вертикаль / горизонталь) и формат (A5 / A6) — это задаёт пропорции рамки изображения.</div>
+  <div class="notice"><strong>PAPER SERIES</strong>Каждая серия — обложка + несколько работ внутри. На сайте: обложка серии видна в списке, по кнопке «к серии» открываются все работы.</div>
   <div id="paper-list"></div>
-  <button class="add-btn" onclick="addPaper()">+ добавить работу</button>
+  <button class="add-btn" onclick="addPaper()">+ добавить серию</button>
 </div>
 
 <div class="section" id="sec-digital">
@@ -178,7 +179,7 @@ textarea{min-height:66px;line-height:1.6}
 const PASS_HASH = '1f739bc090c857ebbe149dc269e993c8b6f5ba81fc4957d3916d5e6a6fec99f9'; // пароль: flux2024
 const SB = 'https://aqmsvdkerzbivglcqixa.supabase.co';
 const SK = 'sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY';
-const GH_TOKEN = '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';
+const GH_TOKEN = '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';
 const GH_USER = 'salavatflux';
 const GH_REPO = 'flux';
 
@@ -269,51 +270,84 @@ function addObject(){DATA.objects.push({image:'',title:'«новая работ�
 // PAPER
 function renderPaper(){
   const el=document.getElementById('paper-list');el.innerHTML='';
-  DATA.paper.forEach((s,i)=>{
-    const w=s.works[0];
+  DATA.paper.forEach((s,si)=>{
+    const cover=s.works[0]||{};
     const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(w.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('paper',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('paper',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('paper',${i})">удалить</button></div>
-    <div class="card-body">
-      <div class="field">
-        <label>Изображение</label>
-        <div class="img-upload${w.image?' has-img':''}" onclick="document.getElementById('pi-f-${i}').click()">
-          <img src="${esc(w.image)}" style="${w.image?'':'display:none'}">
-          <div class="img-label">нажмите чтобы загрузить</div>
-          <input type="file" id="pi-f-${i}" accept="image/*" onchange="loadPapImg(${i},this)" onclick="event.stopPropagation()">
-          <button class="img-clear" onclick="clearPapImg(event,${i})">×</button>
+    // Works HTML inside series
+    const worksHtml=(s.works||[]).map((w,wi)=>`
+      <div class="work-card" id="pw-${si}-${wi}">
+        <div class="card-head" style="background:#f0f0ee;border-bottom:1px solid var(--bd);padding:8px 11px">
+          <span class="card-num" style="font-size:9px">работа ${wi+1}${wi===0?' (обложка серии)':''}</span>
+          <button class="move-btn" style="font-size:10px;padding:2px 6px" onclick="movePapWork(${si},${wi},-1)">↑</button>
+          <button class="move-btn" style="font-size:10px;padding:2px 6px" onclick="movePapWork(${si},${wi},1)">↓</button>
+          <button class="del-btn" style="font-size:9px;padding:3px 7px" onclick="delPapWork(${si},${wi})">удалить</button>
         </div>
-        <div class="img-hint">не обрезается • два пальца для увеличения</div>
-        <div style="margin-top:9px"><label>Ориентация</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(w.orient||'v')==='v'?' on':''}" onclick="setPapOrient(${i},'v')">V вертикаль</button>
-            <button class="orient-btn${w.orient==='h'?' on':''}" onclick="setPapOrient(${i},'h')">H горизонталь</button>
+        <div class="card-body">
+          <div class="field">
+            <label>Фото</label>
+            <div class="img-upload${w.image?' has-img':''}" onclick="document.getElementById('pi-f-${si}-${wi}').click()">
+              <img src="${esc(w.image)}" style="${w.image?'':'display:none'}">
+              <div class="img-label">нажмите чтобы загрузить</div>
+              <input type="file" id="pi-f-${si}-${wi}" accept="image/*" onchange="loadPapImg(${si},${wi},this)" onclick="event.stopPropagation()">
+              <button class="img-clear" onclick="clearPapImg(event,${si},${wi})">×</button>
+            </div>
+            <div style="margin-top:8px"><label>Ориентация</label>
+              <div class="orient-btns">
+                <button class="orient-btn${(w.orient||'v')==='v'?' on':''}" onclick="setPapOrient(${si},${wi},'v')">V вертикаль</button>
+                <button class="orient-btn${w.orient==='h'?' on':''}" onclick="setPapOrient(${si},${wi},'h')">H горизонталь</button>
+              </div>
+            </div>
+            <div style="margin-top:7px"><label>Формат бумаги</label>
+              <div class="orient-btns">
+                <button class="orient-btn${(w.size||'A5')==='A5'?' on':''}" onclick="setPapSize(${si},${wi},'A5')">A5</button>
+                <button class="orient-btn${w.size==='A6'?' on':''}" onclick="setPapSize(${si},${wi},'A6')">A6</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="field"><label>Название</label><input type="text" value="${esc(w.title)}" oninput="DATA.paper[${si}].works[${wi}].title=this.value;save()"></div>
+            <div class="field"><label>Цена</label><input type="text" value="${esc(w.price)}" oninput="DATA.paper[${si}].works[${wi}].price=this.value;save()"></div>
+            <div class="field"><label>Материал</label><textarea oninput="DATA.paper[${si}].works[${wi}].desc=this.value;save()">${esc(w.desc)}</textarea></div>
+            <div class="field"><label>Формат (текст, напр: 210×148мм)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${si}].works[${wi}].fmt=this.value;save()"></div>
+            <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${si}].works[${wi}].yr=this.value;save()"></div>
+            <div class="field"><label>Аннотация</label><textarea oninput="DATA.paper[${si}].works[${wi}].ann=this.value;save()">${esc(w.ann)}</textarea></div>
           </div>
         </div>
-        <div style="margin-top:7px"><label>Формат</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(w.size||'A5')==='A5'?' on':''}" onclick="setPapSize(${i},'A5')">A5</button>
-            <button class="orient-btn${w.size==='A6'?' on':''}" onclick="setPapSize(${i},'A6')">A6</button>
-          </div>
+      </div>`).join('');
+
+    c.innerHTML=`
+      <div class="card-head">
+        <span class="card-num">${si+1}</span>
+        <span class="card-title">серия: ${esc(s.name)||'без названия'}</span>
+        <button class="move-btn" onclick="moveItem('paper',${si},-1)">↑</button>
+        <button class="move-btn" onclick="moveItem('paper',${si},1)">↓</button>
+        <button class="del-btn" onclick="deleteItem('paper',${si})">удалить серию</button>
+      </div>
+      <div class="card-body single" style="padding:13px">
+        <div class="field" style="margin-bottom:12px">
+          <label>Название серии (показывается внутри серии, рядом со стрелкой назад)</label>
+          <input type="text" value="${esc(s.name)}" oninput="DATA.paper[${si}].name=this.value;save()">
         </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div class="field"><label>Название</label><input type="text" value="${esc(w.title)}" oninput="DATA.paper[${i}].works[0].title=this.value;save()"></div>
-        <div class="field"><label>Ссылка на серию</label><input type="text" value="${esc(w.href)}" oninput="DATA.paper[${i}].works[0].href=this.value;save()"></div>
-        <div class="field"><label>Материал</label><textarea oninput="DATA.paper[${i}].works[0].desc=this.value;save()">${esc(w.desc)}</textarea></div>
-        <div class="field"><label>Формат (текст)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${i}].works[0].fmt=this.value;save()"></div>
-        <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${i}].works[0].yr=this.value;save()"></div>
-        <div class="field"><label>Цена</label><input type="text" value="${esc(w.price)}" oninput="DATA.paper[${i}].works[0].price=this.value;save()"></div>
-        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.paper[${i}].works[0].ann=this.value;save()">${esc(w.ann)}</textarea></div>
-      </div>
-    </div>`;
+        <div class="field" style="margin-bottom:12px">
+          <label>Описание серии — необязательно (последний слайд внутри серии, пусто = не показывается)</label>
+          <textarea style="min-height:80px" oninput="DATA.paper[${si}].desc=this.value;save()">${esc(s.desc||'')}</textarea>
+        </div>
+        <div style="border-top:1px solid var(--bd);padding-top:12px;margin-bottom:8px;font-size:9px;letter-spacing:.15em;color:var(--gy)">РАБОТЫ В СЕРИИ — первая работа = обложка</div>
+        ${worksHtml}
+        <button class="add-btn" style="margin-top:8px" onclick="addPapWork(${si})">+ добавить работу в серию</button>
+      </div>`;
     el.appendChild(c);
   });
 }
-async function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;try{DATA.paper[i].works[0].image=await uploadPhoto(f);save();renderPaper();}catch(e){alert(e.message);}}
-function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
-function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
-function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
-function addPaper(){DATA.paper.push({works:[{image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
+async function loadPapImg(si,wi,inp){const f=inp.files[0];if(!f)return;try{DATA.paper[si].works[wi].image=await uploadPhoto(f);save();renderPaper();}catch(e){alert(e.message);}}
+function clearPapImg(ev,si,wi){ev.stopPropagation();DATA.paper[si].works[wi].image='';save();renderPaper();}
+function setPapOrient(si,wi,v){DATA.paper[si].works[wi].orient=v;save();renderPaper();}
+function setPapSize(si,wi,v){DATA.paper[si].works[wi].size=v;save();renderPaper();}
+function movePapWork(si,wi,d){const a=DATA.paper[si].works,ni=wi+d;if(ni<0||ni>=a.length)return;[a[wi],a[ni]]=[a[ni],a[wi]];save();renderPaper();}
+function delPapWork(si,wi){if(!confirm('Удалить работу?'))return;DATA.paper[si].works.splice(wi,1);save();renderPaper();}
+function addPapWork(si){DATA.paper[si].works.push({image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'});save();renderPaper();}
+function addPaper(){DATA.paper.push({name:'новая серия',works:[{image:'',title:'«работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
+
 
 // DIGITAL
 function renderDigital(){
@@ -462,9 +496,9 @@ async function publishToGitHub(){
     const sha=curJ.sha;
     const rawText=decodeURIComponent(escape(atob(curJ.content.replace(/\n/g,''))));
     st.textContent='обновляем данные в файле...';
-    const newD='const D = '+JSON.stringify(DATA,null,2)+';';
-    const updated=rawText.replace(/const D = \{[\s\S]*?\n\};/, newD);
-    if(updated===rawText)throw new Error('Не найден блок данных в index.html');
+    const newD='const D = '+JSON.stringify(DATA,null,2)+';\n';
+    const updated=rawText.replace(/const D = \{[\s\S]*?\};[ \t]*\n/, newD);
+    if(updated===rawText)throw new Error('Не найден блок данных в index.html — проверь формат файла');
     st.textContent='публикуем на GitHub...';
     const enc=btoa(unescape(encodeURIComponent(updated)));
     const push=await fetch(ghUrl,{

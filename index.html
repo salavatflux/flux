@@ -206,6 +206,7 @@ img{display:block}
 .pap-series-pr{display:flex;align-items:center;gap:5px;flex-shrink:0}
 .pap-series-price{font-size:26px;font-weight:400;letter-spacing:.03em;white-space:nowrap}
 @media(max-width:767px){.pap-series-price{font-size:18px}}
+.pap-series-desc-block{width:100%;max-width:480px;font-size:14px;letter-spacing:.05em;line-height:2;color:#444;padding-top:20px}
 #staScroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:56px 0 80px}
 #staScroll::-webkit-scrollbar{width:0}
 .sta-body{max-width:680px;margin:0 auto;padding:0 40px 80px;font-size:14px;letter-spacing:.05em;line-height:2;color:#333;text-align:justify}
@@ -903,7 +904,7 @@ const APP=(()=>{
   function buildSeriesSlides(s){
     const trk=$('papSeriesTrk');
     trk.style.cssText='display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)';
-    trk.innerHTML=s.works.map((w,wi)=>{
+    const workSlides=s.works.map((w,wi)=>{
       const oc=w.size==='A6'?(w.orient==='h'?'orient-h6':'orient-v6'):(w.orient==='h'?'orient-h':'orient-v');
       const sid=`sr-${curSeries}-${wi}`;
       return`<div class="pap-series-slide">
@@ -926,7 +927,9 @@ const APP=(()=>{
             <div class="ann-pap" id="${sid}">${w.ann||''}</div>
           </div>
         </div>
-      </div>`;}).join('');
+      </div>`;});
+    const descSlide=(s.desc&&s.desc.trim())?`<div class="pap-series-slide"><div class="pap-series-layout"><div class="pap-series-desc-block">${s.desc.replace(/\n/g,'<br>')}</div></div></div>`:'';
+    trk.innerHTML=workSlides.join('')+descSlide;
     trk.style.transform='translateX(0)';
     hsw(trk, d=>mvSeries(d));
     updSA(s);
@@ -939,8 +942,9 @@ const APP=(()=>{
     updSA(s);
   }
   function updSA(s){
+    const total=s.works.length+((s.desc&&s.desc.trim())?1:0);
     $('sPrev').classList.toggle('dis',sI===0);
-    $('sNext').classList.toggle('dis',sI>=s.works.length-1);
+    $('sNext').classList.toggle('dis',sI>=total-1);
   }
 
   /* Digital */
