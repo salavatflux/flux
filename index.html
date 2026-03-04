@@ -121,7 +121,7 @@ img{display:block}
    Мобильный:  W = min(88vw, 340px)
    Десктоп:    картинка W = 260px, текст W = 260px, gap 52px → итого 572px по центру
 */
-.pap-layout{width:fit-content;padding:48px 0 64px;box-sizing:border-box;margin:0 auto;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+.pap-layout{width:fit-content;padding:48px 0 64px;box-sizing:border-box;margin:auto;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
 
 /* мобильный — колонка */
 .pap-row{display:flex;flex-direction:column;align-items:center;gap:24px}
@@ -507,151 +507,46 @@ img{display:block}
 <script>
 /* ══ DATA ══ */
 const D = {
-  "bg": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614149638_IMG_1575.jpeg",
-  "objects": [
-    {
-      "ann": "Для покупки обращаться на почту",
-      "meta": "металл, скотч, ручка гелевая\nформат 210 x 134мм    2024 г.",
-      "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772635854049_IMG_1299.jpeg",
-      "price": "120.000₽",
-      "title": "«deconstruction»",
-      "orient": "h"
-    },
-    {
-      "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646348895_PANO_20251015_165501.jpeg",
-      "title": "«новая работа»",
-      "price": "",
-      "ann": "",
-      "meta": "",
-      "orient": "h"
-    }
+  bg: '',
+  objects: [
+    { image:'', title:'«deconstruction»', price:'120.000₽', ann:'', meta:'бумага 200 г/м², цветные карандаши, гелевая ручка\nформат 210 x 148мм    2023 г.' },
+    { image:'', title:'«object 02»',       price:'90.000₽',  ann:'', meta:'смешанная техника\nформат 300 x 210мм    2024 г.' }
   ],
-  "paper": [
-    {
-      "desc": "Я ее сделал осень 25го. Мне уже 29",
-      "name": "осень 25",
-      "works": [
-        {
-          "yr": "2023 г.",
-          "ann": "Данная работа была продана известнейшему коллекционеру в 2025 году. Чтобы узнать актуальную стоимость пишите в dm",
-          "fmt": "формат 210 x 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши",
-          "href": "#",
-          "size": "A6",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614628227_IMG_1717.jpeg",
-          "price": "40.000₽",
-          "title": "«00ооооо0ооооооо»",
-          "orient": "h"
-        },
-        {
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646202080_IMG_1716.jpeg",
-          "title": "«новая работ",
-          "href": "#",
-          "desc": " Nbvhgfhtdhtdb Hgfhfhgvnbvvnfghytd",
-          "fmt": "A6",
-          "yr": "2007",
-          "price": "30000",
-          "ann": "",
-          "orient": "h",
-          "size": "A5"
-        }
-      ]
-    },
-    {
-      "works": [
-        {
-          "yr": "",
-          "ann": "",
-          "fmt": "",
-          "desc": "",
-          "href": "#",
-          "size": "A5",
-          "image": "",
-          "price": "",
-          "title": "«новая работа»",
-          "orient": "v"
-        }
-      ]
-    }
+  paper: [
+    { name:'цвета', works:[
+      { image:'', title:'«цвета 23»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши, гелевая ручка', fmt:'формат 210 x 148мм', yr:'2023 г.', price:'40.000₽', ann:'', orient:'h', size:'A5' },
+      { image:'', title:'«цвета 24»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'45.000₽', ann:'', orient:'h', size:'A5' }
+    ]},
+    { name:'argentum', works:[
+      { image:'', title:'«argentum 01»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'35.000₽', ann:'', orient:'v', size:'A5' },
+      { image:'', title:'«argentum 02»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 148 x 105мм', yr:'2024 г.', price:'28.000₽', ann:'', orient:'v', size:'A6' }
+    ]}
   ],
-  "statement": [
-    "Здесь будет текст statement.jugugjugjjbj jhgjhgjugjugm. Nbmhgjhgjugjugmu",
-    "Rexggvju nhvjygjhgdsgfcbgvnvhyfngv .Hgfhgchgvhgvng jugjugjhbjhbjudtrd uyfhygjbjugkjhliukjbmjbjhgjyfjyfmug= hyfhgfjh ngfhg=.  Nghg&ngvhgfhtfnbnhgfb. Vhgfhvnb"
+  statement: [
+    'Здесь будет текст statement — авторская позиция, художественное кредо.',
+    'Второй абзац statement.'
   ],
-  "digital": [
-    {
-      "h": "Argentum ",
-      "bg": "",
-      "sub": "",
-      "link": "",
-      "blocks": [
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614402074_IMG_1402.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614438708_IMG_1413.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614457001_IMG_1412.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614513293_IMG_1411.jpeg",
-          "type": "image"
-        }
-      ],
-      "linkLabel": "посмотреть серию →"
-    },
-    {
-      "h": "Inferno",
-      "sub": "",
-      "bg": "",
-      "blocks": [
-        {
-          "type": "image",
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646092747_IMG_1783.jpeg"
-        },
-        {
-          "type": "image",
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646100974_IMG_1779.jpeg"
-        },
-        {
-          "type": "text",
-          "content": "Jvhyjv,jbkiv kihkih"
-        }
-      ],
-      "link": "Objkt.com",
-      "linkLabel": "посмотреть серию →"
-    }
-  ],
-  "exhibitions": [
-    {
-      "desc": "02.2026 Сергиев-посад",
-      "name": "Солнечный денек",
-      "panes": [
-        {
-          "tiles": [
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614162707_IMG_1807.jpeg"
-            },
-            {
-              "sz": "M",
-              "text": "фото",
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614184957_IMG_1806.jpeg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614203919_IMG_1805.jpeg"
-            }
-          ]
-        }
-      ]
-    }
+  digital: [{
+    h:'Argentum', sub:'s e r i e s',
+    bg:'',
+    blocks:[
+      {type:'text', content:'Argentum is a monochrome series of digital graphics, in which the form becomes a way to experience and fix internal states.'},
+      {type:'image', src:''},
+      {type:'text', content:'Each work is an independent structure born of intuitive search and contemplation.\n\nThe series refers to the alchemy of perception: through the interaction of lines and masses, through reflections and conflicts, a new symbolic language is born.'},
+      {type:'image', src:''}
+    ],
+    link:'', linkLabel:'посмотреть серию →'
+  }],
+  /* Tile sizes: S=1×1  M=2×1  L=2×2
+     Click tile to cycle S→M→L→S        */
+  exhibitions: [
+    { name:'exhibition1', desc:'краткое описание выставки — место, год', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'L'}] },
+      { tiles:[{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'M'}] }
+    ]},
+    { name:'paper series 2023', desc:'галерея flux, Москва, 2023', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}] }
+    ]}
   ]
 };
 
@@ -965,7 +860,7 @@ const APP=(()=>{
     const trk=$('papTrk');
     trk.innerHTML=D.paper.map((s,i)=>{
       const w=s.works[0];
-      const oc=w.size==='A6'?(w.orient==='h'?'orient-h6':'orient-v6'):(w.orient==='h'?'orient-h':'orient-v');
+      const oc=w.size==='A6'?(( w.orient||'h')==='h'?'orient-h6':'orient-v6'):((w.orient||'h')==='h'?'orient-h':'orient-v');
       return`
       <div class="pap-pane" id="pp${i}">
         <div class="pap-layout">
