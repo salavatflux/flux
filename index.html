@@ -48,7 +48,8 @@ img{display:block}
 #bgWrap{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,#4a6a2a,#7a9e4a 35%,#3a6020 65%,#1a2e08)}
 #bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)}
 
-
+/* BG change label (hover to reveal) */
+#bgBtn{display:none}
 
 /* Hero contacts mobile */
 #hbM{display:none;position:absolute;bottom:26px;left:0;right:0;height:22px;overflow:hidden}
@@ -97,8 +98,8 @@ img{display:block}
 /* Annotation */
 .star{font-size:15px;color:var(--or);padding:0 3px;position:relative;top:-2px;transition:opacity .2s}
 .star:hover{opacity:.7}
-.obj-info{width:100%;max-width:760px;position:relative;overflow:visible}
-.ann{position:relative;left:unset;right:unset;top:unset;z-index:20;max-height:0;overflow:hidden;transition:max-height .35s ease;border:0 solid rgba(0,0,0,.08);font-size:12px;letter-spacing:.05em;color:#666;line-height:1.85;background:#fafaf8;margin-top:0}
+.obj-info{width:100%;max-width:760px;position:relative}
+.ann{display:block;width:100%;max-height:0;overflow:hidden;transition:max-height .35s ease;border:0 solid rgba(0,0,0,.08);font-size:12px;letter-spacing:.05em;color:#666;line-height:1.85;background:#fafaf8;margin-top:0}
 .ann.on{max-height:400px;border-width:1px;padding:13px 17px;margin-top:4px}
 .ann:empty::before{content:'* здесь будет аннотация';color:#ccc;font-style:italic}
 /* Аннотация paper — определена в блоке .pap-* выше */
@@ -428,11 +429,12 @@ img{display:block}
 <!-- HERO -->
 <div id="hero">
   <div id="bgWrap"><img id="bgImg" src="" alt=""></div>
-
+  <label id="bgBtn" for="bgIn">⬆ сменить фото</label>
+  <input type="file" id="bgIn" accept="image/*" style="display:none">
   <!-- mobile contacts -->
   <div id="hbM">
     <div id="hbMT">
-      <div class="hbp"><a href="mailto:salavatgeorgeman@gmail.com" class="cl">salavatgeorgeman@gmail.com</a></div>
+      <div class="hbp"><a href="/cdn-cgi/l/email-protection#7003111c1106110417151f0217151d111e30171d11191c5e131f1d" class="cl"><span class="__cf_email__" data-cfemail="4033212c2136213427252f3227252d212e00272d21292c6e232f2d">[email&#160;protected]</span></a></div>
       <div class="hbp">
         <a href="https://instagram.com/flux_field" target="_blank" class="cl">inst:@flux_field</a>
         <a href="https://t.me/salavatflux" target="_blank" class="cl">tg:@salavatflux</a>
@@ -441,7 +443,7 @@ img{display:block}
   </div>
   <!-- desktop contacts -->
   <div id="hbD">
-    <a href="mailto:salavatgeorgeman@gmail.com" class="cl">salavatgeorgeman@gmail.com</a>
+    <a href="/cdn-cgi/l/email-protection#d7a4b6bbb6a1b6a3b0b2b8a5b0b2bab6b997b0bab6bebbf9b4b8ba" class="cl"><span class="__cf_email__" data-cfemail="3241535e5344534655575d4055575f535c72555f535b5e1c515d5f">[email&#160;protected]</span></a>
     <a href="https://instagram.com/flux_field" target="_blank" class="cl">inst:@flux_field</a>
     <a href="https://t.me/salavatflux" target="_blank" class="cl">tg:@salavatflux</a>
   </div>
@@ -501,7 +503,7 @@ img{display:block}
 </div>
 
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ══ DATA ══ */
 const D = {
   bg: '',
@@ -880,7 +882,7 @@ const APP=(()=>{
   }
 
   /* Series */
-  let sI=0, curSeries=-1;
+  let sI=0, curSeries=-1, seriesMoving=false;
   function openSeries(seriesIdx){
     curSeries=seriesIdx; sI=0;
     const s=D.paper[seriesIdx];
@@ -930,7 +932,6 @@ const APP=(()=>{
     hsw(trk, d=>mvSeries(d));
     updSA(s);
   }
-  let seriesMoving=false;
   function mvSeries(d){
     if(curSeries<0||seriesMoving)return;
     const s=D.paper[curSeries];
@@ -1777,19 +1778,4 @@ async function load(){
       var v=j[0].value;
       if(v.objects)D.objects=v.objects;
       if(v.paper)D.paper=v.paper;
-      if(v.digital)D.digital=v.digital;
-      if(v.statement)D.statement=v.statement;
-      if(v.exhibitions)D.exhibitions=v.exhibitions;
-      if(v.bg)D.bg=v.bg;
-    }
-  }catch(e){console.log("load error",e);}
-  if(typeof APP!=="undefined"){
-    APP.home();
-    if(D.bg){var img=document.getElementById("bgImg");if(img)img.src=D.bg;}
-  }
-}
-window.addEventListener("load",function(){setTimeout(load,200);});
-})();
-</script>
-</body>
-</html>
+      if(v.digital)D.digital=v.dig
