@@ -48,9 +48,7 @@ img{display:block}
 #bgWrap{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,#4a6a2a,#7a9e4a 35%,#3a6020 65%,#1a2e08)}
 #bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)}
 
-/* BG change label (hover to reveal) */
-#bgBtn{position:absolute;bottom:60px;right:16px;z-index:10;opacity:0;transition:opacity .3s;font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,.65);background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);padding:6px 12px;cursor:pointer;font-family:var(--f)}
-#hero:hover #bgBtn{opacity:1}
+
 
 /* Hero contacts mobile */
 #hbM{display:none;position:absolute;bottom:26px;left:0;right:0;height:22px;overflow:hidden}
@@ -88,7 +86,7 @@ img{display:block}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
 .obj-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:40px 48px 80px;display:flex;flex-direction:column;align-items:center;touch-action:pan-y}
 .obj-slide::-webkit-scrollbar{width:0}
-.obj-img{width:100%;max-width:760px;background:#eaeaea;overflow:hidden;margin-bottom:28px}
+.obj-img{width:100%;max-width:760px;background:#eaeaea;overflow:hidden;margin-bottom:28px;flex-shrink:0}
 .obj-img img{width:100%;height:auto}
 .obj-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
 .obj-title{font-size:28px;font-weight:400;letter-spacing:.03em}
@@ -99,9 +97,9 @@ img{display:block}
 /* Annotation */
 .star{font-size:15px;color:var(--or);padding:0 3px;position:relative;top:-2px;transition:opacity .2s}
 .star:hover{opacity:.7}
-.obj-info{width:100%;max-width:760px;position:relative}
-.ann{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;max-height:0;overflow:hidden;transition:max-height .35s ease;border:0 solid rgba(0,0,0,.08);font-size:12px;letter-spacing:.05em;color:#666;line-height:1.85;background:#fafaf8}
-.ann.on{max-height:400px;border-width:1px;padding:13px 17px}
+.obj-info{width:100%;max-width:760px;position:relative;overflow:visible}
+.ann{position:relative;left:unset;right:unset;top:unset;z-index:20;max-height:0;overflow:hidden;transition:max-height .35s ease;border:0 solid rgba(0,0,0,.08);font-size:12px;letter-spacing:.05em;color:#666;line-height:1.85;background:#fafaf8;margin-top:0}
+.ann.on{max-height:400px;border-width:1px;padding:13px 17px;margin-top:4px}
 .ann:empty::before{content:'* здесь будет аннотация';color:#ccc;font-style:italic}
 /* Аннотация paper — определена в блоке .pap-* выше */
 
@@ -161,7 +159,7 @@ img{display:block}
 #digTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
 .dig-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative}
 .dig-slide::-webkit-scrollbar{width:0}
-.dig-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.18;pointer-events:none}
+.dig-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:1;pointer-events:none}
 .dig-inner{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:56px 40px 80px}
 .dig-h{font-size:clamp(48px,8vw,88px);font-weight:300;font-style:italic;letter-spacing:-.01em;text-align:center;line-height:.9;margin-bottom:8px}
 .dig-sub{font-size:12px;letter-spacing:.22em;text-align:center;color:#888;margin-bottom:52px}
@@ -430,8 +428,7 @@ img{display:block}
 <!-- HERO -->
 <div id="hero">
   <div id="bgWrap"><img id="bgImg" src="" alt=""></div>
-  <label id="bgBtn" for="bgIn">⬆ сменить фото</label>
-  <input type="file" id="bgIn" accept="image/*" style="display:none">
+
   <!-- mobile contacts -->
   <div id="hbM">
     <div id="hbMT">
@@ -507,193 +504,46 @@ img{display:block}
 <script>
 /* ══ DATA ══ */
 const D = {
-  "bg": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614149638_IMG_1575.jpeg",
-  "objects": [
-    {
-      "ann": "Для покупки обращаться на почту",
-      "meta": "металл, скотч, ручка гелевая\nформат 210 x 134мм    2024 г.",
-      "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772635854049_IMG_1299.jpeg",
-      "price": "120.000₽",
-      "title": "«deconstruction»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "",
-      "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646348895_PANO_20251015_165501.jpeg",
-      "price": "",
-      "title": "«новая работа»",
-      "orient": "h"
-    }
+  bg: '',
+  objects: [
+    { image:'', title:'«deconstruction»', price:'120.000₽', ann:'', meta:'бумага 200 г/м², цветные карандаши, гелевая ручка\nформат 210 x 148мм    2023 г.' },
+    { image:'', title:'«object 02»',       price:'90.000₽',  ann:'', meta:'смешанная техника\nформат 300 x 210мм    2024 г.' }
   ],
-  "paper": [
-    {
-      "desc": "Я ее сделал осень 25го. Мне уже 29",
-      "name": "осень 25",
-      "works": [
-        {
-          "yr": "2023 г.",
-          "ann": "Данная работа была продана известнейшему коллекционеру в 2025 году. Чтобы узнать актуальную стоимость пишите в dm",
-          "fmt": "формат 210 x 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши",
-          "href": "#",
-          "size": "A5",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772649724587_21.jpeg",
-          "price": "40.000₽",
-          "title": "«00ооооо0ооооооо»",
-          "orient": "v"
-        },
-        {
-          "yr": "2007",
-          "ann": "",
-          "fmt": "A6",
-          "desc": " Nbvhgfhtdhtdb Hgfhfhgvnbvvnfghytd",
-          "href": "#",
-          "size": "A5",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646202080_IMG_1716.jpeg",
-          "price": "30000",
-          "title": "«новая работ",
-          "orient": "h"
-        },
-        {
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772648523468_IMG_1769.jpeg",
-          "title": "«новая работа»",
-          "href": "#",
-          "desc": "Ормломлом ормломт. Ормоншгпонммог лгп",
-          "fmt": "1 х 3см",
-          "yr": "2016",
-          "price": "68000",
-          "ann": "",
-          "orient": "h",
-          "size": "A5"
-        }
-      ]
-    },
-    {
-      "works": [
-        {
-          "yr": "2014",
-          "ann": "",
-          "fmt": "8 х 9см",
-          "desc": "Примапо иолппм проиае",
-          "href": "#",
-          "size": "A5",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772648691090_IMG_1769.jpeg",
-          "price": "40000",
-          "title": "«новая работа»",
-          "orient": "h"
-        }
-      ]
-    }
+  paper: [
+    { name:'цвета', works:[
+      { image:'', title:'«цвета 23»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши, гелевая ручка', fmt:'формат 210 x 148мм', yr:'2023 г.', price:'40.000₽', ann:'', orient:'h', size:'A5' },
+      { image:'', title:'«цвета 24»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'45.000₽', ann:'', orient:'h', size:'A5' }
+    ]},
+    { name:'argentum', works:[
+      { image:'', title:'«argentum 01»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'35.000₽', ann:'', orient:'v', size:'A5' },
+      { image:'', title:'«argentum 02»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 148 x 105мм', yr:'2024 г.', price:'28.000₽', ann:'', orient:'v', size:'A6' }
+    ]}
   ],
-  "statement": [
-    "Здесь будет текст statement.jugugjugjjbj jhgjhgjugjugm. Nbmhgjhgjugjugmu",
-    "Rexggvju nhvjygjhgdsgfcbgvnvhyfngv .Hgfhgchgvhgvng jugjugjhbjhbjudtrd uyfhygjbjugkjhliukjbmjbjhgjyfjyfmug= hyfhgfjh ngfhg=.  Nghg&ngvhgfhtfnbnhgfb. Vhgfhvnb"
+  statement: [
+    'Здесь будет текст statement — авторская позиция, художественное кредо.',
+    'Второй абзац statement.'
   ],
-  "digital": [
-    {
-      "h": "Argentum ",
-      "bg": "",
-      "sub": "",
-      "link": "",
-      "blocks": [
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614402074_IMG_1402.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614438708_IMG_1413.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614457001_IMG_1412.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614513293_IMG_1411.jpeg",
-          "type": "image"
-        }
-      ],
-      "linkLabel": "посмотреть серию →"
-    },
-    {
-      "h": "Inferno",
-      "bg": "",
-      "sub": "",
-      "link": "Objkt.com",
-      "blocks": [
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646092747_IMG_1783.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772646100974_IMG_1779.jpeg",
-          "type": "image"
-        },
-        {
-          "type": "text",
-          "content": "Jvhyjv,jbkiv kihkih"
-        }
-      ],
-      "linkLabel": "посмотреть серию →"
-    }
-  ],
-  "exhibitions": [
-    {
-      "desc": "02.2026 Сергиев-посад",
-      "name": "Солнечный денек",
-      "panes": [
-        {
-          "tiles": [
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614162707_IMG_1807.jpeg"
-            },
-            {
-              "sz": "M",
-              "text": "фото",
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614184957_IMG_1806.jpeg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772614203919_IMG_1805.jpeg"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "новая выставка",
-      "desc": "",
-      "panes": [
-        {
-          "tiles": [
-            {
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772650375283_IMG_1757.jpeg",
-              "text": "фото",
-              "sz": "M"
-            },
-            {
-              "image": "",
-              "text": "фото",
-              "sz": "S"
-            },
-            {
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772650388957_IMG_1754.jpeg",
-              "text": "фото",
-              "sz": "S"
-            },
-            {
-              "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772650407772_IMG_1756.jpeg",
-              "text": "фото",
-              "sz": "S"
-            }
-          ]
-        }
-      ]
-    }
+  digital: [{
+    h:'Argentum', sub:'s e r i e s',
+    bg:'',
+    blocks:[
+      {type:'text', content:'Argentum is a monochrome series of digital graphics, in which the form becomes a way to experience and fix internal states.'},
+      {type:'image', src:''},
+      {type:'text', content:'Each work is an independent structure born of intuitive search and contemplation.\n\nThe series refers to the alchemy of perception: through the interaction of lines and masses, through reflections and conflicts, a new symbolic language is born.'},
+      {type:'image', src:''}
+    ],
+    link:'', linkLabel:'посмотреть серию →'
+  }],
+  /* Tile sizes: S=1×1  M=2×1  L=2×2
+     Click tile to cycle S→M→L→S        */
+  exhibitions: [
+    { name:'exhibition1', desc:'краткое описание выставки — место, год', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'L'}] },
+      { tiles:[{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'M'}] }
+    ]},
+    { name:'paper series 2023', desc:'галерея flux, Москва, 2023', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}] }
+    ]}
   ]
 };
 
@@ -1080,12 +930,14 @@ const APP=(()=>{
     hsw(trk, d=>mvSeries(d));
     updSA(s);
   }
+  let seriesMoving=false;
   function mvSeries(d){
-    if(curSeries<0)return;
+    if(curSeries<0||seriesMoving)return;
     const s=D.paper[curSeries];
     sI=cl(sI+d,0,s.works.length-1);
     $('papSeriesTrk').style.transform=`translateX(-${sI*100}%)`;
     updSA(s);
+    seriesMoving=true;setTimeout(()=>seriesMoving=false,520);
   }
   function updSA(s){
     const total=s.works.length+((s.desc&&s.desc.trim())?1:0);
