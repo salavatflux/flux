@@ -103,6 +103,7 @@ textarea{min-height:66px;line-height:1.6}
 <div id="pass-screen">
   <h2>FLUX — ADMIN</h2>
   <input id="pass-input" type="password" placeholder="пароль" autocomplete="off">
+  <input id="token-input" type="password" placeholder="github token" autocomplete="off" style="margin-top:4px">
   <button onclick="checkPassword()">войти</button>
   <span id="pass-error">неверный пароль</span>
 </div>
@@ -191,6 +192,10 @@ async function checkPassword(){
   const input = document.getElementById('pass-input').value;
   const hash = await fluxHash(input);
   if(hash === PASS_HASH){
+    const token = document.getElementById('token-input').value.trim();
+    if(token) localStorage.setItem('flux_gh_token', token);
+    const saved = localStorage.getItem('flux_gh_token');
+    if(!saved){document.getElementById('pass-error').style.display='block';return;}
     sessionStorage.setItem('flux_auth','1');
     document.getElementById('pass-screen').style.display='none';
     document.getElementById('app').style.display='block';
@@ -487,15 +492,25 @@ async function publishToGitHub(){
   btn.disabled=true; st.textContent='сохраняем данные...';
   try{
     await saveToDB();
-    st.textContent='публикуем на сайт...';
-    const r=await fetch(SB+'/functions/v1/hyper-action',{
-      method:'POST',
-      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},
-      body:JSON.stringify({data:DATA})
-    });
-    const j=await r.json();
-    if(!r.ok||j.error)throw new Error(j.error||'Ошибка публикации');
-    st.textContent='✓ сайт обновлён! (~1 мин до появления)';
+    st.textContent='публикуем на GitHub...';
+    const token=localStorage.getItem('flux_gh_token');
+    if(!token)throw new Error('токен не найден — войдите заново');
+    const ghUrl='https://api.github.com/repos/'+GH_USER+'/'+GH_REPO+'/contents/index.html';
+    const cur=await fetch(ghUrl,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+    if(!cur.ok)throw new Error('GitHub: '+cur.status);
+    const curJ=await cur.json();
+    const sha=curJ.sha;
+    const rawText=new TextDecoder().decode(Uint8Array.from(atob(curJ.content.replace(/\n/g,'')),c=>c.charCodeAt(0)));
+    const newD='const D = '+JSON.stringify(DATA,null,2)+';';
+    const updated=rawText.replace(/const D = \{[\s\S]*?\};/,newD);
+    if(updated===rawText)throw new Error('Не найден блок данных');
+    const bytes=new TextEncoder().encode(updated);
+    let enc='';
+    for(let i=0;i<bytes.length;i++)enc+=String.fromCharCode(bytes[i]);
+    enc=btoa(enc);
+    const push=await fetch(ghUrl,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({message:'update content',content:enc,sha})});
+    if(!push.ok){const e=await push.json();throw new Error(e.message||'GitHub push error');}
+    st.textContent='✓ сайт обновлён! (~1 мин)';
     setTimeout(()=>{st.textContent='авто-сохранение';btn.disabled=false;},5000);
   }catch(e){
     st.textContent='✗ '+e.message;
