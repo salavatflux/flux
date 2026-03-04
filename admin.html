@@ -179,7 +179,6 @@ textarea{min-height:66px;line-height:1.6}
 const PASS_HASH = '1f739bc090c857ebbe149dc269e993c8b6f5ba81fc4957d3916d5e6a6fec99f9'; // пароль: flux2024
 const SB = 'https://aqmsvdkerzbivglcqixa.supabase.co';
 const SK = 'sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY';
-const GH_TOKEN = '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';
 const GH_USER = 'salavatflux';
 const GH_REPO = 'flux';
 
@@ -192,9 +191,9 @@ async function checkPassword(){
   const input = document.getElementById('pass-input').value;
   const hash = await fluxHash(input);
   if(hash === PASS_HASH){
+    sessionStorage.setItem('flux_auth','1');
     document.getElementById('pass-screen').style.display='none';
     document.getElementById('app').style.display='block';
-    sessionStorage.setItem('flux_auth','1');
     await loadFromSB(); renderAll();
   } else {
     document.getElementById('pass-error').style.display='block';
@@ -488,25 +487,14 @@ async function publishToGitHub(){
   btn.disabled=true; st.textContent='сохраняем данные...';
   try{
     await saveToDB();
-    st.textContent='получаем файл с GitHub...';
-    const ghUrl='https://api.github.com/repos/'+GH_USER+'/'+GH_REPO+'/contents/index.html';
-    const cur=await fetch(ghUrl,{headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json'}});
-    if(!cur.ok)throw new Error('GitHub: '+cur.status);
-    const curJ=await cur.json();
-    const sha=curJ.sha;
-    const rawText=decodeURIComponent(escape(atob(curJ.content.replace(/\n/g,''))));
-    st.textContent='обновляем данные в файле...';
-    const newD='const D = '+JSON.stringify(DATA,null,2)+';\n';
-    const updated=rawText.replace(/const D = \{[\s\S]*?\};[ \t]*\n/, newD);
-    if(updated===rawText)throw new Error('Не найден блок данных в index.html — проверь формат файла');
-    st.textContent='публикуем на GitHub...';
-    const enc=btoa(unescape(encodeURIComponent(updated)));
-    const push=await fetch(ghUrl,{
-      method:'PUT',
-      headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
-      body:JSON.stringify({message:'update content',content:enc,sha:sha})
+    st.textContent='публикуем на сайт...';
+    const r=await fetch(SB+'/functions/v1/publish',{
+      method:'POST',
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},
+      body:JSON.stringify({data:DATA})
     });
-    if(!push.ok){const e=await push.json();throw new Error(e.message||'GitHub push error');}
+    const j=await r.json();
+    if(!r.ok||j.error)throw new Error(j.error||'Ошибка публикации');
     st.textContent='✓ сайт обновлён! (~1 мин до появления)';
     setTimeout(()=>{st.textContent='авто-сохранение';btn.disabled=false;},5000);
   }catch(e){
