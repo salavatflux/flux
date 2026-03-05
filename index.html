@@ -1300,7 +1300,23 @@ function renderObjects(){
     el.appendChild(c);
   });
 }
-function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.objects[i].image=e.target.result;save();renderObjects();};r.readAsDataURL(f);}
+
+// ── CLOUDINARY UPLOAD ──
+const CL_CLOUD='dbltupggx';
+const CL_PRESET='flux_unsigned'; // unsigned upload preset — создай в Cloudinary Settings → Upload → Upload presets
+async function clUpload(file, onDone){
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('upload_preset',CL_PRESET);
+  fd.append('folder','flux');
+  try{
+    const r=await fetch('https://api.cloudinary.com/v1_1/'+CL_CLOUD+'/image/upload',{method:'POST',body:fd});
+    const j=await r.json();
+    if(j.secure_url) onDone(j.secure_url);
+    else alert('Ошибка загрузки: '+JSON.stringify(j));
+  }catch(e){alert('Ошибка: '+e.message);}
+}
+function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.objects[i].image=url;save();renderObjects();});}
 function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
 function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
 function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
@@ -1348,7 +1364,7 @@ function renderPaper(){
     el.appendChild(c);
   });
 }
-function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.paper[i].works[0].image=e.target.result;save();renderPaper();};r.readAsDataURL(f);}
+function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.paper[i].works[0].image=url;save();renderPaper();});}
 function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
 function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
 function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
@@ -1406,9 +1422,9 @@ function renderDigital(){
     el.appendChild(c);
   });
 }
-function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].blocks[bi].src=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].blocks[bi].src=url;save();renderDigital();});}
 function clearDigImg(ev,di,bi){ev.stopPropagation();DATA.digital[di].blocks[bi].src='';save();renderDigital();}
-function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].bg=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].bg=url;save();renderDigital();});}
 function clearDigBg(ev,di){ev.stopPropagation();DATA.digital[di].bg='';save();renderDigital();}
 function addBlock(di,type){DATA.digital[di].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});save();renderDigital();}
 function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigital();}
@@ -1453,14 +1469,14 @@ function renderCV(){
     el.appendChild(c);
   });
 }
-function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=e.target.result;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();};r.readAsDataURL(f);}
+function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=url;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();});}
 function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
 function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
 function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
 function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
 
 // BG
-function loadBg(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.bg=e.target.result;const p=document.getElementById('bg-preview');p.src=e.target.result;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();};r.readAsDataURL(f);}
+function loadBg(inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.bg=url;const p=document.getElementById('bg-preview');p.src=url;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();});}
 function clearBg(ev){ev.stopPropagation();DATA.bg='';const p=document.getElementById('bg-preview');p.src='';p.style.display='none';document.getElementById('bg-upload').classList.remove('has-img');save();}
 
 function renderAll(){renderObjects();renderPaper();renderDigital();renderStatement();renderCV();if(DATA.bg){document.getElementById('bg-preview').src=DATA.bg;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-upload').classList.add('has-img');}}
@@ -1562,7 +1578,7 @@ function renderObjects(){
     el.appendChild(c);
   });
 }
-function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.objects[i].image=e.target.result;save();renderObjects();};r.readAsDataURL(f);}
+function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.objects[i].image=url;save();renderObjects();});}
 function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
 function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
 function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
@@ -1610,7 +1626,7 @@ function renderPaper(){
     el.appendChild(c);
   });
 }
-function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.paper[i].works[0].image=e.target.result;save();renderPaper();};r.readAsDataURL(f);}
+function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.paper[i].works[0].image=url;save();renderPaper();});}
 function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
 function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
 function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
@@ -1668,9 +1684,9 @@ function renderDigital(){
     el.appendChild(c);
   });
 }
-function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].blocks[bi].src=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].blocks[bi].src=url;save();renderDigital();});}
 function clearDigImg(ev,di,bi){ev.stopPropagation();DATA.digital[di].blocks[bi].src='';save();renderDigital();}
-function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.digital[di].bg=e.target.result;save();renderDigital();};r.readAsDataURL(f);}
+function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].bg=url;save();renderDigital();});}
 function clearDigBg(ev,di){ev.stopPropagation();DATA.digital[di].bg='';save();renderDigital();}
 function addBlock(di,type){DATA.digital[di].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});save();renderDigital();}
 function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigital();}
@@ -1715,14 +1731,14 @@ function renderCV(){
     el.appendChild(c);
   });
 }
-function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=e.target.result;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();};r.readAsDataURL(f);}
+function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=url;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();});}
 function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
 function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
 function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
 function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
 
 // BG
-function loadBg(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{DATA.bg=e.target.result;const p=document.getElementById('bg-preview');p.src=e.target.result;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();};r.readAsDataURL(f);}
+function loadBg(inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.bg=url;const p=document.getElementById('bg-preview');p.src=url;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();});}
 function clearBg(ev){ev.stopPropagation();DATA.bg='';const p=document.getElementById('bg-preview');p.src='';p.style.display='none';document.getElementById('bg-upload').classList.remove('has-img');save();}
 
 function renderAll(){renderObjects();renderPaper();renderDigital();renderStatement();renderCV();if(DATA.bg){document.getElementById('bg-preview').src=DATA.bg;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-upload').classList.add('has-img');}}
