@@ -179,6 +179,8 @@ textarea{min-height:66px;line-height:1.6}
 // ═══════════════════════════════════════════
 const PASS_HASH = '1f739bc090c857ebbe149dc269e993c8b6f5ba81fc4957d3916d5e6a6fec99f9'; // пароль: flux2024
 const SB = 'https://aqmsvdkerzbivglcqixa.supabase.co';
+const CL_CLOUD='dbltupggx';
+const CL_PRESET='flux_unsigned';
 const SK = 'sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY';
 const GH_USER = 'salavatflux';
 const GH_REPO = 'flux';
@@ -466,10 +468,18 @@ function renderAll(){renderObjects();renderPaper();renderDigital();renderStateme
 
 
 async function uploadPhoto(file){
-  const n=Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-  const r=await fetch(SB+'/storage/v1/object/photos/'+n,{method:'POST',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':file.type},body:file});
-  if(!r.ok){const e=await r.json();throw new Error(e.message||'Ошибка загрузки');}
-  return SB+'/storage/v1/object/public/photos/'+n;
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('upload_preset',CL_PRESET);
+  fd.append('folder','flux');
+  const status=document.getElementById('saveStatus');
+  if(status)status.textContent='загрузка...';
+  const r=await fetch('https://api.cloudinary.com/v1_1/'+CL_CLOUD+'/image/upload',{method:'POST',body:fd});
+  const j=await r.json();
+  if(!j.secure_url)throw new Error(JSON.stringify(j));
+  if(status)status.textContent='загружено ✓';
+  setTimeout(()=>{if(status)status.textContent='авто-сохранение';},2000);
+  return j.secure_url;
 }
 async function loadFromSB(){
   try{
