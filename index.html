@@ -138,7 +138,7 @@ img{display:block}
 
 /* мобильный — колонка */
 .pap-row{display:flex;flex-direction:column;align-items:center;gap:24px}
-.pap-img{flex-shrink:0;width:min(88vw,340px);overflow:hidden;background:#fff}
+.pap-img{flex-shrink:0;width:min(88vw,340px);overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.06)}
 .pap-info{width:min(88vw,340px);min-width:0}
 .ann-pap{width:min(88vw,340px);max-height:0;overflow:hidden;transition:max-height .35s ease,margin-top .35s ease;border:0 solid rgba(0,0,0,.08);font-size:12px;letter-spacing:.05em;color:#666;line-height:1.85;background:#fafaf8}.ann-pap.on{max-height:400px;margin-top:16px;border-width:1px;padding:13px 17px}
 .ann-pap:empty::before{content:'* здесь будет аннотация';color:#ccc;font-style:italic}
@@ -200,7 +200,7 @@ img{display:block}
 .pap-series-layout{width:100%;padding:40px 40px 80px;box-sizing:border-box;margin:0 auto;display:flex;flex-direction:column;align-items:center}
 @media(max-width:767px){.pap-series-layout{padding:32px 20px 64px}}
 /* image and info SAME max-width — text aligns to image edges */
-.pap-series-img{width:100%;max-width:480px;background:#eaeaea;overflow:hidden;margin-bottom:28px;flex-shrink:0}
+.pap-series-img{width:100%;max-width:480px;background:#eaeaea;overflow:hidden;margin-bottom:28px;flex-shrink:0;border:1px solid rgba(0,0,0,.06)}
 .pap-series-img.orient-h{aspect-ratio:210/148}
 .pap-series-img.orient-v{aspect-ratio:148/210}
 .pap-series-img.orient-h6{aspect-ratio:148/105}
@@ -521,352 +521,46 @@ img{display:block}
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ══ DATA ══ */
 const D = {
-  "bg": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772821091140_IMG_1575.jpeg",
-  "objects": [
-    {
-      "ann": "",
-      "meta": "металл, скотч, изолента, гелевая ручки\nформат 340 x 540мм  2025г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993438/flux/pxxhyjvb9iwud7bqumpf.jpg",
-      "price": "83.000₽ ",
-      "title": "«deconstruction»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, акрил, маркеры\n700 х 1500мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993541/flux/ne1zqyqlbuhb9mbnanru.jpg",
-      "price": "156.000₽",
-      "title": "«Алхимия»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, акрил, коллаж, маркеры\n800 х 800мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993584/flux/amq6fiiyg4endfcucmvz.jpg",
-      "price": "98.000₽",
-      "title": "«0рошение»",
-      "orient": "sq"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, карандаш\n600 х 800мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993626/flux/wkghaoslw8awkoqgrwks.jpg",
-      "price": "76.000₽",
-      "title": "«дихотомия»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, баллон, маркеры, гелевая ручка, коллаж\n500 х 800мм 2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993642/flux/zew2vcv3pxzyoyjcieev.jpg",
-      "price": "62.000₽",
-      "title": "«крючок»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, маркеры, коллаж\n600 х 600мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994298/flux/yc7hd44tjuspqy9zt26w.jpg",
-      "price": "57.000₽",
-      "title": "«Эврика»",
-      "orient": "sq"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, акрил, маркеры\n550 х 1200мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994401/flux/yyl8i9tcjtzkx2vyouwy.jpg",
-      "price": "52.000₽",
-      "title": "«от начала до конца»",
-      "orient": "h"
-    }
+  bg: '',
+  objects: [
+    { image:'', title:'«deconstruction»', price:'120.000₽', ann:'', meta:'бумага 200 г/м², цветные карандаши, гелевая ручка\nформат 210 x 148мм    2023 г.' },
+    { image:'', title:'«object 02»',       price:'90.000₽',  ann:'', meta:'смешанная техника\nформат 300 x 210мм    2024 г.' }
   ],
-  "paper": [
-    {
-      "desc": "Эта серия была первой",
-      "name": "Универсум метаморфоз",
-      "works": [
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 x 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линер\n",
-          "href": "#",
-          "size": "A5",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772906374448_Metamorph_on_art_space.jpg",
-          "price": "28.000₽",
-          "title": "«метаморф на выставке»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 x 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линер",
-          "href": "#",
-          "size": "A5",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772906545895_metamorphs__crystals__seeds.JPEG",
-          "price": "28.000₽",
-          "title": "«метаморфы, кристаллы и семена»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993739/flux/xn9xz56wmoqedphmq9yw.jpg",
-          "price": "28.000₽",
-          "title": "«философский камень»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994417/flux/o7cfzttfqve8y5ortugr.jpg",
-          "price": "28.000₽",
-          "title": "«запутанность»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994490/flux/d2f8rx75d7gygtbentmy.jpg",
-          "price": "28.000₽",
-          "title": "«экзотический букет»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994684/flux/uj2x88rp1espea2vxdce.jpg",
-          "price": "28.000₽",
-          "title": "«плоды»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994529/flux/qtvqvexmqrmkqngysqld.jpg",
-          "price": "28.000₽",
-          "title": "«креативный метеор»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994539/flux/tyf7tu8jlw7brak1dqjo.jpg",
-          "price": "28.000₽",
-          "title": "«путаница»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994534/flux/wejywyfh3ca1zqub4usl.jpg",
-          "price": "28.000₽",
-          "title": "«строительство мысли»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994514/flux/rdlfhdhgfy0svwf8mv5t.jpg",
-          "price": "28.000₽",
-          "title": "«прекрасный и непонятный мир метапознания»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994529/flux/hxy3dcmtunck9l4ikdyc.jpg",
-          "price": "28.000₽",
-          "title": "«фрагмент матрицы»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994532/flux/dwwuoqk9vkifuvp0kpom.jpg",
-          "price": "—",
-          "title": "«рождение духа»",
-          "orient": "v"
-        }
-      ]
-    },
-    {
-      "name": "органический хаос",
-      "works": [
-        {
-          "yr": "",
-          "ann": "",
-          "fmt": "",
-          "desc": "",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994543/flux/iymaeqbsprozwpm6thhv.jpg",
-          "price": "",
-          "title": "«органический хаос»",
-          "orient": "v"
-        },
-        {
-          "yr": "",
-          "ann": "",
-          "fmt": "",
-          "desc": "",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994553/flux/mr5fjumr9u7akvb0hkjr.jpg",
-          "price": "",
-          "title": "«квинтэссенция»",
-          "orient": "v"
-        },
-        {
-          "yr": "",
-          "ann": "",
-          "fmt": "",
-          "desc": "",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994835/flux/jzmdirimjlxei2irna2w.jpg",
-          "price": "",
-          "title": "«паломничество»",
-          "orient": "h"
-        }
-      ]
-    },
-    {
-      "name": "новая серия",
-      "works": [
-        {
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772997669/flux/zabck4e9tykggyhhu64a.jpg",
-          "title": "«работа»",
-          "href": "#",
-          "desc": "",
-          "fmt": "",
-          "yr": "",
-          "price": "",
-          "ann": "",
-          "orient": "h",
-          "size": "A5"
-        }
-      ]
-    }
+  paper: [
+    { name:'цвета', works:[
+      { image:'', title:'«цвета 23»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши, гелевая ручка', fmt:'формат 210 x 148мм', yr:'2023 г.', price:'40.000₽', ann:'', orient:'h', size:'A5' },
+      { image:'', title:'«цвета 24»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'45.000₽', ann:'', orient:'h', size:'A5' }
+    ]},
+    { name:'argentum', works:[
+      { image:'', title:'«argentum 01»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'35.000₽', ann:'', orient:'v', size:'A5' },
+      { image:'', title:'«argentum 02»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 148 x 105мм', yr:'2024 г.', price:'28.000₽', ann:'', orient:'v', size:'A6' }
+    ]}
   ],
-  "statement": [
-    "Здесь будет текст statement."
+  statement: [
+    'Здесь будет текст statement — авторская позиция, художественное кредо.',
+    'Второй абзац statement.'
   ],
-  "digital": [
-    {
-      "h": "Argentum",
-      "bg": "",
-      "sub": "s e r i e s",
-      "link": "",
-      "blocks": [
-        {
-          "type": "text",
-          "content": "Текст серии."
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772736771317_IMG_1660.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772736789561_IMG_1659.jpeg",
-          "type": "image"
-        },
-        {
-          "src": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772736806858_IMG_1658.jpeg",
-          "type": "image"
-        }
-      ],
-      "linkLabel": "посмотреть серию →"
-    },
-    {
-      "h": "",
-      "bg": "",
-      "sub": "",
-      "link": "",
-      "blocks": [
-        {
-          "type": "text",
-          "content": ""
-        },
-        {
-          "src": "",
-          "type": "image"
-        },
-        {
-          "src": "",
-          "type": "image"
-        }
-      ],
-      "linkLabel": "посмотреть серию →"
-    }
-  ],
-  "exhibitions": [
-    {
-      "desc": "место, год",
-      "name": "exhibition1",
-      "panes": [
-        {
-          "tiles": [
-            {
-              "sz": "M",
-              "text": "фото",
-              "image": ""
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": ""
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": ""
-            }
-          ]
-        }
-      ]
-    }
+  digital: [{
+    h:'Argentum', sub:'s e r i e s',
+    bg:'',
+    blocks:[
+      {type:'text', content:'Argentum is a monochrome series of digital graphics, in which the form becomes a way to experience and fix internal states.'},
+      {type:'image', src:''},
+      {type:'text', content:'Each work is an independent structure born of intuitive search and contemplation.\n\nThe series refers to the alchemy of perception: through the interaction of lines and masses, through reflections and conflicts, a new symbolic language is born.'},
+      {type:'image', src:''}
+    ],
+    link:'', linkLabel:'посмотреть серию →'
+  }],
+  /* Tile sizes: S=1×1  M=2×1  L=2×2
+     Click tile to cycle S→M→L→S        */
+  exhibitions: [
+    { name:'exhibition1', desc:'краткое описание выставки — место, год', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'L'}] },
+      { tiles:[{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'M'}] }
+    ]},
+    { name:'paper series 2023', desc:'галерея flux, Москва, 2023', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}] }
+    ]}
   ]
 };
 
@@ -1620,12 +1314,24 @@ async function clUpload(file, onDone){
   fd.append('file',file);
   fd.append('upload_preset',CL_PRESET);
   fd.append('folder','flux');
+  const status=document.getElementById('saveStatus');
+  if(status)status.textContent='загрузка...';
   try{
     const r=await fetch('https://api.cloudinary.com/v1_1/'+CL_CLOUD+'/image/upload',{method:'POST',body:fd});
     const j=await r.json();
-    if(j.secure_url) onDone(j.secure_url);
-    else alert('Ошибка загрузки: '+JSON.stringify(j));
-  }catch(e){alert('Ошибка: '+e.message);}
+    console.log('Cloudinary response:', j);
+    if(j.secure_url){
+      if(status)status.textContent='загружено ✓';
+      setTimeout(()=>{if(status)status.textContent='авто-сохранение';},2000);
+      onDone(j.secure_url);
+    } else {
+      if(status)status.textContent='ошибка';
+      alert('Ошибка Cloudinary: '+JSON.stringify(j));
+    }
+  }catch(e){
+    if(status)status.textContent='ошибка';
+    alert('Ошибка сети: '+e.message);
+  }
 }
 function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.objects[i].image=url;save();renderObjects();});}
 function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
