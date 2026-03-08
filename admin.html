@@ -477,6 +477,7 @@ async function uploadPhoto(file){
   const r=await fetch('https://api.cloudinary.com/v1_1/'+CL_CLOUD+'/image/upload',{method:'POST',body:fd});
   const j=await r.json();
   if(!j.secure_url)throw new Error(JSON.stringify(j));
+  alert('✓ URL: '+j.secure_url);
   if(status)status.textContent='загружено ✓';
   setTimeout(()=>{if(status)status.textContent='авто-сохранение';},2000);
   return j.secure_url;
