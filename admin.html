@@ -80,6 +80,14 @@ textarea{min-height:66px;line-height:1.6}
 .tile-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.45);color:#fff;border:none;width:17px;height:17px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3}
 .tile-add-btn{grid-column:span 1;aspect-ratio:1;border:1px dashed var(--bd);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc;transition:all .15s;font-family:var(--f)}
 .tile-add-btn:hover{border-color:var(--or);color:var(--or)}
+.card-head{cursor:pointer;user-select:none}
+.card-head:hover{background:#eee}
+.card-collapsed .card-body,.card-collapsed .card-series-body{display:none!important}
+.card-collapse-icon{font-size:11px;color:var(--gy);margin-left:auto;margin-right:4px;transition:transform .2s;flex-shrink:0}
+.card-collapsed .card-collapse-icon{transform:rotate(-90deg)}
+.chrono-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.chrono-bar button{padding:6px 13px;font-family:var(--f);font-size:10px;letter-spacing:.13em;border:1px solid var(--bd);background:none;cursor:pointer;color:var(--gy);transition:all .15s}
+.chrono-bar button.act{border-color:var(--or);background:var(--or);color:#fff}
 .add-btn{display:flex;align-items:center;gap:8px;padding:10px 13px;border:1px dashed var(--bd);background:none;cursor:pointer;font-family:var(--f);font-size:10px;letter-spacing:.13em;color:var(--gy);width:100%;transition:all .15s;margin-top:5px}
 .add-btn:hover{border-color:var(--or);color:var(--or)}
 .del-btn{padding:4px 8px;font-family:var(--f);font-size:9px;letter-spacing:.1em;border:1px solid #ddd;background:none;cursor:pointer;color:#bbb;transition:all .15s}
@@ -130,6 +138,10 @@ textarea{min-height:66px;line-height:1.6}
 </div>
 
 <div class="section" id="sec-paper">
+  <div class="chrono-bar">
+    <button id="adm-pb-new" class="act" onclick="setAdmPapOrder('new')">новые → старые</button>
+    <button id="adm-pb-old" onclick="setAdmPapOrder('old')">старые → новые</button>
+  </div>
   <div class="notice"><strong>PAPER SERIES</strong>Каждая серия — обложка + несколько работ внутри. На сайте: обложка серии видна в списке, по кнопке «к серии» открываются все работы.</div>
   <div id="paper-list"></div>
   <button class="add-btn" onclick="addPaper()">+ добавить серию</button>
@@ -274,11 +286,21 @@ function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
 function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
 
 // PAPER
+let admPapReversed=false;
+function setAdmPapOrder(ord){
+  admPapReversed=(ord==='old');
+  document.getElementById('adm-pb-new').classList.toggle('act',!admPapReversed);
+  document.getElementById('adm-pb-old').classList.toggle('act',admPapReversed);
+  renderPaper();
+}
 function renderPaper(){
   const el=document.getElementById('paper-list');el.innerHTML='';
-  DATA.paper.forEach((s,si)=>{
+  const papList=admPapReversed?[...DATA.paper].reverse():DATA.paper;
+  papList.forEach((s)=>{
+    const si=DATA.paper.indexOf(s);
     const cover=s.works[0]||{};
-    const c=document.createElement('div');c.className='card';
+    const collapsed=s._collapsed||false;
+    const c=document.createElement('div');c.className='card'+(collapsed?' card-collapsed':'');
     // Works HTML inside series
     const worksHtml=(s.works||[]).map((w,wi)=>`
       <div class="work-card" id="pw-${si}-${wi}">
@@ -322,12 +344,13 @@ function renderPaper(){
       </div>`).join('');
 
     c.innerHTML=`
-      <div class="card-head">
+      <div class="card-head" onclick="togglePapCard(${si},this.closest('.card'))">
         <span class="card-num">${si+1}</span>
-        <span class="card-title">серия: ${esc(s.name)||'без названия'}</span>
-        <button class="move-btn" onclick="moveItem('paper',${si},-1)">↑</button>
-        <button class="move-btn" onclick="moveItem('paper',${si},1)">↓</button>
-        <button class="del-btn" onclick="deleteItem('paper',${si})">удалить серию</button>
+        <span class="card-title">серия: ${esc(s.name)||'без названия'} ${cover.yr?'<span style=\'font-size:10px;color:#aaa;font-weight:400\'>('+esc(cover.yr)+')</span>':''}</span>
+        <button class="move-btn" onclick="event.stopPropagation();moveItem('paper',${si},-1)">↑</button>
+        <button class="move-btn" onclick="event.stopPropagation();moveItem('paper',${si},1)">↓</button>
+        <button class="del-btn" onclick="event.stopPropagation();deleteItem('paper',${si})">удалить</button>
+        <span class="card-collapse-icon">▾</span>
       </div>
       <div class="card-body single" style="padding:13px">
         <div class="field" style="margin-bottom:12px">
@@ -344,6 +367,10 @@ function renderPaper(){
       </div>`;
     el.appendChild(c);
   });
+}
+function togglePapCard(si,cardEl){
+  DATA.paper[si]._collapsed=!DATA.paper[si]._collapsed;
+  cardEl.classList.toggle('card-collapsed',DATA.paper[si]._collapsed);
 }
 async function loadPapImg(si,wi,inp){const f=inp.files[0];if(!f)return;try{DATA.paper[si].works[wi].image=await uploadPhoto(f);save();renderPaper();}catch(e){alert(e.message);}}
 function clearPapImg(ev,si,wi){ev.stopPropagation();DATA.paper[si].works[wi].image='';save();renderPaper();}
@@ -512,7 +539,7 @@ async function publishToGitHub(){
     const sha=curJ.sha;
     const rawText=new TextDecoder().decode(Uint8Array.from(atob(curJ.content.replace(/\n/g,'')),c=>c.charCodeAt(0)));
     const newD='const D = '+JSON.stringify(DATA,null,2)+';';
-    const updated=rawText.replace(/const D = \{[\s\S]*?\};/,newD);
+    const updated=rawText.replace(/const D = \{[\s\S]*?\n\};/,newD);
     if(updated===rawText)throw new Error('Не найден блок данных');
     const bytes=new TextEncoder().encode(updated);
     let enc='';
