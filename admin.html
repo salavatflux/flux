@@ -111,6 +111,7 @@ textarea{min-height:66px;line-height:1.6}
 <div id="pass-screen">
   <h2>FLUX — ADMIN</h2>
   <input id="pass-input" type="password" placeholder="пароль" autocomplete="off">
+  <input id="token-input" type="password" placeholder="github token" autocomplete="off" style="margin-top:4px;display:none">
   <button onclick="checkPassword()">войти</button>
   <span id="pass-error">неверный пароль</span>
 </div>
@@ -227,6 +228,10 @@ window.addEventListener('DOMContentLoaded', ()=>{
     loadFromSB().then(renderAll);
   }
   document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
+  // Show token field if not saved yet
+  if(!localStorage.getItem('flux_gh_token')){
+    document.getElementById('token-input').style.display='block';
+  }
 });
 let DATA={
   bg:'',
