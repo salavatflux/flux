@@ -100,8 +100,6 @@ img{display:block}
 
 
 
-/* zoom escape */
-.obj-img img, .pap-img img, .pap-series-img img{will-change:transform;transition:transform .05s linear}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
@@ -866,6 +864,7 @@ const APP=(()=>{
   function mvObj(d){
     if(d===1&&oI>=D.objects.length-1){secNav(1);return;}
     if(d===-1&&oI===0){secNav(-1);return;}
+    resetZoomIn($('objTrk'));
     oI=cl(oI+d,0,D.objects.length-1);$('objTrk').style.transform=`translateX(-${oI*100}%)`;updOA();
   }
   function updOA(){$('oPrev').classList.toggle('dis',oI===0);$('oNext').classList.toggle('dis',oI>=D.objects.length-1)}
@@ -876,6 +875,7 @@ const APP=(()=>{
     const list=getPapList();
     if(d===1&&pI>=list.length-1){secNav(1);return;}
     if(d===-1&&pI===0){secNav(-1);return;}
+    resetZoomIn($('papTrk'));
     pI=cl(pI+d,0,list.length-1);$('papTrk').style.transform=`translateX(-${pI*100}%)`;updPA();
   }
   function updPA(){const list=getPapList();$('pPrev').classList.toggle('dis',pI===0);$('pNext').classList.toggle('dis',pI>=list.length-1)}
@@ -905,7 +905,6 @@ const APP=(()=>{
         </div>
       </div>`;}).join('');
     hsw(trk,d=>mvObj(d)); updOA();
-    trk.querySelectorAll('.obj-img img').forEach(attachZoom);
   }
 
   /* Build Paper */
@@ -934,7 +933,6 @@ const APP=(()=>{
         </div>
       </div>`;}).join('');
     updPA();
-    trk.querySelectorAll('.pap-img img').forEach(attachZoom);
   }
 
   /* Series */
@@ -986,7 +984,6 @@ const APP=(()=>{
     trk.innerHTML=workSlides.join('')+descSlide;
     trk.style.transform='translateX(0)';
     hsw(trk, d=>mvSeries(d));
-    trk.querySelectorAll('.pap-series-img img').forEach(attachZoom);
     updSA(s);
   }
   function mvSeries(d){
@@ -1068,73 +1065,6 @@ const APP=(()=>{
   if(document.readyState!=='loading')init();
 
 
-  /* ── PINCH ZOOM ── */
-  function attachZoom(imgEl){
-    if(!imgEl||imgEl.dataset.zoomBound) return;
-    imgEl.dataset.zoomBound='1';
-    const container=imgEl.parentElement;
-
-    let scale=1, lastScale=1, startDist=0;
-    let originX=0, originY=0;
-
-    function getDist(t){
-      const dx=t[0].clientX-t[1].clientX, dy=t[0].clientY-t[1].clientY;
-      return Math.sqrt(dx*dx+dy*dy);
-    }
-    function getMid(t){
-      return {x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2};
-    }
-    function applyZoom(s, ox, oy){
-      imgEl.style.transformOrigin=`${ox}px ${oy}px`;
-      imgEl.style.transform=`scale(${s})`;
-      if(s>1){
-        container.style.overflow='visible';
-        container.style.zIndex='500';
-        container.style.position='relative';
-      }
-    }
-    function reset(){
-      scale=1; lastScale=1;
-      imgEl.style.transform='';
-      imgEl.style.transformOrigin='';
-      container.style.overflow='';
-      container.style.zIndex='';
-      container.style.position='';
-    }
-
-    imgEl.addEventListener('touchstart',e=>{
-      if(e.touches.length===2){
-        e.preventDefault();
-        startDist=getDist(e.touches);
-        const mid=getMid(e.touches);
-        const rect=imgEl.getBoundingClientRect();
-        originX=mid.x-rect.left;
-        originY=mid.y-rect.top;
-      }
-    },{passive:false});
-
-    imgEl.addEventListener('touchmove',e=>{
-      if(e.touches.length===2){
-        e.preventDefault();
-        const d=getDist(e.touches);
-        scale=Math.max(1, Math.min(6, lastScale*(d/startDist)));
-        applyZoom(scale, originX, originY);
-      }
-    },{passive:false});
-
-    imgEl.addEventListener('touchend',e=>{
-      if(e.touches.length<2){
-        lastScale=scale;
-        if(scale<=1.05) reset();
-      }
-    },{passive:true});
-
-    imgEl.addEventListener('click',e=>{
-      if(scale>1){ e.stopPropagation(); reset(); }
-    });
-  }
-
-  function rebuild(){buildObj();buildPap();buildDig();buildSta();buildSt();}
   return{open,close,home,toggle,openSt,closeSt,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann,togglePapOrder,rebuild};
 })();
 </script>
