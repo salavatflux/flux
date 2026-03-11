@@ -111,7 +111,6 @@ textarea{min-height:66px;line-height:1.6}
 <div id="pass-screen">
   <h2>FLUX — ADMIN</h2>
   <input id="pass-input" type="password" placeholder="пароль" autocomplete="off">
-  <input id="token-input" type="password" placeholder="github token" autocomplete="off" style="margin-top:4px">
   <button onclick="checkPassword()">войти</button>
   <span id="pass-error">неверный пароль</span>
 </div>
@@ -121,6 +120,7 @@ textarea{min-height:66px;line-height:1.6}
   <h1>FLUX — ADMIN</h1>
   <button class="hbtn" id="savebtn" onclick="publishToGitHub()">⬆ опубликовать сайт</button>
   <button class="hbtn sec" onclick="showChangePass()">🔑 пароль</button>
+  <button class="hbtn sec" onclick="showChangeToken()">⚙ github token</button>
   <span id="saveStatus" style="margin-left:auto">авто-сохранение</span>
 </header>
 <nav class="tabs">
@@ -595,6 +595,33 @@ async function doChangePass(){
   err.style.color='#4ade80';
   err.textContent='✓ пароль изменён';
   setTimeout(hideChangePass,1500);
+}
+</script>
+<div id="change-token-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#111;padding:32px;display:flex;flex-direction:column;gap:14px;min-width:300px">
+    <h2 style="color:#fff;font-size:12px;letter-spacing:.2em;font-weight:400;font-family:'Source Code Pro',monospace">GITHUB TOKEN</h2>
+    <input id="ct-input" type="password" placeholder="ghp_..." autocomplete="off" style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.3);color:#fff;font-family:'Source Code Pro',monospace;font-size:13px;padding:6px 4px;outline:none;letter-spacing:.06em;width:100%">
+    <span style="font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.08em;font-family:'Source Code Pro',monospace">сохраняется в браузере, не в коде</span>
+    <div style="display:flex;gap:10px">
+      <button onclick="doChangeToken()" style="flex:1;padding:8px;background:#e8501a;border:none;color:#fff;font-family:'Source Code Pro',monospace;font-size:11px;letter-spacing:.15em;cursor:pointer">сохранить</button>
+      <button onclick="hideChangeToken()" style="padding:8px 16px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-family:'Source Code Pro',monospace;font-size:11px;cursor:pointer">отмена</button>
+    </div>
+  </div>
+</div>
+<script>
+function showChangeToken(){
+  const saved=localStorage.getItem('flux_gh_token')||'';
+  document.getElementById('ct-input').value=saved;
+  const m=document.getElementById('change-token-modal');
+  m.style.display='flex';
+  setTimeout(()=>document.getElementById('ct-input').focus(),50);
+}
+function hideChangeToken(){document.getElementById('change-token-modal').style.display='none';}
+function doChangeToken(){
+  const val=document.getElementById('ct-input').value.trim();
+  if(!val)return;
+  localStorage.setItem('flux_gh_token',val);
+  hideChangeToken();
 }
 </script>
 </body>
