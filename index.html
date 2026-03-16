@@ -97,12 +97,6 @@ img{display:block}
 .sp.open{opacity:1;pointer-events:auto}
 
 
-
-
-/* ── PINCH ZOOM ── */
-#zoomOv{display:none;position:fixed;top:var(--nh);left:0;right:0;bottom:0;z-index:8000;background:#111;touch-action:none}
-#zoomOv.on{display:block}
-#zoomOvImg{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;display:block;-webkit-user-drag:none;pointer-events:none}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
@@ -481,9 +475,6 @@ img{display:block}
 
 <!-- COPYRIGHT -->
 <div id="copy">© 2026 flux</div>
-
-<!-- ZOOM OVERLAY -->
-<div id="zoomOv" id="zoomOv"></div>
 
 <!-- OBJECTS -->
 <div class="sp" id="secObj">
@@ -867,7 +858,7 @@ const APP=(()=>{
       snap(cur,velX);
     });
   }
-  function mvObj(d){resetZoom();
+  function mvObj(d){
     if(d===1&&oI>=D.objects.length-1){secNav(1);return;}
     if(d===-1&&oI===0){secNav(-1);return;}
     oI=cl(oI+d,0,D.objects.length-1);$('objTrk').style.transform=`translateX(-${oI*100}%)`;updOA();
@@ -876,7 +867,7 @@ const APP=(()=>{
 
   /* Paper */
   function getPapList(){return papReversed?[...D.paper].reverse():D.paper}
-  function mvPap(d){resetZoom();
+  function mvPap(d){
     const list=getPapList();
     if(d===1&&pI>=list.length-1){secNav(1);return;}
     if(d===-1&&pI===0){secNav(-1);return;}
@@ -909,7 +900,6 @@ const APP=(()=>{
         </div>
       </div>`;}).join('');
     hsw(trk,d=>mvObj(d)); updOA();
-    setTimeout(()=>trk.querySelectorAll('.obj-img img').forEach(attachZoom),100);
   }
 
   /* Build Paper */
@@ -938,7 +928,6 @@ const APP=(()=>{
         </div>
       </div>`;}).join('');
     updPA();
-    setTimeout(()=>trk.querySelectorAll('.pap-img img').forEach(attachZoom),100);
   }
 
   /* Series */
@@ -990,10 +979,9 @@ const APP=(()=>{
     trk.innerHTML=workSlides.join('')+descSlide;
     trk.style.transform='translateX(0)';
     hsw(trk, d=>mvSeries(d));
-    setTimeout(()=>trk.querySelectorAll('.pap-series-img img').forEach(attachZoom),100);
     updSA(s);
   }
-  function mvSeries(d){resetZoom();
+  function mvSeries(d){
     if(curSeries<0||seriesMoving)return;
     const s=D.paper[curSeries];
     sI=cl(sI+d,0,s.works.length-1);
@@ -1009,7 +997,7 @@ const APP=(()=>{
 
   /* Digital */
   let dI=0;
-  function mvDig(d){resetZoom();
+  function mvDig(d){
     if(d===1&&dI>=D.digital.length-1){secNav(1);return;}
     if(d===-1&&dI===0){secNav(-1);return;}
     dI=cl(dI+d,0,D.digital.length-1);
@@ -1043,7 +1031,6 @@ const APP=(()=>{
       </div>`;
     }).join('');
     hsw(trk, d=>mvDig(d));
-    setTimeout(()=>trk.querySelectorAll('.dig-block-img img').forEach(attachZoom),100);
     updDA();
   }
 
@@ -1072,115 +1059,7 @@ const APP=(()=>{
   document.addEventListener('DOMContentLoaded',init);
   if(document.readyState!=='loading')init();
 
-
-
-  /* ══ PINCH ZOOM ══ */
-  const ZOOM=(()=>{
-    const ov=$('zoomOv');
-    let img=null, scale=1, px=0, py=0;
-    let t0dist=0, t0scale=1, t0mx=0, t0my=0, t0px=0, t0py=0;
-    let panX=0, panY=0, panPx=0, panPy=0, panning=false, moved=false;
-
-    function apply(){img.style.transform=`translate(${px}px,${py}px) scale(${scale})`;}
-
-    function clamp(){
-      const W=ov.offsetWidth, H=ov.offsetHeight;
-      const iw=img.naturalWidth*scale, ih=img.naturalHeight*scale;
-      px=Math.max(Math.min(0,W-iw), Math.min(0,px));
-      py=Math.max(Math.min(0,H-ih), Math.min(0,py));
-    }
-
-    function open(src){
-      ov.innerHTML='';
-      img=document.createElement('img');
-      img.id='zoomOvImg';
-      img.src=src;
-      ov.appendChild(img);
-      img.onload=()=>{
-        const W=ov.offsetWidth, H=ov.offsetHeight;
-        scale=Math.min(W/img.naturalWidth, H/img.naturalHeight);
-        px=(W-img.naturalWidth*scale)/2;
-        py=(H-img.naturalHeight*scale)/2;
-        apply();
-        ov.classList.add('on');
-      };
-    }
-
-    function close(){ov.classList.remove('on');ov.innerHTML='';img=null;}
-
-    function dist(t){
-      const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;
-      return Math.sqrt(dx*dx+dy*dy);
-    }
-    function midpt(t){return{x:(t[0].clientX+t[1].clientX)/2,y:(t[0].clientY+t[1].clientY)/2};}
-
-    ov.addEventListener('touchstart',e=>{
-      e.preventDefault();
-      if(e.touches.length===2){
-        panning=false;
-        t0dist=dist(e.touches);
-        t0scale=scale;
-        const m=midpt(e.touches);
-        t0mx=m.x; t0my=m.y; t0px=px; t0py=py;
-      } else if(e.touches.length===1){
-        panning=true; moved=false;
-        panX=e.touches[0].clientX; panY=e.touches[0].clientY;
-        panPx=px; panPy=py;
-      }
-    },{passive:false});
-
-    ov.addEventListener('touchmove',e=>{
-      e.preventDefault();
-      if(!img) return;
-      if(e.touches.length===2){
-        panning=false;
-        const d=dist(e.touches);
-        const m=midpt(e.touches);
-        const ns=Math.max(0.3,Math.min(8,t0scale*(d/t0dist)));
-        px=t0px+(m.x-t0mx)+(t0mx-0)*(t0scale-ns)/t0scale*0;
-        // correct pinch-pan formula
-        px=m.x-(t0mx-t0px)*ns/t0scale;
-        py=m.y-(t0my-t0py)*ns/t0scale;
-        scale=ns;
-        clamp(); apply();
-      } else if(e.touches.length===1 && panning){
-        moved=true;
-        px=panPx+(e.touches[0].clientX-panX);
-        py=panPy+(e.touches[0].clientY-panY);
-        clamp(); apply();
-      }
-    },{passive:false});
-
-    ov.addEventListener('touchend',e=>{
-      if(e.touches.length===0){
-        if(!moved && panning) close(); // tap = close
-        panning=false; moved=false;
-        // if zoomed out to fit, close
-        if(img){
-          const W=ov.offsetWidth,H=ov.offsetHeight;
-          const fitScale=Math.min(W/img.naturalWidth,H/img.naturalHeight);
-          if(scale<=fitScale*1.05) close();
-        }
-      }
-    },{passive:true});
-
-    return{open,close,isOpen:()=>ov.classList.contains('on')};
-  })();
-
-  function attachZoom(imgEl){
-    if(!imgEl||!imgEl.src||imgEl.dataset.zb) return;
-    imgEl.dataset.zb='1';
-    imgEl.addEventListener('touchstart',e=>{
-      if(window.innerWidth>=768||e.touches.length<2) return;
-      e.preventDefault();
-      e.stopPropagation();
-      ZOOM.open(imgEl.src);
-    },{passive:false});
-  }
-
-  function resetZoom(){if(ZOOM.isOpen()) ZOOM.close();}
-
-    return{open,close,home,toggle,openSt,closeSt,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann,togglePapOrder};
+  return{open,close,home,toggle,openSt,closeSt,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann,togglePapOrder};
 })();
 </script>
 
@@ -1653,6 +1532,283 @@ function loadFromPortfolio(){const inp=document.createElement('input');inp.type=
 
   </div>
 </div>
+<script>
+
+// ═══════════════════════════════════════════
+// ПАРОЛЬ — замените на свой хэш.
+// Как сменить: откройте консоль браузера (F12),
+// введите: fluxHash('ваш_новый_пароль') и скопируйте результат сюда.
+// ═══════════════════════════════════════════
+const PASS_HASH = 'b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576b4dd66caca2a3efb'; // пароль: flux2024
+
+async function fluxHash(s){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword(){
+  const input = document.getElementById('pass-input').value;
+  const hash = await fluxHash(input);
+  if(hash === PASS_HASH){
+    document.getElementById('pass-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    sessionStorage.setItem('flux_auth','1');
+    load(); renderAll();
+  } else {
+    document.getElementById('pass-error').style.display='block';
+    document.getElementById('pass-input').value='';
+    document.getElementById('pass-input').focus();
+  }
+}
+
+// Check if already authenticated this session
+window.addEventListener('DOMContentLoaded', ()=>{
+  if(sessionStorage.getItem('flux_auth')==='1'){
+    document.getElementById('pass-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    load(); renderAll();
+  }
+  document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
+});
+let DATA={
+  bg:'',
+  objects:[{image:'',title:'«deconstruction»',price:'120.000₽',ann:'',meta:'бумага 200 г/м², цветные карандаши\nформат 210 x 148мм    2023 г.',orient:'h'}],
+  paper:[{works:[{image:'',title:'«цвета 23»',href:'#',desc:'бумага 200 г/м², цветные карандаши',fmt:'формат 210 x 148мм',yr:'2023 г.',price:'40.000₽',ann:'',orient:'v',size:'A5'}]}],
+  statement:['Здесь будет текст statement.'],
+  digital:[{h:'Argentum',sub:'s e r i e s',bg:'',blocks:[{type:'text',content:'Текст серии.'},{type:'image',src:''}],link:'',linkLabel:'посмотреть серию →'}],
+  exhibitions:[{name:'exhibition1',desc:'место, год',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]}]
+};
+
+function save(){try{localStorage.setItem('flux_admin',JSON.stringify(DATA));const s=document.getElementById('saveStatus');s.textContent='сохранено ✓';setTimeout(()=>s.textContent='авто-сохранение',1800);}catch(e){}}
+function load(){try{const s=localStorage.getItem('flux_admin');if(s)DATA=JSON.parse(s);}catch(e){}}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function switchTab(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('sec-'+id).classList.add('on');btn.classList.add('on');renderAll();}
+function moveItem(arr,i,d){const a=DATA[arr],ni=i+d;if(ni<0||ni>=a.length)return;[a[i],a[ni]]=[a[ni],a[i]];save();renderAll();}
+function deleteItem(arr,i){if(!confirm('Удалить?'))return;DATA[arr].splice(i,1);save();renderAll();}
+
+// OBJECTS
+function renderObjects(){
+  const el=document.getElementById('objects-list');el.innerHTML='';
+  DATA.objects.forEach((o,i)=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(o.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('objects',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('objects',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('objects',${i})">удалить</button></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Изображение</label>
+        <div class="img-upload${o.image?' has-img':''}" onclick="document.getElementById('oi-f-${i}').click()">
+          <img src="${esc(o.image)}" style="${o.image?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить</div>
+          <input type="file" id="oi-f-${i}" accept="image/*" onchange="loadObjImg(${i},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearObjImg(event,${i})">×</button>
+        </div>
+        <div class="img-hint">не обрезается • два пальца для увеличения</div>
+        <div style="margin-top:9px"><label>Ориентация рамки</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(o.orient||'h')==='h'?' on':''}" onclick="setObjOrient(${i},'h')">H горизонт.</button>
+            <button class="orient-btn${o.orient==='v'?' on':''}" onclick="setObjOrient(${i},'v')">V вертикал.</button>
+            <button class="orient-btn${o.orient==='sq'?' on':''}" onclick="setObjOrient(${i},'sq')">□ квадрат</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Название</label><input type="text" value="${esc(o.title)}" oninput="DATA.objects[${i}].title=this.value;save()"></div>
+        <div class="field"><label>Цена</label><input type="text" value="${esc(o.price)}" oninput="DATA.objects[${i}].price=this.value;save()"></div>
+        <div class="field"><label>Материал и формат</label><textarea oninput="DATA.objects[${i}].meta=this.value;save()">${esc(o.meta)}</textarea></div>
+        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.objects[i].image=url;save();renderObjects();});}
+function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
+function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
+function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
+
+// PAPER
+function renderPaper(){
+  const el=document.getElementById('paper-list');el.innerHTML='';
+  DATA.paper.forEach((s,i)=>{
+    const w=s.works[0];
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(w.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('paper',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('paper',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('paper',${i})">удалить</button></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Изображение</label>
+        <div class="img-upload${w.image?' has-img':''}" onclick="document.getElementById('pi-f-${i}').click()">
+          <img src="${esc(w.image)}" style="${w.image?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить</div>
+          <input type="file" id="pi-f-${i}" accept="image/*" onchange="loadPapImg(${i},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearPapImg(event,${i})">×</button>
+        </div>
+        <div class="img-hint">не обрезается • два пальца для увеличения</div>
+        <div style="margin-top:9px"><label>Ориентация</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(w.orient||'v')==='v'?' on':''}" onclick="setPapOrient(${i},'v')">V вертикаль</button>
+            <button class="orient-btn${w.orient==='h'?' on':''}" onclick="setPapOrient(${i},'h')">H горизонталь</button>
+          </div>
+        </div>
+        <div style="margin-top:7px"><label>Формат</label>
+          <div class="orient-btns">
+            <button class="orient-btn${(w.size||'A5')==='A5'?' on':''}" onclick="setPapSize(${i},'A5')">A5</button>
+            <button class="orient-btn${w.size==='A6'?' on':''}" onclick="setPapSize(${i},'A6')">A6</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="field"><label>Название</label><input type="text" value="${esc(w.title)}" oninput="DATA.paper[${i}].works[0].title=this.value;save()"></div>
+        <div class="field"><label>Ссылка на серию</label><input type="text" value="${esc(w.href)}" oninput="DATA.paper[${i}].works[0].href=this.value;save()"></div>
+        <div class="field"><label>Материал</label><textarea oninput="DATA.paper[${i}].works[0].desc=this.value;save()">${esc(w.desc)}</textarea></div>
+        <div class="field"><label>Формат (текст)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${i}].works[0].fmt=this.value;save()"></div>
+        <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${i}].works[0].yr=this.value;save()"></div>
+        <div class="field"><label>Цена</label><input type="text" value="${esc(w.price)}" oninput="DATA.paper[${i}].works[0].price=this.value;save()"></div>
+        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.paper[${i}].works[0].ann=this.value;save()">${esc(w.ann)}</textarea></div>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.paper[i].works[0].image=url;save();renderPaper();});}
+function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
+function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
+function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
+function addPaper(){DATA.paper.push({works:[{image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
+
+// DIGITAL
+function renderDigital(){
+  const el=document.getElementById('digital-list');el.innerHTML='';
+  DATA.digital.forEach((d,di)=>{
+    if(!d.blocks)d.blocks=[];
+    const c=document.createElement('div');c.className='card';
+    const blocksHtml=d.blocks.map((b,bi)=>`
+      <div class="block-item">
+        <div class="block-item-side">
+          <span class="block-type-badge">${b.type==='text'?'TXT':'IMG'}</span>
+          <button class="bmv" onclick="moveBlock(${di},${bi},-1)">↑</button>
+          <button class="bmv" onclick="moveBlock(${di},${bi},1)">↓</button>
+          <button class="bdl" onclick="delBlock(${di},${bi})">×</button>
+        </div>
+        <div class="block-item-body">
+          ${b.type==='text'
+            ?`<textarea style="min-height:80px;width:100%" oninput="DATA.digital[${di}].blocks[${bi}].content=this.value;save()">${esc(b.content)}</textarea>`
+            :`<div class="img-upload${b.src?' has-img':''}" onclick="document.getElementById('di-f-${di}-${bi}').click()">
+                <img src="${esc(b.src||'')}" style="${b.src?'':'display:none'}">
+                <div class="img-label">нажмите чтобы загрузить</div>
+                <input type="file" id="di-f-${di}-${bi}" accept="image/*" onchange="loadDigImg(${di},${bi},this)" onclick="event.stopPropagation()">
+                <button class="img-clear" onclick="clearDigImg(event,${di},${bi})">×</button>
+              </div>`
+          }
+        </div>
+      </div>`).join('');
+    c.innerHTML=`<div class="card-head"><span class="card-num">${di+1}</span><span class="card-title">${esc(d.h)||'серия'}</span><button class="del-btn" onclick="deleteItem('digital',${di})">удалить</button></div>
+    <div class="card-body single">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="field"><label>Название (курсив)</label><input type="text" value="${esc(d.h)}" oninput="DATA.digital[${di}].h=this.value;save()"></div>
+        <div class="field"><label>Подзаголовок</label><input type="text" value="${esc(d.sub)}" oninput="DATA.digital[${di}].sub=this.value;save()"></div>
+        <div class="field"><label>Ссылка (URL)</label><input type="text" value="${esc(d.link||'')}" placeholder="https://..." oninput="DATA.digital[${di}].link=this.value;save()"></div>
+        <div class="field"><label>Текст кнопки ссылки</label><input type="text" value="${esc(d.linkLabel||'посмотреть серию →')}" oninput="DATA.digital[${di}].linkLabel=this.value;save()"></div>
+      </div>
+      <div class="field" style="margin-bottom:11px"><label>Фон (полупрозрачный)</label>
+        <div class="img-upload${d.bg?' has-img':''}" style="min-height:70px" onclick="document.getElementById('db-f-${di}').click()">
+          <img src="${esc(d.bg||'')}" style="${d.bg?'':'display:none'}">
+          <div class="img-label">нажмите чтобы загрузить фон</div>
+          <input type="file" id="db-f-${di}" accept="image/*" onchange="loadDigBg(${di},this)" onclick="event.stopPropagation()">
+          <button class="img-clear" onclick="clearDigBg(event,${di})">×</button>
+        </div>
+      </div>
+      <label style="display:block;margin-bottom:7px">ЛЕНТА — чередуйте текст и изображения</label>
+      <div class="block-list">${blocksHtml}</div>
+      <div class="add-block-btns">
+        <button class="add-block-btn" onclick="addBlock(${di},'text')">+ текст</button>
+        <button class="add-block-btn" onclick="addBlock(${di},'image')">+ изображение</button>
+      </div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].blocks[bi].src=url;save();renderDigital();});}
+function clearDigImg(ev,di,bi){ev.stopPropagation();DATA.digital[di].blocks[bi].src='';save();renderDigital();}
+function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].bg=url;save();renderDigital();});}
+function clearDigBg(ev,di){ev.stopPropagation();DATA.digital[di].bg='';save();renderDigital();}
+function addBlock(di,type){DATA.digital[di].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});save();renderDigital();}
+function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigital();}
+function moveBlock(di,bi,d){const a=DATA.digital[di].blocks,ni=bi+d;if(ni<0||ni>=a.length)return;[a[bi],a[ni]]=[a[ni],a[bi]];save();renderDigital();}
+function addDigital(){DATA.digital.push({h:'',sub:'',bg:'',blocks:[{type:'text',content:''}],link:'',linkLabel:'посмотреть серию →'});save();renderDigital();}
+
+// STATEMENT
+function renderStatement(){
+  const el=document.getElementById('statement-list');el.innerHTML='';
+  DATA.statement.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="card-head"><span class="card-num">§${i+1}</span><span class="card-title">абзац</span><button class="del-btn" onclick="deleteItem('statement',${i})">удалить</button></div>
+    <div class="card-body single"><textarea style="min-height:90px" oninput="DATA.statement[${i}]=this.value;save()">${esc(p)}</textarea></div>`;
+    el.appendChild(c);
+  });
+}
+function addStatementPara(){DATA.statement.push('');save();renderStatement();}
+
+// CV
+function renderCV(){
+  const el=document.getElementById('cv-list');el.innerHTML='';
+  DATA.exhibitions.forEach((ex,ei)=>{
+    const c=document.createElement('div');c.className='card';
+    const allTiles=ex.panes.flatMap(p=>p.tiles);
+    const tilesHtml=allTiles.map((t,ti)=>`
+      <div class="tile-item sz-${t.sz||'S'}">
+        ${t.image?`<img src="${t.image}">`:''}
+        <div class="tile-ph">${t.image?'':'📷'}</div>
+        <input type="file" accept="image/*" onchange="loadTileImg(${ei},${ti},this)" onclick="event.stopPropagation()">
+        <span class="tile-sz-badge" onclick="cycleTileSz(event,${ei},${ti})">${t.sz||'S'}</span>
+        <button class="tile-del" onclick="deleteTile(event,${ei},${ti})">×</button>
+      </div>`).join('');
+    c.innerHTML=`<div class="card-head"><span class="card-num">${ei+1}</span><span class="card-title">${esc(ex.name)||'выставка'}</span><button class="move-btn" onclick="moveItem('exhibitions',${ei},-1)">↑</button><button class="move-btn" onclick="moveItem('exhibitions',${ei},1)">↓</button><button class="del-btn" onclick="deleteItem('exhibitions',${ei})">удалить</button></div>
+    <div class="card-body single">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px">
+        <div class="field"><label>Название выставки</label><input type="text" value="${esc(ex.name)}" oninput="DATA.exhibitions[${ei}].name=this.value;save()"></div>
+        <div class="field"><label>Описание (место, год)</label><input type="text" value="${esc(ex.desc||'')}" oninput="DATA.exhibitions[${ei}].desc=this.value;save()"></div>
+      </div>
+      <label>Фотографии — клик на ячейку загружает фото • клик на S/M/L меняет размер</label>
+      <div class="tile-grid-preview">${tilesHtml}<button class="tile-add-btn" onclick="addTile(${ei})">+</button></div>
+    </div>`;
+    el.appendChild(c);
+  });
+}
+function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=url;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();});}
+function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
+function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
+function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
+function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
+
+// BG
+function loadBg(inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.bg=url;const p=document.getElementById('bg-preview');p.src=url;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();});}
+function clearBg(ev){ev.stopPropagation();DATA.bg='';const p=document.getElementById('bg-preview');p.src='';p.style.display='none';document.getElementById('bg-upload').classList.remove('has-img');save();}
+
+function renderAll(){renderObjects();renderPaper();renderDigital();renderStatement();renderCV();if(DATA.bg){document.getElementById('bg-preview').src=DATA.bg;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-upload').classList.add('has-img');}}
+
+function generateCode(){document.getElementById('outputCode').value=`const D = ${JSON.stringify(DATA,null,2)};`;document.getElementById('outputArea').style.display='block';}
+function copyCode(){const ta=document.getElementById('outputCode');ta.select();document.execCommand('copy');const m=document.getElementById('copyMsg');m.style.display='inline';setTimeout(()=>m.style.display='none',2000);}
+function closeOutput(){document.getElementById('outputArea').style.display='none';}
+function loadFromPortfolio(){const inp=document.createElement('input');inp.type='file';inp.accept='.html';inp.onchange=function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const m=e.target.result.match(/const D = (\{[\s\S]*?\});\s*\n/);if(m){try{DATA=JSON.parse(m[1]);save();renderAll();alert('Загружено!');}catch(err){alert('Ошибка: '+err.message);}}else alert('Данные не найдены. Нужен файл portfolio_v15.html');};r.readAsText(f);};inp.click();}
+
+
+// Show admin if ?admin in URL
+if(window.ADMIN_MODE){
+  document.addEventListener('DOMContentLoaded',function(){
+    document.getElementById('ADMIN_ROOT').style.display='block';
+    if(sessionStorage.getItem('flux_auth')==='1'){
+      document.getElementById('pass-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+      load(); renderAll();
+    } else {
+      document.getElementById('pass-screen').style.display='flex';
+      setTimeout(function(){
+        var inp=document.getElementById('pass-input');
+        if(inp) inp.focus();
+      },100);
+    }
+  });
+}
+</script>
 <script>
 (function(){
 var SB="https://aqmsvdkerzbivglcqixa.supabase.co",SK="sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY";
