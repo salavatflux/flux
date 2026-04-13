@@ -93,7 +93,7 @@ img{display:block}
 #zoomOv{display:none;position:fixed;inset:0;z-index:10000;touch-action:none}
 #zoomOv.on{display:block}
 #zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-#zoomOvImg{position:absolute;display:block;user-select:none;-webkit-user-drag:none;touch-action:none;transform:none}
+#zoomOvImg{position:absolute;display:block;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;pointer-events:none}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
@@ -656,7 +656,6 @@ const APP=(()=>{
     }
     sw($('navM'),d=>setP(mp+d));
     sw($('hero'),d=>setP(mp+d));
-    sw($('papOuter'),d=>mvPap(d));
   }
   function setP(i){
     mp=Math.max(0,Math.min(1,i));
@@ -965,7 +964,7 @@ const APP=(()=>{
   }
 
   /* Series */
-  let sI=0, curSeries=-1, seriesMoving=false;
+  let sI=0, curSeries=-1;
   function openSeries(seriesIdx){
     curSeries=seriesIdx; sI=0;
     const s=D.paper[seriesIdx];
@@ -1016,12 +1015,12 @@ const APP=(()=>{
     updSA(s);
   }
   function mvSeries(d){resetZoom();
-    if(curSeries<0||seriesMoving)return;
+    if(curSeries<0)return;
     const s=D.paper[curSeries];
-    sI=cl(sI+d,0,s.works.length-1);
+    const total=s.works.length+((s.desc&&s.desc.trim())?1:0);
+    sI=cl(sI+d,0,total-1);
     $('papSeriesTrk').style.transform=`translateX(-${sI*100}%)`;
     updSA(s);
-    seriesMoving=true;setTimeout(()=>seriesMoving=false,520);
   }
   function updSA(s){
     const total=s.works.length+((s.desc&&s.desc.trim())?1:0);
@@ -1097,59 +1096,60 @@ const APP=(()=>{
   document.addEventListener('DOMContentLoaded',init);
   if(document.readyState!=='loading')init();
 
-  /* ══ LIGHTBOX ══
-     Единый модуль — работает одинаково во всех разделах.
-     Закрытие: тап вне картинки, пинч-уменьшение до fitScale, Escape, клик по фону (desktop).
-  ══ */
+  /* ══ LIGHTBOX ══ */
   const ZOOM=(()=>{
     const ov=$('zoomOv');
     const img=$('zoomOvImg');
     const PAD=40;
-    let srcs=[], cur=0;
-    // transform state — img позиционируется через left/top + scale, transform-origin:center center
-    let sc=1, cx=0, cy=0; // cx/cy = центр картинки в экранных координатах
+    let srcs=[],cur=0;
+    // state
+    let ox=0,oy=0,sc=1; // origin offset (top-left of image at scale 1) + scale
+    // touch tracking
+    let mode=''; // 'tap'|'pan'|'swipeX'|'swipeY'|'pinch'
+    let t1x=0,t1y=0,t2x=0,t2y=0; // start positions
+    let ox0=0,oy0=0,sc0=1,pd0=1,pmx=0,pmy=0; // pinch start state
 
-    /* ─ helpers ─ */
-    function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
-    function mid(a,b){return{x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2};}
+    /* image natural size */
+    function nw(){return img.naturalWidth||1;}
+    function nh(){return img.naturalHeight||1;}
+    function W(){return ov.offsetWidth;}
+    function H(){return ov.offsetHeight;}
 
-    function fitSc(){
-      const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
-      return Math.min((ov.offsetWidth-PAD*2)/nw,(ov.offsetHeight-PAD*2)/nh);
+    function fitSc(){return Math.min((W()-PAD*2)/nw(),(H()-PAD*2)/nh());}
+
+    /* clamp ox/oy so image doesn't wander off screen */
+    function clamp(){
+      const iw=nw()*sc, ih=nh()*sc;
+      if(iw<=W()) ox=(W()-iw)/2; else ox=Math.max(W()-iw,Math.min(0,ox));
+      if(ih<=H()) oy=(H()-ih)/2; else oy=Math.max(H()-ih,Math.min(0,oy));
     }
-    function clampCenter(){
-      const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
-      const W=ov.offsetWidth,H=ov.offsetHeight;
-      const hw=nw*sc/2,hh=nh*sc/2;
-      // если картинка уже экрана — центрируем; если шире — не выходим за экран
-      if(nw*sc<=W) cx=W/2; else cx=Math.max(hw,Math.min(W-hw,cx));
-      if(nh*sc<=H) cy=H/2; else cy=Math.max(hh,Math.min(H-hh,cy));
+
+    /* apply: img positioned at (ox,oy) with width=nw*sc via transform on a 0-sized element
+       We set img.style.left=ox, img.style.top=oy, img actual size = naturalSize,
+       then scale via transform-origin top-left */
+    function applyT(anim){
+      img.style.transition=anim?'transform .22s ease':'none';
+      img.style.transformOrigin='0 0';
+      img.style.left='0';
+      img.style.top='0';
+      img.style.width=nw()+'px';
+      img.style.height=nh()+'px';
+      img.style.transform=`translate(${ox}px,${oy}px) scale(${sc})`;
     }
-    function applyT(animate){
-      const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
-      // left/top = верхний левый угол
-      const left=cx-nw*sc/2, top=cy-nh*sc/2;
-      img.style.transition=animate?'left .22s ease,top .22s ease,width .22s ease':'none';
-      img.style.left=left+'px';
-      img.style.top=top+'px';
-      img.style.width=nw*sc+'px';
-      img.style.height=nh*sc+'px';
-      img.style.transform='none'; // не используем transform совсем
-    }
-    function doFit(animate){
-      const nw=img.naturalWidth,nh=img.naturalHeight;
-      if(!nw||!nh)return;
+
+    function doFit(anim){
       sc=fitSc();
-      cx=ov.offsetWidth/2;
-      cy=ov.offsetHeight/2;
-      applyT(!!animate);
+      ox=(W()-nw()*sc)/2;
+      oy=(H()-nh()*sc)/2;
+      applyT(!!anim);
     }
 
-    /* ─ load ─ */
+    /* load src, call cb when naturalWidth is ready */
     function loadSrc(src,cb){
       img.style.opacity='0';
       img.style.transition='none';
-      sc=1;cx=ov.offsetWidth/2;cy=ov.offsetHeight/2;
+      img.style.transform='none';
+      ox=0;oy=0;sc=1;
       const tmp=new Image();
       tmp.onload=tmp.onerror=()=>{
         img.onload=()=>{img.onload=null;cb();};
@@ -1158,161 +1158,126 @@ const APP=(()=>{
       };
       tmp.src=src;
     }
-    function showFit(){
-      doFit(false);
-      img.style.transition='opacity .2s';
-      img.style.opacity='1';
-    }
 
-    /* ─ public ─ */
+    function showFit(){doFit(false);img.style.transition='opacity .2s';img.style.opacity='1';}
+
     function open(list,idx){
-      srcs=list; cur=Math.max(0,Math.min(idx,list.length-1));
+      srcs=list;cur=Math.max(0,Math.min(idx,list.length-1));
+      mode='';
       ov.classList.add('on');
       loadSrc(srcs[cur],showFit);
     }
     function close(){
       ov.classList.remove('on');
-      srcs=[];cur=0;sc=1;
-      img.onload=null;img.src='';
-      img.style.opacity='0';
-      // сбросить touch state
-      tp1=null;tp2=null;mode='';
+      mode='';srcs=[];cur=0;sc=1;ox=0;oy=0;
+      img.onload=null;img.src='';img.style.opacity='0';
     }
     function goTo(idx){
       cur=Math.max(0,Math.min(idx,srcs.length-1));
       loadSrc(srcs[cur],showFit);
     }
 
-    /* ─ desktop ─ */
-    ov.addEventListener('click',e=>{
-      if(e.target===ov||e.target===$('zoomOvBg'))close();
-    });
+    /* desktop */
+    ov.addEventListener('click',e=>{if(e.target===ov||e.target===$('zoomOvBg'))close();});
     document.addEventListener('keydown',e=>{
       if(!ov.classList.contains('on'))return;
       if(e.key==='Escape')close();
-      if(e.key==='ArrowRight'&&cur<srcs.length-1)goTo(cur+1);
-      if(e.key==='ArrowLeft'&&cur>0)goTo(cur-1);
+      else if(e.key==='ArrowRight'&&cur<srcs.length-1)goTo(cur+1);
+      else if(e.key==='ArrowLeft'&&cur>0)goTo(cur-1);
     });
 
-    /* ─ touch ─
-       mode: '' | 'tap' | 'pan' | 'swipeX' | 'pinch'
-    */
-    let tp1=null,tp2=null,mode='';
-    let pinchStartSc,pinchStartCx,pinchStartCy,pinchStartDist,pinchMidX,pinchMidY;
-    let panStartCx,panStartCy,panStartPx,panStartPy;
-    let swipeStartX,swipeStartY,swipeDx;
-    let tapDownX,tapDownY;
-
+    /* ── touch ── */
     ov.addEventListener('touchstart',e=>{
+      if(!ov.classList.contains('on'))return;
       e.preventDefault();
+      e.stopPropagation();
       const tl=e.touches;
+
       if(tl.length>=2){
-        // pinch start
         mode='pinch';
-        tp1=tl[0];tp2=tl[1];
-        pinchStartDist=dist(tp1,tp2);
-        pinchStartSc=sc;
-        pinchStartCx=cx;pinchStartCy=cy;
-        const m=mid(tp1,tp2);
-        pinchMidX=m.x;pinchMidY=m.y;
+        t1x=tl[0].clientX;t1y=tl[0].clientY;
+        t2x=tl[1].clientX;t2y=tl[1].clientY;
+        pd0=Math.hypot(t2x-t1x,t2y-t1y)||1;
+        pmx=(t1x+t2x)/2; pmy=(t1y+t2y)/2;
+        ox0=ox;oy0=oy;sc0=sc;
       } else {
-        tp1=tl[0];tp2=null;
-        tapDownX=tl[0].clientX;tapDownY=tl[0].clientY;
-        const atFit=(sc<=fitSc()*1.06);
-        if(atFit){
-          mode='tap'; // may become 'swipeX'
-          swipeStartX=tl[0].clientX;swipeStartY=tl[0].clientY;swipeDx=0;
-        } else {
-          mode='pan';
-          panStartCx=cx;panStartCy=cy;
-          panStartPx=tl[0].clientX;panStartPy=tl[0].clientY;
-        }
+        const x=tl[0].clientX,y=tl[0].clientY;
+        t1x=x;t1y=y;
+        const atFit=sc<=fitSc()*1.05;
+        if(atFit){mode='tap';}
+        else{mode='pan';ox0=ox;oy0=oy;}
       }
-    },{passive:false});
+    },{passive:false,capture:true});
 
     ov.addEventListener('touchmove',e=>{
+      if(!ov.classList.contains('on'))return;
       e.preventDefault();
+      e.stopPropagation();
       const tl=e.touches;
+
       if(mode==='pinch'&&tl.length>=2){
-        const d=dist(tl[0],tl[1]);
-        const m=mid(tl[0],tl[1]);
-        const ns=Math.max(0.3,Math.min(8,pinchStartSc*(d/pinchStartDist)));
-        const ratio=ns/pinchStartSc;
-        // масштабируем вокруг начальной точки пинча
-        cx=pinchMidX+(pinchStartCx-pinchMidX)*ratio;
-        cy=pinchMidY+(pinchStartCy-pinchMidY)*ratio;
+        const x1=tl[0].clientX,y1=tl[0].clientY;
+        const x2=tl[1].clientX,y2=tl[1].clientY;
+        const pd=Math.hypot(x2-x1,y2-y1)||1;
+        const mx=(x1+x2)/2,my=(y1+y2)/2;
+        const ns=Math.max(0.25,Math.min(8,sc0*(pd/pd0)));
+        const r=ns/sc0;
+        // zoom toward initial pinch midpoint
+        ox=mx-(pmx-ox0)*r;
+        oy=my-(pmy-oy0)*r;
         sc=ns;
-        clampCenter();
         applyT(false);
-      } else if(mode==='pan'&&tl.length===1){
-        cx=panStartCx+(tl[0].clientX-panStartPx);
-        cy=panStartCy+(tl[0].clientY-panStartPy);
-        clampCenter();applyT(false);
-      } else if((mode==='tap'||mode==='swipeX')&&tl.length===1){
-        const dx=tl[0].clientX-swipeStartX;
-        const dy=tl[0].clientY-swipeStartY;
-        if(mode==='tap'&&(Math.abs(dx)>10||Math.abs(dy)>10)){
+      } else if(mode==='pan'){
+        ox=ox0+(tl[0].clientX-t1x);
+        oy=oy0+(tl[0].clientY-t1y);
+        clamp();applyT(false);
+      } else if(mode==='tap'||mode==='swipeX'||mode==='swipeY'){
+        const dx=tl[0].clientX-t1x,dy=tl[0].clientY-t1y;
+        if(mode==='tap'&&(Math.abs(dx)>8||Math.abs(dy)>8)){
           mode=Math.abs(dx)>=Math.abs(dy)?'swipeX':'swipeY';
         }
         if(mode==='swipeX'){
-          swipeDx=dx;
           img.style.transition='none';
-          // двигаем только горизонтально с сопротивлением
-          const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
-          img.style.left=(cx-nw*sc/2+swipeDx*0.4)+'px';
+          img.style.transform=`translate(${ox+dx*0.4}px,${oy}px) scale(${sc})`;
         }
       }
-    },{passive:false});
+    },{passive:false,capture:true});
 
     ov.addEventListener('touchend',e=>{
+      if(!ov.classList.contains('on'))return;
       e.preventDefault();
-      const remaining=e.touches.length;
+      e.stopPropagation();
+      const rem=e.touches.length;
+      const ct=e.changedTouches[0];
 
       if(mode==='pinch'){
-        if(remaining===0||remaining===1){
-          // закрыть если уменьшили ниже порога
-          if(sc<fitSc()*0.72){
-            close(); return;
-          }
-          // иначе — snap: если чуть ниже fit — вернуть к fit; иначе оставить
-          if(sc<fitSc()){doFit(true);}else{clampCenter();applyT(true);}
-          if(remaining===1){
-            // перейти в pan одним пальцем
-            mode='pan';
-            tp1=e.touches[0];tp2=null;
-            panStartCx=cx;panStartCy=cy;
-            panStartPx=e.touches[0].clientX;panStartPy=e.touches[0].clientY;
-          } else {
-            mode='';tp1=null;tp2=null;
-          }
+        if(sc<fitSc()*0.7){close();return;}
+        if(sc<fitSc()){doFit(true);}else{clamp();applyT(true);}
+        if(rem===1){
+          mode='pan';
+          t1x=e.touches[0].clientX;t1y=e.touches[0].clientY;
+          ox0=ox;oy0=oy;
+        } else {mode='';}
+      } else if(mode==='pan'){
+        clamp();applyT(true);mode='';
+      } else if(mode==='swipeX'){
+        const dx=ct.clientX-t1x;
+        if(Math.abs(dx)>60){
+          const next=cur+(dx<0?1:-1);
+          if(next>=0&&next<srcs.length){goTo(next);mode='';return;}
         }
-      } else if(mode==='pan'&&remaining===0){
-        mode='';clampCenter();applyT(true);
-      } else if(mode==='swipeX'&&remaining===0){
-        mode='';
-        if(Math.abs(swipeDx)>65){
-          const next=cur+(swipeDx<0?1:-1);
-          if(next>=0&&next<srcs.length)goTo(next);
-          else{clampCenter();applyT(true);}
-        } else {
-          clampCenter();applyT(true);
-        }
-        swipeDx=0;
-      } else if(mode==='tap'&&remaining===0){
-        mode='';
-        // простой тап — проверить попал ли на картинку
-        const ct=e.changedTouches[0];
-        const moved=Math.hypot(ct.clientX-tapDownX,ct.clientY-tapDownY);
+        applyT(true);mode='';
+      } else if(mode==='tap'){
+        // genuine tap — close if outside image rect
+        const moved=Math.hypot(ct.clientX-t1x,ct.clientY-t1y);
         if(moved<10){
-          // попадание по картинке через реальные CSS-координаты
-          const r=img.getBoundingClientRect();
-          const onImg=ct.clientX>=r.left&&ct.clientX<=r.right&&ct.clientY>=r.top&&ct.clientY<=r.bottom;
-          if(!onImg)close();
+          // image rect via its current transform: left=ox, top=oy, w=nw*sc, h=nh*sc
+          const il=ox,it=oy,ir=ox+nw()*sc,ib=oy+nh()*sc;
+          if(ct.clientX<il||ct.clientX>ir||ct.clientY<it||ct.clientY>ib){close();}
         }
-      } else if(remaining===0){
         mode='';
-      }
-    },{passive:false});
+      } else {mode='';}
+    },{passive:false,capture:true});
 
     return{open,close,isOpen:()=>ov.classList.contains('on')};
   })();
