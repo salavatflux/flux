@@ -625,6 +625,10 @@ const APP=(()=>{
 
     buildObj(); buildPap(); buildDig(); buildSta(); buildSt();
     initSwipe(); updLogo();
+    // Swipe handlers on track elements — only once, not in build functions
+    hsw($('objTrk'),d=>mvObj(d));
+    hsw($('digTrk'),d=>mvDig(d));
+    hsw($('papTrk'),d=>mvPap(d));
   }
 
   function setImg(s){bgImg.src=s;bgImg.style.display='block'}
@@ -926,7 +930,7 @@ const APP=(()=>{
           <div class="ann" id="oa${i}">${o.ann}</div>
         </div>
       </div>`;}).join('');
-    hsw(trk,d=>mvObj(d)); updOA();
+    updOA();
     setTimeout(()=>trk.querySelectorAll('.obj-img img').forEach(attachZoom),100);
   }
 
@@ -1060,7 +1064,6 @@ const APP=(()=>{
         </div>
       </div>`;
     }).join('');
-    hsw(trk, d=>mvDig(d));
     setTimeout(()=>trk.querySelectorAll('.dig-block-img img').forEach(attachZoom),100);
     updDA();
   }
