@@ -128,8 +128,8 @@ textarea{min-height:66px;line-height:1.6}
   <button class="tab on" onclick="switchTab('objects',this)">objects</button>
   <button class="tab" onclick="switchTab('paper',this)">paper series</button>
   <button class="tab" onclick="switchTab('digital',this)">digital</button>
-  <button class="tab" onclick="switchTab('statement',this)">statement</button>
-  <button class="tab" onclick="switchTab('cv',this)">CV / выставки</button>
+  <button class="tab" onclick="switchTab('statement',this)">about</button>
+  <button class="tab" onclick="switchTab('cv',this)">events / выставки</button>
   <button class="tab" onclick="switchTab('bg',this)">фон</button>
 </nav>
 
@@ -156,13 +156,16 @@ textarea{min-height:66px;line-height:1.6}
 </div>
 
 <div class="section" id="sec-statement">
-  <div class="notice"><strong>STATEMENT</strong>Каждое поле = один абзац авторского текста.</div>
+  <div class="notice"><strong>ABOUT</strong>Каждый блок — подраздел с заголовком. Тип «statement» выводит абзацы текста, тип «education» — список пунктов со значком •.</div>
   <div id="statement-list"></div>
-  <button class="add-btn" onclick="addStatementPara()">+ добавить абзац</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+    <button class="add-btn" style="flex:1;min-width:160px" onclick="addAboutSection('statement')">+ подраздел (текст)</button>
+    <button class="add-btn" style="flex:1;min-width:160px" onclick="addAboutSection('education')">+ подраздел (education •)</button>
+  </div>
 </div>
 
 <div class="section" id="sec-cv">
-  <div class="notice"><strong>CV / ВЫСТАВКИ</strong>Нажмите на ячейку чтобы загрузить фото. Нажмите на <b>S / M / L</b> чтобы изменить размер. × — удалить. + — добавить ячейку.</div>
+  <div class="notice"><strong>EVENTS / ВЫСТАВКИ</strong>Нажмите на ячейку чтобы загрузить фото. Нажмите на <b>S / M / L</b> чтобы изменить размер. × — удалить. + — добавить ячейку.</div>
   <div id="cv-list"></div>
   <button class="add-btn" onclick="addExhibition()">+ добавить выставку</button>
 </div>
@@ -237,7 +240,7 @@ let DATA={
   bg:'',
   objects:[{image:'',title:'«deconstruction»',price:'120.000₽',ann:'',meta:'бумага 200 г/м², цветные карандаши\nформат 210 x 148мм    2023 г.',orient:'h'}],
   paper:[{works:[{image:'',title:'«цвета 23»',href:'#',desc:'бумага 200 г/м², цветные карандаши',fmt:'формат 210 x 148мм',yr:'2023 г.',price:'40.000₽',ann:'',orient:'v',size:'A5'}]}],
-  statement:['Здесь будет текст statement.'],
+  statement:[{type:'section',heading:'statement',paras:['Здесь будет текст statement.']},{type:'section',heading:'education',edu:['']}],
   digital:[{h:'Argentum',sub:'s e r i e s',bg:'',blocks:[{type:'text',content:'Текст серии.'},{type:'image',src:''}],link:'',linkLabel:'посмотреть серию →'}],
   exhibitions:[{name:'exhibition1',desc:'место, год',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]}]
 };
@@ -446,17 +449,66 @@ function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigit
 function moveBlock(di,bi,d){const a=DATA.digital[di].blocks,ni=bi+d;if(ni<0||ni>=a.length)return;[a[bi],a[ni]]=[a[ni],a[bi]];save();renderDigital();}
 function addDigital(){DATA.digital.push({h:'',sub:'',bg:'',blocks:[{type:'text',content:''}],link:'',linkLabel:'посмотреть серию →'});save();renderDigital();}
 
-// STATEMENT
+// ABOUT
 function renderStatement(){
   const el=document.getElementById('statement-list');el.innerHTML='';
-  DATA.statement.forEach((p,i)=>{
+  DATA.statement.forEach((sec,i)=>{
+    if(typeof sec==='string') sec=DATA.statement[i]={type:'section',heading:'statement',paras:[sec]};
+    const isEdu=sec.edu!=null;
     const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">§${i+1}</span><span class="card-title">абзац</span><button class="del-btn" onclick="deleteItem('statement',${i})">удалить</button></div>
-    <div class="card-body single"><textarea style="min-height:90px" oninput="DATA.statement[${i}]=this.value;save()">${esc(p)}</textarea></div>`;
+    let innerHtml='';
+    if(isEdu){
+      const lines=(sec.edu||[]).join('\n');
+      innerHtml=`<div class="field">
+        <label>Пункты (каждая строка = один пункт •)</label>
+        <textarea style="min-height:110px" oninput="setEduLines(${i},this.value)">${esc(lines)}</textarea>
+      </div>`;
+    } else {
+      const paras=sec.paras||[];
+      innerHtml=paras.map((p,pi)=>`
+        <div class="field" style="position:relative">
+          <label>Абзац ${pi+1}</label>
+          <textarea style="min-height:80px" oninput="DATA.statement[${i}].paras[${pi}]=this.value;save()">${esc(p)}</textarea>
+          <button class="del-btn" style="position:absolute;top:0;right:0" onclick="delAboutPara(${i},${pi})">−</button>
+        </div>`).join('')+
+        `<button class="add-btn" style="margin-top:6px" onclick="addAboutPara(${i})">+ абзац</button>`;
+    }
+    c.innerHTML=`<div class="card-head">
+      <span class="card-num">${i+1}</span>
+      <span class="card-title">${esc(sec.heading||(isEdu?'education':'statement'))}</span>
+      <input type="text" value="${esc(sec.heading||'')}" placeholder="заголовок"
+        style="flex:1;max-width:200px;font-size:11px;padding:3px 7px;margin:0 8px;border:1px solid var(--bd);font-family:var(--f);letter-spacing:.04em;background:#fff;color:var(--bk);outline:none"
+        oninput="DATA.statement[${i}].heading=this.value;save()">
+      <button class="move-btn" onclick="moveItem('statement',${i},-1)">↑</button>
+      <button class="move-btn" onclick="moveItem('statement',${i},1)">↓</button>
+      <button class="del-btn" onclick="deleteItem('statement',${i})">удалить</button>
+    </div>
+    <div class="card-body single">${innerHtml}</div>`;
     el.appendChild(c);
   });
 }
-function addStatementPara(){DATA.statement.push('');save();renderStatement();}
+function setEduLines(i,val){
+  DATA.statement[i].edu=val.split('\n').map(s=>s.trim()).filter(Boolean);
+  save();
+}
+function addAboutPara(i){
+  if(!DATA.statement[i].paras)DATA.statement[i].paras=[];
+  DATA.statement[i].paras.push('');
+  save();renderStatement();
+}
+function delAboutPara(i,pi){
+  DATA.statement[i].paras.splice(pi,1);
+  save();renderStatement();
+}
+function addAboutSection(type){
+  if(type==='education'){
+    DATA.statement.push({type:'section',heading:'education',edu:['']});
+  } else {
+    DATA.statement.push({type:'section',heading:'statement',paras:['']});
+  }
+  save();renderStatement();
+}
+function addStatementPara(){addAboutSection('statement');}
 
 // CV
 function renderCV(){

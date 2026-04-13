@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<script>
-(function(){
-  if(!window.location.search.includes('admin')) return;
-  // Redirect to admin mode - replace page content after load
-  window.ADMIN_MODE = true;
-})();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>flux — Salavat Georgeman</title>
@@ -96,7 +89,11 @@ img{display:block}
 }
 .sp.open{opacity:1;pointer-events:auto}
 
-
+/* ── LIGHTBOX ── */
+#zoomOv{display:none;position:fixed;inset:0;z-index:8000;touch-action:none;cursor:zoom-out}
+#zoomOv.on{display:flex;align-items:center;justify-content:center}
+#zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#zoomOvImg{position:relative;z-index:1;max-width:calc(100% - 32px);max-height:calc(100vh - var(--nh) - 40px);object-fit:contain;display:block;pointer-events:auto;border-radius:2px;user-select:none;-webkit-user-drag:none;will-change:transform}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
@@ -233,6 +230,13 @@ img{display:block}
 #staScroll::-webkit-scrollbar{width:0}
 .sta-body{max-width:680px;margin:0 auto;padding:0 40px 80px;font-size:14px;letter-spacing:.05em;line-height:2;color:#333;text-align:justify;text-indent:2em}
 .sta-body p{margin-bottom:24px}.sta-body p:last-child{margin-bottom:0}
+.sta-section{margin-bottom:48px}
+.sta-section:last-child{margin-bottom:0}
+.sta-heading{font-size:14px;font-weight:600;letter-spacing:.10em;color:#111;margin-bottom:16px;text-indent:0;text-align:left}
+.sta-section p{margin-bottom:20px;text-indent:2em}
+.sta-edu-list{list-style:none;padding:0;margin:0}
+.sta-edu-list li{padding-left:1.4em;position:relative;margin-bottom:10px;font-size:14px;letter-spacing:.05em;line-height:2;color:#333;text-indent:0}
+.sta-edu-list li::before{content:'•';position:absolute;left:0;color:#111}
 
 
    - Slides in from right
@@ -346,10 +350,6 @@ img{display:block}
 }
 *{scrollbar-width:none}
 
-/* ══ ADMIN PANEL ══ */
-
-
-/* admin panel overlay */
 </style>
 </head>
 <body>
@@ -431,8 +431,8 @@ img{display:block}
   <button class="nb" data-s="pap" onclick="APP.toggle('pap')">paper series</button>
   <button class="nb" data-s="dig" onclick="APP.toggle('dig')">digital</button>
   <span class="nb-gap"></span>
-  <button class="nb" data-s="sta" onclick="APP.toggle('sta')">statement</button>
-  <button class="nb" data-s="cv" onclick="APP.toggle('cv')">CV</button>
+  <button class="nb" data-s="sta" onclick="APP.toggle('sta')">about</button>
+  <button class="nb" data-s="cv" onclick="APP.toggle('cv')">events</button>
 </nav>
 
 <!-- MOBILE NAV -->
@@ -444,8 +444,8 @@ img{display:block}
       <button class="nb" data-s="dig" onclick="APP.toggle('dig')">digital</button>
     </div>
     <div class="nmp nmp2">
-      <button class="nb" data-s="sta" onclick="APP.toggle('sta')">statement</button>
-      <button class="nb nb-cv" data-s="cv" onclick="APP.toggle('cv')">CV</button>
+      <button class="nb" data-s="sta" onclick="APP.toggle('sta')">about</button>
+      <button class="nb nb-cv" data-s="cv" onclick="APP.toggle('cv')">events</button>
     </div>
   </div>
 </div>
@@ -475,6 +475,9 @@ img{display:block}
 
 <!-- COPYRIGHT -->
 <div id="copy">© 2026 flux</div>
+
+<!-- ZOOM OVERLAY -->
+<div id="zoomOv"><div id="zoomOvBg"></div><img id="zoomOvImg" src="" alt=""></div>
 
 <!-- OBJECTS -->
 <div class="sp" id="secObj">
@@ -533,1411 +536,65 @@ img{display:block}
 </div>
 
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ══ DATA ══ */
 const D = {
-  "bg": "https://res.cloudinary.com/dbltupggx/image/upload/v1775079004/flux/a2rlypfidlzqwhjrrbhv.jpg",
-  "objects": [
-    {
-      "ann": "",
-      "meta": "металл, скотч, изолента, гелевая ручки\nформат 340 x 540мм  2025г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993438/flux/pxxhyjvb9iwud7bqumpf.jpg",
-      "price": "-",
-      "title": "«deconstruction»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, акрил, маркеры\n700 х 1500мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993541/flux/ne1zqyqlbuhb9mbnanru.jpg",
-      "price": "156.000₽",
-      "title": "«Алхимия»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, акрил, коллаж, маркеры\n800 х 800мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773146162/flux/m9yeznrrs914u53lazbm.jpg",
-      "price": "98.000₽",
-      "title": "«0рошение»",
-      "orient": "sq"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, карандаш\n600 х 800мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993626/flux/wkghaoslw8awkoqgrwks.jpg",
-      "price": "76.000₽",
-      "title": "«дихотомия»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, баллон, маркеры, гелевая ручка, коллаж\n500 х 800мм 2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993642/flux/zew2vcv3pxzyoyjcieev.jpg",
-      "price": "62.000₽",
-      "title": "«крючок»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, маркеры, коллаж\n600 х 600мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773146180/flux/h455gvzhcbv05iext6lb.jpg",
-      "price": "57.000₽",
-      "title": "«Эврика»",
-      "orient": "sq"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, акрил, маркеры\n550 х 1200мм  2024г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773146195/flux/fm6d5pug8fhr5cihxwrm.jpg",
-      "price": "52.000₽",
-      "title": "«от начала до конца»",
-      "orient": "h"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, акрил, маркеры\n500 х 500мм  2021г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773146292/flux/nbqynrzi6klcvlxsvix2.jpg",
-      "price": "42.000₽",
-      "title": "«знание»",
-      "orient": "sq"
-    },
-    {
-      "ann": "",
-      "meta": "фанера, грунт, акрил, гелевая ручка\n500 х 500мм  2021г.",
-      "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773146552/flux/xy99v9swwvdp94po2a84.jpg",
-      "price": "42.000₽",
-      "title": "«пламя»",
-      "orient": "h"
-    }
+  bg: '',
+  objects: [
+    { image:'', title:'«deconstruction»', price:'120.000₽', ann:'', meta:'бумага 200 г/м², цветные карандаши, гелевая ручка\nформат 210 x 148мм    2023 г.' },
+    { image:'', title:'«object 02»',       price:'90.000₽',  ann:'', meta:'смешанная техника\nформат 300 x 210мм    2024 г.' }
   ],
-  "paper": [
-    {
-      "desc": "",
-      "name": "Универсум метаморфоз",
-      "works": [
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 x 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линер\n",
-          "href": "#",
-          "size": "A5",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772906374448_Metamorph_on_art_space.jpg",
-          "price": "28.000₽",
-          "title": "«метаморф на выставке»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 x 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линер",
-          "href": "#",
-          "size": "A5",
-          "image": "https://aqmsvdkerzbivglcqixa.supabase.co/storage/v1/object/public/photos/1772906545895_metamorphs__crystals__seeds.JPEG",
-          "price": "28.000₽",
-          "title": "«метаморфы, кристаллы и семена»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772993739/flux/xn9xz56wmoqedphmq9yw.jpg",
-          "price": "28.000₽",
-          "title": "«философский камень»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994417/flux/o7cfzttfqve8y5ortugr.jpg",
-          "price": "28.000₽",
-          "title": "«запутанность»",
-          "orient": "v"
-        },
-        {
-          "yr": "2018 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994490/flux/d2f8rx75d7gygtbentmy.jpg",
-          "price": "28.000₽",
-          "title": "«экзотический букет»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994684/flux/uj2x88rp1espea2vxdce.jpg",
-          "price": "28.000₽",
-          "title": "«плоды»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994529/flux/qtvqvexmqrmkqngysqld.jpg",
-          "price": "28.000₽",
-          "title": "«креативный метеор»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994539/flux/tyf7tu8jlw7brak1dqjo.jpg",
-          "price": "28.000₽",
-          "title": "«путаница»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994534/flux/wejywyfh3ca1zqub4usl.jpg",
-          "price": "28.000₽",
-          "title": "«строительство мысли»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994514/flux/rdlfhdhgfy0svwf8mv5t.jpg",
-          "price": "28.000₽",
-          "title": "«прекрасный и непонятный мир метапознания»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994529/flux/hxy3dcmtunck9l4ikdyc.jpg",
-          "price": "28.000₽",
-          "title": "«фрагмент матрицы»",
-          "orient": "v"
-        },
-        {
-          "yr": "2019 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994532/flux/dwwuoqk9vkifuvp0kpom.jpg",
-          "price": "—",
-          "title": "«рождение духа»",
-          "orient": "v"
-        }
-      ],
-      "_collapsed": false
-    },
-    {
-      "name": "полевые потоки",
-      "works": [
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773071893/flux/c5jkcypivx1dbepczib3.jpg",
-          "price": "21.000₽",
-          "title": "«1»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773070053/flux/s85vori7dow7bzqydp3r.jpg",
-          "price": "21.000₽",
-          "title": "«2»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773071880/flux/hxtnmqucctbov4o1skrx.jpg",
-          "price": "21.000₽",
-          "title": "«3»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773071868/flux/kbqexf1nlp6avllubs64.jpg",
-          "price": "21.000₽",
-          "title": "«4»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773070287/flux/jjz8w8ir7rbqwqvt4tnd.jpg",
-          "price": "21.000₽",
-          "title": "«5»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773070363/flux/t3ijsjkf8gnbmivyyeqb.jpg",
-          "price": "21.000₽",
-          "title": "«6»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773070397/flux/kghbsmhco8gfto2j8rkr.jpg",
-          "price": "21.000₽",
-          "title": "«7»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773070469/flux/dht6xojleryz6z59dcvs.jpg",
-          "price": "21.000₽",
-          "title": "«8»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773070623/flux/c6luvy6llndoaxykmu9u.jpg",
-          "price": "21.000₽",
-          "title": "«9»",
-          "orient": "h"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², акрил, маркеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773070703/flux/yz2vgkhfzbheupohqzym.jpg",
-          "price": "21.000₽",
-          "title": "«10»",
-          "orient": "h"
-        }
-      ],
-      "_collapsed": true
-    },
-    {
-      "name": "материально-электронный хаос",
-      "works": [
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, линер, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773072203/flux/gws0iqfzhqvsonptykh1.jpg",
-          "price": "35.000₽",
-          "title": "«электроника»",
-          "orient": "v"
-        },
-        {
-          "yr": "2020 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 100 г/м², линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773072423/flux/ofb5m0qznk8wzvlgugd9.jpg",
-          "price": "35.000₽",
-          "title": "«сэмплы»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², линеры, карандаш",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773072717/flux/ixmpvsnrbbaf1rg4lx06.jpg",
-          "price": "35.000₽",
-          "title": "«свежий горный эмбиент»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевые ручки",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773072963/flux/n5kciggka9nqplvsmamp.jpg",
-          "price": "35.000₽",
-          "title": "«метаверсии»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773073800/flux/ybx5jyk8cyg40zcoqgrv.jpg",
-          "price": "35.000₽",
-          "title": "«без названия»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773074314/flux/i7fud3bfzrqskejmiunb.jpg",
-          "price": "35.000₽",
-          "title": "«саунд-коллаж воина»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 100 г/м², гелевые ручки",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773074458/flux/juhvzovrgajgoiydgpap.jpg",
-          "price": "35.000₽",
-          "title": "«объективный взгляд»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773074637/flux/s67ngrxx7pvoq70xjdfe.jpg",
-          "price": "35.000₽",
-          "title": "«техноорганика»",
-          "orient": "v"
-        }
-      ],
-      "_collapsed": true
-    },
-    {
-      "name": "органический хаос",
-      "works": [
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркер, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994543/flux/iymaeqbsprozwpm6thhv.jpg",
-          "price": "29.500₽",
-          "title": "«органический хаос»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркер, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994553/flux/mr5fjumr9u7akvb0hkjr.jpg",
-          "price": "29.500₽",
-          "title": "«квинтэссенция»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркер, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773054831/flux/iulhdobxiiey1rubyic7.jpg",
-          "price": "29.500₽",
-          "title": "«янтарное возмездие»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркер, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773058221/flux/nz5f3fyecw9z7arf0xnn.jpg",
-          "price": "29.500₽",
-          "title": "«происхождение»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, линер",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773058567/flux/sgticmygjji8iw4cgcng.jpg",
-          "price": "29.500₽",
-          "title": "«потоки»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, линер",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773058652/flux/bp6lcmdmsblny25li83y.jpg",
-          "price": "29.500₽",
-          "title": "«запутанности и волны»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, линер, ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773058773/flux/kgiwkeo6jzzeymahaa7w.jpg",
-          "price": "29.500₽",
-          "title": "«безграничость»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, линер",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773058873/flux/sffuewysx4yxdfpaugqm.jpg",
-          "price": "29.500₽",
-          "title": "«конструктор для сада»",
-          "orient": "v"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркер, линеры",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1772994835/flux/jzmdirimjlxei2irna2w.jpg",
-          "price": "29.500₽",
-          "title": "«паломничество»",
-          "orient": "h"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773059116/flux/tcyhv6pwivxeoeuyif2j.jpg",
-          "price": "29.500₽",
-          "title": "«планы»",
-          "orient": "h"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773059250/flux/mf7dbgnrvxy5g2v9zvey.jpg",
-          "price": "29.500₽",
-          "title": "«безмятежность»",
-          "orient": "h"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773059356/flux/btpbwunepxeizeisl5cj.jpg",
-          "price": "29.500₽",
-          "title": "«переход»",
-          "orient": "h"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773059632/flux/oxcevwovhjoo27lj1kx2.jpg",
-          "price": "28.500₽",
-          "title": "«субстанция1»",
-          "orient": "h"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773059496/flux/h1rhl9ydroimbojzpdei.jpg",
-          "price": "29.500₽",
-          "title": "«субстанция2»",
-          "orient": "h"
-        },
-        {
-          "yr": "2021 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², маркеры, гелевые ручки",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773059902/flux/ubxcebmlndxc50dpnkek.jpg",
-          "price": "29.500₽",
-          "title": "«субстанция3»",
-          "orient": "h"
-        }
-      ],
-      "_collapsed": true
-    },
-    {
-      "name": "первобытно-индустриальный хаос",
-      "works": [
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773060936/flux/nyuwdgskapnidfbajbwl.jpg",
-          "price": "32.000₽",
-          "title": "«архаика»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061060/flux/j0utkdh6wvxmdmkfcevr.jpg",
-          "price": "32.000₽",
-          "title": "«архаика2»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061125/flux/uy59vmimvkmqjicjnaqe.jpg",
-          "price": "32.000₽",
-          "title": "«архаика3»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061255/flux/h4vz2g1wcysqu9r0hgjn.jpg",
-          "price": "32.000₽",
-          "title": "«реликты»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061367/flux/nu9xbbi6ovss7kc3kqtx.jpg",
-          "price": "32.000₽",
-          "title": "«реликты2»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061459/flux/nagfvcdfnmh3xspaaw4l.jpg",
-          "price": "32.000₽",
-          "title": "«воин»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061607/flux/g6sp2yvv5iifckr5jtvz.jpg",
-          "price": "32.000₽",
-          "title": "«артефакты»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061699/flux/pxpsnvputgsvhg6eoxd7.jpg",
-          "price": "32.000₽",
-          "title": "«глифы»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773061779/flux/hdxbadhk17qfbojc2e7b.jpg",
-          "price": "32.000₽",
-          "title": "«глифы и артефакты»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², линеры, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773062558/flux/ojm7abv7n8dldwmx0fli.jpg",
-          "price": "32.000₽",
-          "title": "«формы»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773062599/flux/xz2dzkblidodaxfhun7v.jpg",
-          "price": "32.000₽",
-          "title": "«форма»",
-          "orient": "h"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063030/flux/kzlhpa8uwohsi75ka76k.jpg",
-          "price": "-",
-          "title": "«племенной»",
-          "orient": "h"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063176/flux/kcgmkgicihzz1ldiwok1.jpg",
-          "price": "32.000₽",
-          "title": "«ритуальное пространство»",
-          "orient": "h"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063553/flux/zkbcexxv8bktmvhuiijq.jpg",
-          "price": "32.000₽",
-          "title": "«осознание»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063616/flux/ewvgyxsujnkwwzfl4zes.jpg",
-          "price": "32.000₽",
-          "title": "«конструкция»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063463/flux/pkmacftb9xiifzhzhk8d.jpg",
-          "price": "32.000₽",
-          "title": "«экспансия»",
-          "orient": "h"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063685/flux/wkkm7nkkydi7bhoxbyyo.jpg",
-          "price": "33.000₽",
-          "title": "«трафик»",
-          "orient": "h"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063813/flux/os3kuxqlthjdbj8h5uwe.jpg",
-          "price": "32.000₽",
-          "title": "«реликт индастриал»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773063965/flux/co83hq7utwtvnnp8i8uf.jpg",
-          "price": "32.000₽",
-          "title": "«чувства водонапорных башен»",
-          "orient": "v"
-        }
-      ],
-      "_collapsed": true
-    },
-    {
-      "name": "формообразование",
-      "works": [
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773086956/flux/n2hfoilqahkk8wvubyfw.jpg",
-          "price": "16.000₽",
-          "title": "«№1»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773087477/flux/yu8dsxrg7ksoiveaynoa.jpg",
-          "price": "16.000₽",
-          "title": "«№2»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773087600/flux/xtv5oww7ipfzvi8tu3gt.jpg",
-          "price": "16.000₽",
-          "title": "«№3»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773087643/flux/vi8bpefrey0yqdlh7qgn.jpg",
-          "price": "16.000₽",
-          "title": "«№4»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773087871/flux/ab2gugsvvidyguwfty5p.jpg",
-          "price": "16.000₽",
-          "title": "«№5»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773087930/flux/bmzjggjnbkw19g0x0pux.jpg",
-          "price": "16.000₽",
-          "title": "«№6»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773087996/flux/vpxnrfdcw9t5mlbalsur.jpg",
-          "price": "16.000₽",
-          "title": "«№7»",
-          "orient": "v"
-        }
-      ],
-      "_collapsed": true
-    },
-    {
-      "name": "без названия",
-      "works": [
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773146879/flux/cdekdr4hfjlqupkh1mtj.jpg",
-          "price": "34.000₽",
-          "title": "«ритуальный космогенез»",
-          "orient": "v"
-        },
-        {
-          "yr": "2022 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², карандаш",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773146863/flux/axnkycn5ycml4bzpj4mh.jpg",
-          "price": "34.000₽",
-          "title": "«сакральное формообразование»",
-          "orient": "v"
-        }
-      ],
-      "_collapsed": false
-    },
-    {
-      "name": "самоцветы",
-      "works": [
-        {
-          "yr": "2023 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773082787/flux/iviovclcq0ogpey87vjb.jpg",
-          "price": "36.000₽",
-          "title": "«№1»",
-          "orient": "v"
-        },
-        {
-          "yr": "2023 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773083868/flux/w5t8ak7dps4krxpal5gw.jpg",
-          "price": "36.000₽",
-          "title": "«№2»",
-          "orient": "v"
-        },
-        {
-          "yr": "2023 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773083116/flux/ktxam8ajcmzfblyxczkz.jpg",
-          "price": "36.000₽",
-          "title": "«№3»",
-          "orient": "v"
-        },
-        {
-          "yr": "2023 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773083426/flux/l0lbt6miqvvfljoanmke.jpg",
-          "price": "36.000₽",
-          "title": "«№4»",
-          "orient": "v"
-        },
-        {
-          "yr": "2023 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773083562/flux/afu1ykpnxzknnbqo8in6.jpg",
-          "price": "36.000₽",
-          "title": "«№5»",
-          "orient": "v"
-        },
-        {
-          "yr": "2023 г.",
-          "ann": "",
-          "fmt": "210 х 148мм",
-          "desc": "бумага 200 г/м², цветные карандаши, гелевая ручка",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773083955/flux/nf2lo94mzkh1h2hjd2wb.jpg",
-          "price": "36.000₽",
-          "title": "«№6»",
-          "orient": "v"
-        }
-      ]
-    },
-    {
-      "name": "25-26",
-      "works": [
-        {
-          "yr": "2025 г.",
-          "ann": "",
-          "fmt": "297 х 210мм",
-          "desc": "бумага 200 г/м², гелевая и шариковая ручки",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773147650/flux/qcmbaaoydd0eytyxbjd0.jpg",
-          "price": "40.000₽",
-          "title": "«industrial_legacy»",
-          "orient": "h"
-        },
-        {
-          "yr": "2026 г.",
-          "ann": "",
-          "fmt": "297 х 210мм",
-          "desc": "бумага 200 г/м², гелевая и шариковая ручки",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773148267/flux/c07vyxkn2hxj9fluxj1e.jpg",
-          "price": "37.000₽",
-          "title": "«NY26»",
-          "orient": "h"
-        },
-        {
-          "yr": "2026 г.",
-          "ann": "",
-          "fmt": "297 х 210мм",
-          "desc": "бумага 200 г/м², гелевая и шариковая ручки",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773148445/flux/w3thcqcrxdkhucy2reqr.jpg",
-          "price": "38.000₽",
-          "title": "«0oo00oooooo000ooooo0oooooooo»",
-          "orient": "h"
-        },
-        {
-          "yr": "2026 г.",
-          "ann": "",
-          "fmt": "297 х 210₽",
-          "desc": "бумага 200 г/м², гелевая и шариковая ручки",
-          "href": "#",
-          "size": "A5",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773148799/flux/chppzmlvdtoptw6nvjot.jpg",
-          "price": "-",
-          "title": "«angel_guardians»",
-          "orient": "h"
-        },
-        {
-          "yr": "2025 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², гелевая ручка, карандаш",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773148940/flux/tydosctnyzdu7yxyxlr9.jpg",
-          "price": "18.000₽",
-          "title": "«avg1»",
-          "orient": "h"
-        },
-        {
-          "yr": "2025 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773149036/flux/cay2j4em8couicbfiahj.jpg",
-          "price": "18.000₽",
-          "title": "«avg2»",
-          "orient": "h"
-        },
-        {
-          "yr": "2025 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773149159/flux/uncqlyoq5xydbspckxyn.jpg",
-          "price": "18.000₽",
-          "title": "«avg3»",
-          "orient": "h"
-        },
-        {
-          "yr": "2025 г.",
-          "ann": "",
-          "fmt": "148 х 105мм",
-          "desc": "бумага 200 г/м², гелевая ручка",
-          "href": "#",
-          "size": "A6",
-          "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773149225/flux/pb3yvkdzje4ubosecn0r.jpg",
-          "price": "18.000₽",
-          "title": "«avg4»",
-          "orient": "h"
-        }
-      ]
-    }
+  paper: [
+    { name:'цвета', works:[
+      { image:'', title:'«цвета 23»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши, гелевая ручка', fmt:'формат 210 x 148мм', yr:'2023 г.', price:'40.000₽', ann:'', orient:'h', size:'A5' },
+      { image:'', title:'«цвета 24»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'45.000₽', ann:'', orient:'h', size:'A5' }
+    ]},
+    { name:'argentum', works:[
+      { image:'', title:'«argentum 01»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'35.000₽', ann:'', orient:'v', size:'A5' },
+      { image:'', title:'«argentum 02»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 148 x 105мм', yr:'2024 г.', price:'28.000₽', ann:'', orient:'v', size:'A6' }
+    ]}
   ],
-  "statement": [
-    "   Моё искусство основано на исследовании сознания и природы вещей, и того, что может являться причиной всех событий. Мне близка философия панпсихизма, где сознание не отделимо от мира, а является его первопричиной. Этот взгляд даёт мне восприятие себя как точки сознания в пространстве, сформировавшейся благодаря судьбе и природным механизмам, что раз за разом приводит к интересным инсайтам. В этом контексте можно сказать, что я работаю с процессуальностью.",
-    "   Понимание мира как единого целого связано для меня с понятием [эйдоса] — идеи, предшествующей любой физической форме. Эйдос — это инструмент позволяющий выразить глубинную сущность вещей; замысел, определяющий их существование. Это философское видение помогает мне исследовать форму вне времени, и время вне формы. Поэтому в своей практике я использую [момент] как пространство исследования, поскольку каждая форма, которая воспроизводится в моменте, является частью процесса движения, и, участвует в [органической генерации].",
-    "   В своих работах я стремлюсь передавать образы, которые не являются конкретными, но способны пробудить ассоциации и напомнить о чём-то важном или знакомом, чтобы погрузить зрителя в глубины бессознательного. Интуитивный подход в искусстве напоминает магию — процесс, в котором художник становится проводником скрытых сил. ",
-    "   Я работаю с разными медиумами (графика, инсталляции, музыка) и экспериментирую с материалами, такими как металл, дерево, пенополистирол. Однако основным направлением для меня служит цифровая и традиционная графика. В своей работе я стараюсь сочетать экспериментальные подходы и изучать свойства различных материалов для более тонкой передачи энергий."
+  statement: [
+    { type:'section', heading:'statement', paras:[
+      'Здесь будет текст statement — авторская позиция, художественное кредо.',
+      'Второй абзац statement.'
+    ]},
+    { type:'section', heading:'education', edu:[
+      'Образование, строка 1',
+      'Образование, строка 2'
+    ]}
   ],
-  "digital": [
-    {
-      "h": "",
-      "bg": "https://res.cloudinary.com/dbltupggx/image/upload/v1773670838/flux/sau4sozk7rtwmqgooqoi.jpg",
-      "sub": "",
-      "link": "https://objkt.com/collections/KT1RAFVdnegaQQFkitBixqKRsc8ZoYE575pf",
-      "blocks": [
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773153801/flux/ktcon3ohiz6jzxzcdmbv.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155415/flux/hy1pcjgs6npndbhkcsrt.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155704/flux/jhyfqx5tsvezzxwexo99.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155758/flux/xm9gl4knwp0zvnyhb7z3.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155899/flux/wdujcfznf3fdjatd33js.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155921/flux/lxneb6ouaehbpm8nwzjt.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155941/flux/umanmbcgxt9ow0fg8w1i.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155962/flux/clnbsout36x9iuqlgsnu.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773155986/flux/eb6qoe7xooar9nv8cque.jpg",
-          "type": "image"
-        },
-        {
-          "type": "text",
-          "content": "* пространство петроглифов\n* не силой, а искусством\n* среди оружия музы молчат\n* голод — учитель ремесел\n* жизнь коротка, искусство вечно"
-        }
-      ],
-      "linkLabel": "посмотреть серию →"
-    },
-    {
-      "h": "",
-      "bg": "https://res.cloudinary.com/dbltupggx/image/upload/v1773228370/flux/jr6uy5hbuqhwvwzpooab.jpg",
-      "sub": "",
-      "link": "https://objkt.com/collections/KT1M3iJTXuRLTGwiEELuxNNf28CwcR9wKWzX",
-      "blocks": [
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773164358/flux/sjl3qmhmup9dxeinsy4m.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162272/flux/ucrqg2eqqcphnwiljiwa.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162299/flux/hjbbrqys1fuau7zfwese.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162334/flux/zhyjnvcatn32dw9ake49.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162382/flux/i5onnuwg0h7ctpwveepa.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162665/flux/lgtfi1fsilzbc2zlozeh.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162712/flux/e9hjwrhub5neyblefpvu.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162767/flux/ltqclxygvdzgzhb23bxj.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162799/flux/ctdo2k5bvgtqcmarfili.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162884/flux/ypfo2qnhifpyssvj1d7c.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162920/flux/ifduxrlsjcqeqy6dvoqz.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162949/flux/k1sq2hcsv4zoei36fedz.jpg",
-          "type": "image"
-        },
-        {
-          "src": "https://res.cloudinary.com/dbltupggx/image/upload/v1773162982/flux/c6adp9i5h097cdrdk84o.jpg",
-          "type": "image"
-        }
-      ],
-      "linkLabel": "посмотреть серию →"
-    }
-  ],
-  "exhibitions": [
-    {
-      "desc": "поп-ап выставка / Сергиев-посад / 12.25",
-      "name": "«out put»",
-      "panes": [
-        {
-          "tiles": [
-            {
-              "sz": "M",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235683/flux/qmx7urvsnjoowhfgj5nl.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235698/flux/tp6rgwrpunfuhci2hluq.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235713/flux/osjydw6npzdhratilvhx.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235723/flux/dei0xnvpe25b6vejtfxm.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235734/flux/lllnuaxs7vivwivw8dtv.jpg"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "desc": "поп-ап проект / Москва / 09.2025",
-      "name": "«second batch of stock»",
-      "panes": [
-        {
-          "tiles": [
-            {
-              "sz": "M",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235535/flux/i6adu4fdcj18qoskxa9p.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235547/flux/vywcrzqwlcykpl8pwftj.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235559/flux/yzcb9cdvpu0lwsobz28c.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235578/flux/fvahbgvxamt4tr5rjntm.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235587/flux/uvxs3cs4c3axun8r5qif.jpg"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "desc": "поп-ап выставка / Москва / 10.2024",
-      "name": "«fractal fractalovich»",
-      "panes": [
-        {
-          "tiles": [
-            {
-              "sz": "L",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773234020/flux/wf89fg8lbmwtowqghig4.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773234063/flux/rdfixmaoc9euw9h9tygw.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235314/flux/s7ous7dmss4pqvu8brvx.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773235326/flux/y07ykaifg2ad6zhk4sse.jpg"
-            },
-            {
-              "sz": "S",
-              "text": "фото",
-              "image": "https://res.cloudinary.com/dbltupggx/image/upload/v1773236218/flux/lyiopzjb08oybqngc1og.jpg"
-            }
-          ]
-        }
-      ]
-    }
+  digital: [{
+    h:'Argentum', sub:'s e r i e s',
+    bg:'',
+    blocks:[
+      {type:'text', content:'Argentum is a monochrome series of digital graphics, in which the form becomes a way to experience and fix internal states.'},
+      {type:'image', src:''},
+      {type:'text', content:'Each work is an independent structure born of intuitive search and contemplation.\n\nThe series refers to the alchemy of perception: through the interaction of lines and masses, through reflections and conflicts, a new symbolic language is born.'},
+      {type:'image', src:''}
+    ],
+    link:'', linkLabel:'посмотреть серию →'
+  }],
+  /* Tile sizes: S=1×1  M=2×1  L=2×2
+     Click tile to cycle S→M→L→S        */
+  exhibitions: [
+    { name:'exhibition1', desc:'краткое описание выставки — место, год', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'L'}] },
+      { tiles:[{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'M'}] }
+    ]},
+    { name:'paper series 2023', desc:'галерея flux, Москва, 2023', panes:[
+      { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}] }
+    ]}
   ]
 };
 
 /* ══ APP ══ */
+
+  // Auto-optimize Cloudinary URLs
+  function clOpt(url){
+    if(!url||!url.includes('res.cloudinary.com'))return url;
+    return url.replace('/upload/','/upload/q_auto,f_auto,w_1600/');
+  }
 const APP=(()=>{
   const BP=768;
   let mp=0,oI=0,pI=0,sec=null,stO=false,papReversed=false;
@@ -2049,8 +706,20 @@ const APP=(()=>{
 
   /* Build Statement text */
   function buildSta(){
-    const staParas=D.statement.flatMap(p=>p.split(/\n+/).map(s=>s.trim()).filter(Boolean));
-    $('staScroll').innerHTML=`<div class="sta-body">${staParas.map(p=>`<p>${p}</p>`).join('')}</div>`;
+    const html=D.statement.map(sec=>{
+      if(!sec||typeof sec==='string'){
+        // legacy plain string fallback
+        return`<div class="sta-section"><p>${sec}</p></div>`;
+      }
+      let inner='';
+      if(sec.edu){
+        inner=`<ul class="sta-edu-list">${sec.edu.map(e=>`<li>${e}</li>`).join('')}</ul>`;
+      } else {
+        inner=(sec.paras||[]).map(p=>`<p>${p}</p>`).join('');
+      }
+      return`<div class="sta-section"><div class="sta-heading">${sec.heading||''}</div>${inner}</div>`;
+    }).join('');
+    $('staScroll').innerHTML=`<div class="sta-body">${html}</div>`;
     hsw($('staScroll'), d=>secNav(d));
   }
 
@@ -2216,7 +885,7 @@ const APP=(()=>{
       snap(cur,velX);
     });
   }
-  function mvObj(d){
+  function mvObj(d){resetZoom();
     if(d===1&&oI>=D.objects.length-1){secNav(1);return;}
     if(d===-1&&oI===0){secNav(-1);return;}
     oI=cl(oI+d,0,D.objects.length-1);$('objTrk').style.transform=`translateX(-${oI*100}%)`;updOA();
@@ -2225,7 +894,7 @@ const APP=(()=>{
 
   /* Paper */
   function getPapList(){return papReversed?[...D.paper].reverse():D.paper}
-  function mvPap(d){
+  function mvPap(d){resetZoom();
     const list=getPapList();
     if(d===1&&pI>=list.length-1){secNav(1);return;}
     if(d===-1&&pI===0){secNav(-1);return;}
@@ -2258,6 +927,7 @@ const APP=(()=>{
         </div>
       </div>`;}).join('');
     hsw(trk,d=>mvObj(d)); updOA();
+    setTimeout(()=>trk.querySelectorAll('.obj-img img').forEach(attachZoom),100);
   }
 
   /* Build Paper */
@@ -2286,6 +956,7 @@ const APP=(()=>{
         </div>
       </div>`;}).join('');
     updPA();
+    setTimeout(()=>trk.querySelectorAll('.pap-img img').forEach(attachZoom),100);
   }
 
   /* Series */
@@ -2337,9 +1008,10 @@ const APP=(()=>{
     trk.innerHTML=workSlides.join('')+descSlide;
     trk.style.transform='translateX(0)';
     hsw(trk, d=>mvSeries(d));
+    setTimeout(()=>trk.querySelectorAll('.pap-series-img img').forEach(attachZoom),100);
     updSA(s);
   }
-  function mvSeries(d){
+  function mvSeries(d){resetZoom();
     if(curSeries<0||seriesMoving)return;
     const s=D.paper[curSeries];
     sI=cl(sI+d,0,s.works.length-1);
@@ -2355,7 +1027,7 @@ const APP=(()=>{
 
   /* Digital */
   let dI=0;
-  function mvDig(d){
+  function mvDig(d){resetZoom();
     if(d===1&&dI>=D.digital.length-1){secNav(1);return;}
     if(d===-1&&dI===0){secNav(-1);return;}
     dI=cl(dI+d,0,D.digital.length-1);
@@ -2379,7 +1051,7 @@ const APP=(()=>{
         return'';
       }).join('');
       const linkHtml=p.link?`<a class="dig-link" href="${p.link}" target="_blank">${p.linkLabel||'подробнее →'}</a>`:'';
-      return`<div class="dig-slide" ${bgStyle?`style="${bgStyle}"`:''}">
+      return`<div class="dig-slide" ${bgStyle?`style="${bgStyle}"`:''}>
         <div class="dig-inner">
           ${p.h?`<div class="dig-h">${p.h}</div>`:''}
           ${p.sub?`<div class="dig-sub">${p.sub}</div>`:''}
@@ -2389,6 +1061,7 @@ const APP=(()=>{
       </div>`;
     }).join('');
     hsw(trk, d=>mvDig(d));
+    setTimeout(()=>trk.querySelectorAll('.dig-block-img img').forEach(attachZoom),100);
     updDA();
   }
 
@@ -2417,756 +1090,117 @@ const APP=(()=>{
   document.addEventListener('DOMContentLoaded',init);
   if(document.readyState!=='loading')init();
 
-  return{open,close,home,toggle,openSt,closeSt,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann,togglePapOrder};
+  /* ══ LIGHTBOX ══ */
+  const ZOOM=(()=>{
+    const ov=$('zoomOv');
+    const imgEl=$('zoomOvImg');
+    let srcs=[], cur=0;
+    // swipe state
+    let swX=0, swY=0, swDx=0, swiping=false, swMoved=false;
+
+    function open(srcList, idx){
+      srcs=srcList; cur=idx;
+      imgEl.src=srcs[cur];
+      imgEl.style.transform='';
+      ov.classList.add('on');
+      document.body.style.overflow='hidden';
+    }
+
+    function close(){
+      ov.classList.remove('on');
+      document.body.style.overflow='';
+      srcs=[]; cur=0;
+      imgEl.style.transform='';
+    }
+
+    function go(dir){
+      const next=cur+dir;
+      if(next<0||next>=srcs.length) return;
+      // slide out current
+      imgEl.style.transition='transform .18s cubic-bezier(.25,.46,.45,.94)';
+      imgEl.style.transform=`translateX(${dir<0?'60px':'-60px'}) scale(.92)`;
+      setTimeout(()=>{
+        cur=next;
+        imgEl.style.transition='none';
+        imgEl.style.transform=`translateX(${dir<0?'-60px':'60px'}) scale(.92)`;
+        imgEl.src=srcs[cur];
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          imgEl.style.transition='transform .18s cubic-bezier(.25,.46,.45,.94)';
+          imgEl.style.transform='';
+        }));
+      },170);
+    }
+
+    // Close on backdrop tap
+    $('zoomOvBg').addEventListener('click', close);
+    // Prevent close when tapping image itself
+    imgEl.addEventListener('click', e=>e.stopPropagation());
+
+    // Touch swipe on overlay
+    ov.addEventListener('touchstart',e=>{
+      if(e.touches.length!==1) return;
+      swX=e.touches[0].clientX; swY=e.touches[0].clientY;
+      swDx=0; swiping=true; swMoved=false;
+    },{passive:true});
+
+    ov.addEventListener('touchmove',e=>{
+      if(!swiping||e.touches.length!==1) return;
+      const dx=e.touches[0].clientX-swX;
+      const dy=e.touches[0].clientY-swY;
+      // Only handle if clearly horizontal
+      if(!swMoved && Math.abs(dy)>Math.abs(dx)) {swiping=false;return;}
+      if(Math.abs(dx)>6){
+        swMoved=true;
+        e.preventDefault(); // prevent scroll only when horizontal
+        swDx=dx;
+        imgEl.style.transition='none';
+        imgEl.style.transform=`translateX(${dx*0.35}px)`;
+      }
+    },{passive:false});
+
+    ov.addEventListener('touchend',e=>{
+      if(!swiping) return;
+      swiping=false;
+      imgEl.style.transition='transform .18s cubic-bezier(.25,.46,.45,.94)';
+      imgEl.style.transform='';
+      if(swMoved && Math.abs(swDx)>50){
+        go(swDx<0?1:-1);
+      }
+      swMoved=false;
+    },{passive:true});
+
+    // Keyboard
+    document.addEventListener('keydown',e=>{
+      if(!ov.classList.contains('on')) return;
+      if(e.key==='Escape') close();
+      if(e.key==='ArrowRight') go(1);
+      if(e.key==='ArrowLeft') go(-1);
+    });
+
+    return{open,close,isOpen:()=>ov.classList.contains('on')};
+  })();
+
+  // Collect all images in same container as siblings
+  function attachZoom(imgElNode){
+    if(!imgElNode||!imgElNode.src||imgElNode.dataset.zb) return;
+    imgElNode.dataset.zb='1';
+    imgElNode.style.cursor='zoom-in';
+    imgElNode.addEventListener('click',e=>{
+      e.stopPropagation();
+      // gather sibling images in same track/slide
+      const container=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
+      const all=[...container.querySelectorAll('img[data-zb]')].filter(i=>i.src&&!i.src.endsWith('#'));
+      const idx=all.indexOf(imgElNode);
+      ZOOM.open(all.map(i=>i.src), idx<0?0:idx);
+    });
+  }
+
+  function resetZoom(){if(ZOOM.isOpen()) ZOOM.close();}
+
+    return{open,close,home,toggle,openSt,closeSt,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann,togglePapOrder};
 })();
 </script>
 
-
-<!-- ADMIN PANEL (hidden unless ?admin) -->
-<div id="ADMIN_ROOT" style="display:none;position:fixed;inset:0;z-index:99999;background:#fff;overflow:auto">
-  <style>
-#pass-screen{position:fixed;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:16px}
-#pass-screen h2{color:#fff;font-size:13px;letter-spacing:.25em;font-weight:400;font-family:'Source Code Pro',monospace}
-#pass-screen input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.3);color:#fff;font-family:'Source Code Pro',monospace;font-size:16px;letter-spacing:.15em;padding:8px 4px;width:220px;outline:none;text-align:center}
-#pass-screen input:focus{border-bottom-color:#e8501a}
-#pass-screen button{margin-top:8px;padding:8px 24px;background:#e8501a;border:none;color:#fff;font-family:'Source Code Pro',monospace;font-size:11px;letter-spacing:.15em;cursor:pointer}
-#pass-error{color:#e8501a;font-size:10px;letter-spacing:.15em;font-family:'Source Code Pro',monospace;display:none}
-#app{display:none}
-</style>
-  <div id="pass-screen">
-  <h2>FLUX — ADMIN</h2>
-  <input id="pass-input" type="password" placeholder="пароль" autocomplete="off">
-  <button onclick="checkPassword()">войти</button>
-  <span id="pass-error">неверный пароль</span>
-</div>
-  <div id="app" style="display:none">
-    
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--f:'Source Code Pro',monospace;--or:#e8501a;--bk:#111;--gy:#888;--lt:#f5f5f3;--bd:#e0e0e0}
-body{font-family:var(--f);background:var(--lt);color:var(--bk);min-height:100vh;padding-bottom:80px}
-header{background:var(--bk);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
-header h1{font-size:13px;letter-spacing:.2em;font-weight:400}
-.hbtn{padding:7px 15px;font-family:var(--f);font-size:11px;letter-spacing:.12em;cursor:pointer;border:none;background:var(--or);color:#fff;transition:opacity .2s;white-space:nowrap}
-.hbtn:hover{opacity:.8}
-.hbtn.sec{background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.8)}
-#saveStatus{font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-left:auto}
-nav.tabs{display:flex;border-bottom:2px solid var(--bd);background:#fff;padding:0 20px;overflow-x:auto}
-.tab{padding:12px 18px;font-family:var(--f);font-size:11px;letter-spacing:.14em;cursor:pointer;border:none;background:none;color:var(--gy);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s,border-color .2s}
-.tab.on{color:var(--or);border-bottom-color:var(--or)}
-.section{display:none;padding:22px}
-.section.on{display:block}
-.card{background:#fff;border:1px solid var(--bd);margin-bottom:13px}
-.card-head{display:flex;align-items:center;padding:11px 13px;gap:9px;border-bottom:1px solid var(--bd);background:#fafaf8}
-.card-num{font-size:10px;color:var(--gy);letter-spacing:.1em;min-width:18px}
-.card-title{font-size:12px;letter-spacing:.07em;flex:1}
-.card-body{padding:13px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.card-body.single{grid-template-columns:1fr}
-@media(max-width:600px){.card-body{grid-template-columns:1fr}}
-label{display:block;font-size:9px;letter-spacing:.15em;color:var(--gy);margin-bottom:4px;text-transform:uppercase}
-input[type=text],textarea,select{width:100%;font-family:var(--f);font-size:12px;letter-spacing:.04em;border:1px solid var(--bd);padding:7px 9px;background:#fff;color:var(--bk);outline:none;transition:border-color .2s;resize:vertical}
-input[type=text]:focus,textarea:focus,select:focus{border-color:var(--or)}
-textarea{min-height:66px;line-height:1.6}
-.field{display:flex;flex-direction:column;gap:3px}
-/* img upload — contain, no crop */
-.img-upload{border:1px dashed var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;position:relative;overflow:hidden;background:#f8f8f8;transition:border-color .2s;min-height:110px}
-.img-upload:hover{border-color:var(--or)}
-.img-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;touch-action:pinch-zoom}
-.img-upload .img-label{font-size:10px;letter-spacing:.09em;color:var(--gy);position:relative;z-index:1;text-align:center;padding:10px}
-.img-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
-.img-upload .img-clear{position:absolute;top:4px;right:4px;z-index:3;background:rgba(0,0,0,.5);color:#fff;border:none;width:20px;height:20px;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
-.img-upload.has-img .img-clear{display:flex}
-.img-upload.has-img .img-label{opacity:0}
-.img-hint{font-size:9px;color:#bbb;letter-spacing:.07em;margin-top:2px;font-style:italic}
-.orient-btns{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px}
-.orient-btn{padding:5px 10px;font-family:var(--f);font-size:9px;letter-spacing:.11em;border:1px solid var(--bd);background:#fff;cursor:pointer;color:var(--gy);transition:all .15s}
-.orient-btn.on{border-color:var(--or);background:var(--or);color:#fff}
-/* digital block editor */
-.block-list{display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
-.block-item{border:1px solid var(--bd);background:#fafaf8;display:flex;align-items:stretch}
-.block-item-side{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px 3px;gap:3px;background:#f0f0ee;border-right:1px solid var(--bd);min-width:26px}
-.block-type-badge{font-size:7px;letter-spacing:.08em;color:var(--gy);writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg)}
-.block-item-body{flex:1;padding:9px}
-.bmv{background:none;border:none;cursor:pointer;font-size:11px;color:var(--gy);padding:1px;line-height:1;transition:color .15s}
-.bmv:hover{color:var(--bk)}
-.bdl{background:none;border:none;cursor:pointer;font-size:13px;color:#ccc;padding:1px;line-height:1;transition:color .15s;margin-top:auto}
-.bdl:hover{color:#c00}
-.add-block-btns{display:flex;gap:6px;flex-wrap:wrap}
-.add-block-btn{padding:6px 13px;font-family:var(--f);font-size:10px;letter-spacing:.11em;border:1px dashed var(--bd);background:none;cursor:pointer;color:var(--gy);transition:all .15s}
-.add-block-btn:hover{border-color:var(--or);color:var(--or)}
-/* tiles */
-.tile-grid-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin:8px 0}
-.tile-item{background:#e4e4e4;position:relative;cursor:pointer;overflow:hidden}
-.tile-item.sz-S{grid-column:span 1;aspect-ratio:1}
-.tile-item.sz-M{grid-column:span 2;aspect-ratio:2}
-.tile-item.sz-L{grid-column:span 2;grid-row:span 2;aspect-ratio:1}
-.tile-item img{width:100%;height:100%;object-fit:cover;display:block}
-.tile-item input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
-.tile-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#bbb;pointer-events:none}
-.tile-sz-badge{position:absolute;top:2px;left:2px;background:rgba(0,0,0,.45);color:#fff;font-size:8px;padding:1px 4px;letter-spacing:.07em;font-family:var(--f);z-index:3;cursor:pointer;user-select:none}
-.tile-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.45);color:#fff;border:none;width:17px;height:17px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3}
-.tile-add-btn{grid-column:span 1;aspect-ratio:1;border:1px dashed var(--bd);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc;transition:all .15s;font-family:var(--f)}
-.tile-add-btn:hover{border-color:var(--or);color:var(--or)}
-.add-btn{display:flex;align-items:center;gap:8px;padding:10px 13px;border:1px dashed var(--bd);background:none;cursor:pointer;font-family:var(--f);font-size:10px;letter-spacing:.13em;color:var(--gy);width:100%;transition:all .15s;margin-top:5px}
-.add-btn:hover{border-color:var(--or);color:var(--or)}
-.del-btn{padding:4px 8px;font-family:var(--f);font-size:9px;letter-spacing:.1em;border:1px solid #ddd;background:none;cursor:pointer;color:#bbb;transition:all .15s}
-.del-btn:hover{background:#c00;color:#fff;border-color:#c00}
-.move-btn{padding:4px 7px;font-family:var(--f);font-size:11px;border:1px solid var(--bd);background:none;cursor:pointer;color:var(--gy);transition:all .15s}
-.move-btn:hover{border-color:var(--bk);color:var(--bk)}
-#outputArea{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);overflow:auto}
-.output-box{background:#fff;max-width:660px;margin:36px auto;padding:26px}
-.output-box h2{font-size:12px;letter-spacing:.2em;font-weight:400;margin-bottom:9px}
-.output-box p{font-size:11px;letter-spacing:.04em;color:#666;line-height:1.7;margin-bottom:11px}
-.output-box textarea{width:100%;height:260px;font-size:11px;line-height:1.5;font-family:monospace;border:1px solid var(--bd);padding:9px;resize:none}
-.output-actions{display:flex;gap:9px;margin-top:11px;align-items:center}
-.notice{background:#fff8f0;border-left:3px solid var(--or);padding:9px 13px;font-size:11px;letter-spacing:.04em;line-height:1.7;margin-bottom:16px;color:#555}
-.notice strong{display:block;font-size:9px;letter-spacing:.2em;margin-bottom:2px;color:var(--or)}
-</style>
-</head>
-<body>
-<header>
-  <h1>FLUX — ADMIN</h1>
-  <button class="hbtn" onclick="generateCode()">⬇ сгенерировать код</button>
-  <button class="hbtn sec" onclick="loadFromPortfolio()">⬆ из portfolio.html</button>
-  <span id="saveStatus">авто-сохранение</span>
-</header>
-<nav class="tabs">
-  <button class="tab on" onclick="switchTab('objects',this)">objects</button>
-  <button class="tab" onclick="switchTab('paper',this)">paper series</button>
-  <button class="tab" onclick="switchTab('digital',this)">digital</button>
-  <button class="tab" onclick="switchTab('statement',this)">statement</button>
-  <button class="tab" onclick="switchTab('cv',this)">CV / выставки</button>
-  <button class="tab" onclick="switchTab('bg',this)">фон</button>
-</nav>
-
-<div class="section on" id="sec-objects">
-  <div class="notice"><strong>OBJECTS</strong>Нажмите на серый прямоугольник чтобы загрузить фото. Изображение показывается целиком, не обрезается. На мобильном — два пальца для увеличения. Ориентация задаёт пропорции рамки.</div>
-  <div id="objects-list"></div>
-  <button class="add-btn" onclick="addObject()">+ добавить работу</button>
-</div>
-
-<div class="section" id="sec-paper">
-  <div class="notice"><strong>PAPER SERIES</strong>Укажите ориентацию (вертикаль / горизонталь) и формат (A5 / A6) — это задаёт пропорции рамки изображения.</div>
-  <div id="paper-list"></div>
-  <button class="add-btn" onclick="addPaper()">+ добавить работу</button>
-</div>
-
-<div class="section" id="sec-digital">
-  <div class="notice"><strong>DIGITAL</strong>Каждая серия — отдельный слайд, листается стрелками. Внутри — лента из текстовых блоков и фотографий в любом порядке. Можно задать фоновое изображение (полупрозрачное) и кнопку-ссылку внизу.</div>
-  <div id="digital-list"></div>
-  <button class="add-btn" onclick="addDigital()">+ добавить серию</button>
-</div>
-
-<div class="section" id="sec-statement">
-  <div class="notice"><strong>STATEMENT</strong>Каждое поле = один абзац авторского текста.</div>
-  <div id="statement-list"></div>
-  <button class="add-btn" onclick="addStatementPara()">+ добавить абзац</button>
-</div>
-
-<div class="section" id="sec-cv">
-  <div class="notice"><strong>CV / ВЫСТАВКИ</strong>Нажмите на ячейку чтобы загрузить фото. Нажмите на <b>S / M / L</b> чтобы изменить размер. × — удалить. + — добавить ячейку.</div>
-  <div id="cv-list"></div>
-  <button class="add-btn" onclick="addExhibition()">+ добавить выставку</button>
-</div>
-
-<div class="section" id="sec-bg">
-  <div class="notice"><strong>ФОНОВОЕ ФОТО</strong>Загрузите фото для главного экрана.</div>
-  <div class="card"><div class="card-body single">
-    <div class="field">
-      <label>Изображение</label>
-      <div class="img-upload" id="bg-upload" style="min-height:180px" onclick="document.getElementById('bg-file').click()">
-        <img id="bg-preview" src="" style="display:none">
-        <div class="img-label">нажмите чтобы загрузить</div>
-        <input id="bg-file" type="file" accept="image/*" onchange="loadBg(this)" onclick="event.stopPropagation()" style="display:none">
-        <button class="img-clear" onclick="clearBg(event)">×</button>
-      </div>
-    </div>
-  </div></div>
-</div>
-
-<div id="outputArea">
-  <div class="output-box">
-    <h2>КОД ДЛЯ ВСТАВКИ В PORTFOLIO_V15.HTML</h2>
-    <p>Найдите строку <code>const D = {</code> и замените весь блок до закрывающей <code>};</code> на этот код:</p>
-    <textarea id="outputCode" readonly></textarea>
-    <div class="output-actions">
-      <button class="hbtn" onclick="copyCode()">📋 копировать</button>
-      <span id="copyMsg" style="font-size:11px;color:green;display:none;letter-spacing:.08em">✓ скопировано</span>
-      <button class="hbtn sec" style="margin-left:auto" onclick="closeOutput()">закрыть</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ═══════════════════════════════════════════
-// ПАРОЛЬ — замените на свой хэш.
-// Как сменить: откройте консоль браузера (F12),
-// введите: fluxHash('ваш_новый_пароль') и скопируйте результат сюда.
-// ═══════════════════════════════════════════
-const PASS_HASH = 'b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576b4dd66caca2a3efb'; // пароль: flux2024
-
-async function fluxHash(s){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-async function checkPassword(){
-  const input = document.getElementById('pass-input').value;
-  const hash = await fluxHash(input);
-  if(hash === PASS_HASH){
-    document.getElementById('pass-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    sessionStorage.setItem('flux_auth','1');
-    load(); renderAll();
-  } else {
-    document.getElementById('pass-error').style.display='block';
-    document.getElementById('pass-input').value='';
-    document.getElementById('pass-input').focus();
-  }
-}
-
-// Check if already authenticated this session
-window.addEventListener('DOMContentLoaded', ()=>{
-  if(sessionStorage.getItem('flux_auth')==='1'){
-    document.getElementById('pass-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    load(); renderAll();
-  }
-  document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
-});
-let DATA={
-  bg:'',
-  objects:[{image:'',title:'«deconstruction»',price:'120.000₽',ann:'',meta:'бумага 200 г/м², цветные карандаши\nформат 210 x 148мм    2023 г.',orient:'h'}],
-  paper:[{works:[{image:'',title:'«цвета 23»',href:'#',desc:'бумага 200 г/м², цветные карандаши',fmt:'формат 210 x 148мм',yr:'2023 г.',price:'40.000₽',ann:'',orient:'v',size:'A5'}]}],
-  statement:['Здесь будет текст statement.'],
-  digital:[{h:'Argentum',sub:'s e r i e s',bg:'',blocks:[{type:'text',content:'Текст серии.'},{type:'image',src:''}],link:'',linkLabel:'посмотреть серию →'}],
-  exhibitions:[{name:'exhibition1',desc:'место, год',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]}]
-};
-
-function save(){try{localStorage.setItem('flux_admin',JSON.stringify(DATA));const s=document.getElementById('saveStatus');s.textContent='сохранено ✓';setTimeout(()=>s.textContent='авто-сохранение',1800);}catch(e){}}
-function load(){try{const s=localStorage.getItem('flux_admin');if(s)DATA=JSON.parse(s);}catch(e){}}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function switchTab(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('sec-'+id).classList.add('on');btn.classList.add('on');renderAll();}
-function moveItem(arr,i,d){const a=DATA[arr],ni=i+d;if(ni<0||ni>=a.length)return;[a[i],a[ni]]=[a[ni],a[i]];save();renderAll();}
-function deleteItem(arr,i){if(!confirm('Удалить?'))return;DATA[arr].splice(i,1);save();renderAll();}
-
-// OBJECTS
-function renderObjects(){
-  const el=document.getElementById('objects-list');el.innerHTML='';
-  DATA.objects.forEach((o,i)=>{
-    const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(o.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('objects',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('objects',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('objects',${i})">удалить</button></div>
-    <div class="card-body">
-      <div class="field">
-        <label>Изображение</label>
-        <div class="img-upload${o.image?' has-img':''}" onclick="document.getElementById('oi-f-${i}').click()">
-          <img src="${esc(o.image)}" style="${o.image?'':'display:none'}">
-          <div class="img-label">нажмите чтобы загрузить</div>
-          <input type="file" id="oi-f-${i}" accept="image/*" onchange="loadObjImg(${i},this)" onclick="event.stopPropagation()">
-          <button class="img-clear" onclick="clearObjImg(event,${i})">×</button>
-        </div>
-        <div class="img-hint">не обрезается • два пальца для увеличения</div>
-        <div style="margin-top:9px"><label>Ориентация рамки</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(o.orient||'h')==='h'?' on':''}" onclick="setObjOrient(${i},'h')">H горизонт.</button>
-            <button class="orient-btn${o.orient==='v'?' on':''}" onclick="setObjOrient(${i},'v')">V вертикал.</button>
-            <button class="orient-btn${o.orient==='sq'?' on':''}" onclick="setObjOrient(${i},'sq')">□ квадрат</button>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div class="field"><label>Название</label><input type="text" value="${esc(o.title)}" oninput="DATA.objects[${i}].title=this.value;save()"></div>
-        <div class="field"><label>Цена</label><input type="text" value="${esc(o.price)}" oninput="DATA.objects[${i}].price=this.value;save()"></div>
-        <div class="field"><label>Материал и формат</label><textarea oninput="DATA.objects[${i}].meta=this.value;save()">${esc(o.meta)}</textarea></div>
-        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
-      </div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-
-// ── CLOUDINARY UPLOAD ──
-const CL_CLOUD='dbltupggx';
-const CL_PRESET='flux_unsigned';
-// Auto-optimize Cloudinary URLs
-function clOpt(url){
-  if(!url||!url.includes('res.cloudinary.com'))return url;
-  return url.replace('/upload/','/upload/q_auto,f_auto,w_1600/');
-} // unsigned upload preset — создай в Cloudinary Settings → Upload → Upload presets
-async function clUpload(file, onDone){
-  const fd=new FormData();
-  fd.append('file',file);
-  fd.append('upload_preset',CL_PRESET);
-  fd.append('folder','flux');
-  const status=document.getElementById('saveStatus');
-  if(status)status.textContent='загрузка...';
-  try{
-    const r=await fetch('https://api.cloudinary.com/v1_1/'+CL_CLOUD+'/image/upload',{method:'POST',body:fd});
-    const j=await r.json();
-    console.log('Cloudinary response:', j);
-    if(j.secure_url){
-      if(status)status.textContent='загружено ✓';
-      setTimeout(()=>{if(status)status.textContent='авто-сохранение';},2000);
-      onDone(j.secure_url);
-    } else {
-      if(status)status.textContent='ошибка';
-      alert('Ошибка Cloudinary: '+JSON.stringify(j));
-    }
-  }catch(e){
-    if(status)status.textContent='ошибка';
-    alert('Ошибка сети: '+e.message);
-  }
-}
-function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.objects[i].image=url;save();renderObjects();});}
-function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
-function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
-function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
-
-// PAPER
-function renderPaper(){
-  const el=document.getElementById('paper-list');el.innerHTML='';
-  DATA.paper.forEach((s,i)=>{
-    const w=s.works[0];
-    const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(w.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('paper',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('paper',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('paper',${i})">удалить</button></div>
-    <div class="card-body">
-      <div class="field">
-        <label>Изображение</label>
-        <div class="img-upload${w.image?' has-img':''}" onclick="document.getElementById('pi-f-${i}').click()">
-          <img src="${esc(w.image)}" style="${w.image?'':'display:none'}">
-          <div class="img-label">нажмите чтобы загрузить</div>
-          <input type="file" id="pi-f-${i}" accept="image/*" onchange="loadPapImg(${i},this)" onclick="event.stopPropagation()">
-          <button class="img-clear" onclick="clearPapImg(event,${i})">×</button>
-        </div>
-        <div class="img-hint">не обрезается • два пальца для увеличения</div>
-        <div style="margin-top:9px"><label>Ориентация</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(w.orient||'v')==='v'?' on':''}" onclick="setPapOrient(${i},'v')">V вертикаль</button>
-            <button class="orient-btn${w.orient==='h'?' on':''}" onclick="setPapOrient(${i},'h')">H горизонталь</button>
-          </div>
-        </div>
-        <div style="margin-top:7px"><label>Формат</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(w.size||'A5')==='A5'?' on':''}" onclick="setPapSize(${i},'A5')">A5</button>
-            <button class="orient-btn${w.size==='A6'?' on':''}" onclick="setPapSize(${i},'A6')">A6</button>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div class="field"><label>Название</label><input type="text" value="${esc(w.title)}" oninput="DATA.paper[${i}].works[0].title=this.value;save()"></div>
-        <div class="field"><label>Ссылка на серию</label><input type="text" value="${esc(w.href)}" oninput="DATA.paper[${i}].works[0].href=this.value;save()"></div>
-        <div class="field"><label>Материал</label><textarea oninput="DATA.paper[${i}].works[0].desc=this.value;save()">${esc(w.desc)}</textarea></div>
-        <div class="field"><label>Формат (текст)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${i}].works[0].fmt=this.value;save()"></div>
-        <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${i}].works[0].yr=this.value;save()"></div>
-        <div class="field"><label>Цена</label><input type="text" value="${esc(w.price)}" oninput="DATA.paper[${i}].works[0].price=this.value;save()"></div>
-        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.paper[${i}].works[0].ann=this.value;save()">${esc(w.ann)}</textarea></div>
-      </div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.paper[i].works[0].image=url;save();renderPaper();});}
-function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
-function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
-function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
-function addPaper(){DATA.paper.push({works:[{image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
-
-// DIGITAL
-function renderDigital(){
-  const el=document.getElementById('digital-list');el.innerHTML='';
-  DATA.digital.forEach((d,di)=>{
-    if(!d.blocks)d.blocks=[];
-    const c=document.createElement('div');c.className='card';
-    const blocksHtml=d.blocks.map((b,bi)=>`
-      <div class="block-item">
-        <div class="block-item-side">
-          <span class="block-type-badge">${b.type==='text'?'TXT':'IMG'}</span>
-          <button class="bmv" onclick="moveBlock(${di},${bi},-1)">↑</button>
-          <button class="bmv" onclick="moveBlock(${di},${bi},1)">↓</button>
-          <button class="bdl" onclick="delBlock(${di},${bi})">×</button>
-        </div>
-        <div class="block-item-body">
-          ${b.type==='text'
-            ?`<textarea style="min-height:80px;width:100%" oninput="DATA.digital[${di}].blocks[${bi}].content=this.value;save()">${esc(b.content)}</textarea>`
-            :`<div class="img-upload${b.src?' has-img':''}" onclick="document.getElementById('di-f-${di}-${bi}').click()">
-                <img src="${esc(b.src||'')}" style="${b.src?'':'display:none'}">
-                <div class="img-label">нажмите чтобы загрузить</div>
-                <input type="file" id="di-f-${di}-${bi}" accept="image/*" onchange="loadDigImg(${di},${bi},this)" onclick="event.stopPropagation()">
-                <button class="img-clear" onclick="clearDigImg(event,${di},${bi})">×</button>
-              </div>`
-          }
-        </div>
-      </div>`).join('');
-    c.innerHTML=`<div class="card-head"><span class="card-num">${di+1}</span><span class="card-title">${esc(d.h)||'серия'}</span><button class="del-btn" onclick="deleteItem('digital',${di})">удалить</button></div>
-    <div class="card-body single">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div class="field"><label>Название (курсив)</label><input type="text" value="${esc(d.h)}" oninput="DATA.digital[${di}].h=this.value;save()"></div>
-        <div class="field"><label>Подзаголовок</label><input type="text" value="${esc(d.sub)}" oninput="DATA.digital[${di}].sub=this.value;save()"></div>
-        <div class="field"><label>Ссылка (URL)</label><input type="text" value="${esc(d.link||'')}" placeholder="https://..." oninput="DATA.digital[${di}].link=this.value;save()"></div>
-        <div class="field"><label>Текст кнопки ссылки</label><input type="text" value="${esc(d.linkLabel||'посмотреть серию →')}" oninput="DATA.digital[${di}].linkLabel=this.value;save()"></div>
-      </div>
-      <div class="field" style="margin-bottom:11px"><label>Фон (полупрозрачный)</label>
-        <div class="img-upload${d.bg?' has-img':''}" style="min-height:70px" onclick="document.getElementById('db-f-${di}').click()">
-          <img src="${esc(d.bg||'')}" style="${d.bg?'':'display:none'}">
-          <div class="img-label">нажмите чтобы загрузить фон</div>
-          <input type="file" id="db-f-${di}" accept="image/*" onchange="loadDigBg(${di},this)" onclick="event.stopPropagation()">
-          <button class="img-clear" onclick="clearDigBg(event,${di})">×</button>
-        </div>
-      </div>
-      <label style="display:block;margin-bottom:7px">ЛЕНТА — чередуйте текст и изображения</label>
-      <div class="block-list">${blocksHtml}</div>
-      <div class="add-block-btns">
-        <button class="add-block-btn" onclick="addBlock(${di},'text')">+ текст</button>
-        <button class="add-block-btn" onclick="addBlock(${di},'image')">+ изображение</button>
-      </div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].blocks[bi].src=url;save();renderDigital();});}
-function clearDigImg(ev,di,bi){ev.stopPropagation();DATA.digital[di].blocks[bi].src='';save();renderDigital();}
-function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].bg=url;save();renderDigital();});}
-function clearDigBg(ev,di){ev.stopPropagation();DATA.digital[di].bg='';save();renderDigital();}
-function addBlock(di,type){DATA.digital[di].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});save();renderDigital();}
-function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigital();}
-function moveBlock(di,bi,d){const a=DATA.digital[di].blocks,ni=bi+d;if(ni<0||ni>=a.length)return;[a[bi],a[ni]]=[a[ni],a[bi]];save();renderDigital();}
-function addDigital(){DATA.digital.push({h:'',sub:'',bg:'',blocks:[{type:'text',content:''}],link:'',linkLabel:'посмотреть серию →'});save();renderDigital();}
-
-// STATEMENT
-function renderStatement(){
-  const el=document.getElementById('statement-list');el.innerHTML='';
-  DATA.statement.forEach((p,i)=>{
-    const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">§${i+1}</span><span class="card-title">абзац</span><button class="del-btn" onclick="deleteItem('statement',${i})">удалить</button></div>
-    <div class="card-body single"><textarea style="min-height:90px" oninput="DATA.statement[${i}]=this.value;save()">${esc(p)}</textarea></div>`;
-    el.appendChild(c);
-  });
-}
-function addStatementPara(){DATA.statement.push('');save();renderStatement();}
-
-// CV
-function renderCV(){
-  const el=document.getElementById('cv-list');el.innerHTML='';
-  DATA.exhibitions.forEach((ex,ei)=>{
-    const c=document.createElement('div');c.className='card';
-    const allTiles=ex.panes.flatMap(p=>p.tiles);
-    const tilesHtml=allTiles.map((t,ti)=>`
-      <div class="tile-item sz-${t.sz||'S'}">
-        ${t.image?`<img src="${t.image}">`:''}
-        <div class="tile-ph">${t.image?'':'📷'}</div>
-        <input type="file" accept="image/*" onchange="loadTileImg(${ei},${ti},this)" onclick="event.stopPropagation()">
-        <span class="tile-sz-badge" onclick="cycleTileSz(event,${ei},${ti})">${t.sz||'S'}</span>
-        <button class="tile-del" onclick="deleteTile(event,${ei},${ti})">×</button>
-      </div>`).join('');
-    c.innerHTML=`<div class="card-head"><span class="card-num">${ei+1}</span><span class="card-title">${esc(ex.name)||'выставка'}</span><button class="move-btn" onclick="moveItem('exhibitions',${ei},-1)">↑</button><button class="move-btn" onclick="moveItem('exhibitions',${ei},1)">↓</button><button class="del-btn" onclick="deleteItem('exhibitions',${ei})">удалить</button></div>
-    <div class="card-body single">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px">
-        <div class="field"><label>Название выставки</label><input type="text" value="${esc(ex.name)}" oninput="DATA.exhibitions[${ei}].name=this.value;save()"></div>
-        <div class="field"><label>Описание (место, год)</label><input type="text" value="${esc(ex.desc||'')}" oninput="DATA.exhibitions[${ei}].desc=this.value;save()"></div>
-      </div>
-      <label>Фотографии — клик на ячейку загружает фото • клик на S/M/L меняет размер</label>
-      <div class="tile-grid-preview">${tilesHtml}<button class="tile-add-btn" onclick="addTile(${ei})">+</button></div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=url;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();});}
-function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
-function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
-function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
-function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
-
-// BG
-function loadBg(inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.bg=url;const p=document.getElementById('bg-preview');p.src=url;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();});}
-function clearBg(ev){ev.stopPropagation();DATA.bg='';const p=document.getElementById('bg-preview');p.src='';p.style.display='none';document.getElementById('bg-upload').classList.remove('has-img');save();}
-
-function renderAll(){renderObjects();renderPaper();renderDigital();renderStatement();renderCV();if(DATA.bg){document.getElementById('bg-preview').src=DATA.bg;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-upload').classList.add('has-img');}}
-
-function generateCode(){document.getElementById('outputCode').value=`const D = ${JSON.stringify(DATA,null,2)};`;document.getElementById('outputArea').style.display='block';}
-function copyCode(){const ta=document.getElementById('outputCode');ta.select();document.execCommand('copy');const m=document.getElementById('copyMsg');m.style.display='inline';setTimeout(()=>m.style.display='none',2000);}
-function closeOutput(){document.getElementById('outputArea').style.display='none';}
-function loadFromPortfolio(){const inp=document.createElement('input');inp.type='file';inp.accept='.html';inp.onchange=function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const m=e.target.result.match(/const D = (\{[\s\S]*?\});\s*\n/);if(m){try{DATA=JSON.parse(m[1]);save();renderAll();alert('Загружено!');}catch(err){alert('Ошибка: '+err.message);}}else alert('Данные не найдены. Нужен файл portfolio_v15.html');};r.readAsText(f);};inp.click();}
-
-</script>
-
-  </div>
-</div>
-<script>
-
-// ═══════════════════════════════════════════
-// ПАРОЛЬ — замените на свой хэш.
-// Как сменить: откройте консоль браузера (F12),
-// введите: fluxHash('ваш_новый_пароль') и скопируйте результат сюда.
-// ═══════════════════════════════════════════
-const PASS_HASH = 'b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576b4dd66caca2a3efb'; // пароль: flux2024
-
-async function fluxHash(s){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-async function checkPassword(){
-  const input = document.getElementById('pass-input').value;
-  const hash = await fluxHash(input);
-  if(hash === PASS_HASH){
-    document.getElementById('pass-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    sessionStorage.setItem('flux_auth','1');
-    load(); renderAll();
-  } else {
-    document.getElementById('pass-error').style.display='block';
-    document.getElementById('pass-input').value='';
-    document.getElementById('pass-input').focus();
-  }
-}
-
-// Check if already authenticated this session
-window.addEventListener('DOMContentLoaded', ()=>{
-  if(sessionStorage.getItem('flux_auth')==='1'){
-    document.getElementById('pass-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    load(); renderAll();
-  }
-  document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
-});
-let DATA={
-  bg:'',
-  objects:[{image:'',title:'«deconstruction»',price:'120.000₽',ann:'',meta:'бумага 200 г/м², цветные карандаши\nформат 210 x 148мм    2023 г.',orient:'h'}],
-  paper:[{works:[{image:'',title:'«цвета 23»',href:'#',desc:'бумага 200 г/м², цветные карандаши',fmt:'формат 210 x 148мм',yr:'2023 г.',price:'40.000₽',ann:'',orient:'v',size:'A5'}]}],
-  statement:['Здесь будет текст statement.'],
-  digital:[{h:'Argentum',sub:'s e r i e s',bg:'',blocks:[{type:'text',content:'Текст серии.'},{type:'image',src:''}],link:'',linkLabel:'посмотреть серию →'}],
-  exhibitions:[{name:'exhibition1',desc:'место, год',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]}]
-};
-
-function save(){try{localStorage.setItem('flux_admin',JSON.stringify(DATA));const s=document.getElementById('saveStatus');s.textContent='сохранено ✓';setTimeout(()=>s.textContent='авто-сохранение',1800);}catch(e){}}
-function load(){try{const s=localStorage.getItem('flux_admin');if(s)DATA=JSON.parse(s);}catch(e){}}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function switchTab(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('sec-'+id).classList.add('on');btn.classList.add('on');renderAll();}
-function moveItem(arr,i,d){const a=DATA[arr],ni=i+d;if(ni<0||ni>=a.length)return;[a[i],a[ni]]=[a[ni],a[i]];save();renderAll();}
-function deleteItem(arr,i){if(!confirm('Удалить?'))return;DATA[arr].splice(i,1);save();renderAll();}
-
-// OBJECTS
-function renderObjects(){
-  const el=document.getElementById('objects-list');el.innerHTML='';
-  DATA.objects.forEach((o,i)=>{
-    const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(o.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('objects',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('objects',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('objects',${i})">удалить</button></div>
-    <div class="card-body">
-      <div class="field">
-        <label>Изображение</label>
-        <div class="img-upload${o.image?' has-img':''}" onclick="document.getElementById('oi-f-${i}').click()">
-          <img src="${esc(o.image)}" style="${o.image?'':'display:none'}">
-          <div class="img-label">нажмите чтобы загрузить</div>
-          <input type="file" id="oi-f-${i}" accept="image/*" onchange="loadObjImg(${i},this)" onclick="event.stopPropagation()">
-          <button class="img-clear" onclick="clearObjImg(event,${i})">×</button>
-        </div>
-        <div class="img-hint">не обрезается • два пальца для увеличения</div>
-        <div style="margin-top:9px"><label>Ориентация рамки</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(o.orient||'h')==='h'?' on':''}" onclick="setObjOrient(${i},'h')">H горизонт.</button>
-            <button class="orient-btn${o.orient==='v'?' on':''}" onclick="setObjOrient(${i},'v')">V вертикал.</button>
-            <button class="orient-btn${o.orient==='sq'?' on':''}" onclick="setObjOrient(${i},'sq')">□ квадрат</button>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div class="field"><label>Название</label><input type="text" value="${esc(o.title)}" oninput="DATA.objects[${i}].title=this.value;save()"></div>
-        <div class="field"><label>Цена</label><input type="text" value="${esc(o.price)}" oninput="DATA.objects[${i}].price=this.value;save()"></div>
-        <div class="field"><label>Материал и формат</label><textarea oninput="DATA.objects[${i}].meta=this.value;save()">${esc(o.meta)}</textarea></div>
-        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
-      </div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-function loadObjImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.objects[i].image=url;save();renderObjects();});}
-function clearObjImg(ev,i){ev.stopPropagation();DATA.objects[i].image='';save();renderObjects();}
-function setObjOrient(i,v){DATA.objects[i].orient=v;save();renderObjects();}
-function addObject(){DATA.objects.push({image:'',title:'«новая работа»',price:'',ann:'',meta:'',orient:'h'});save();renderObjects();}
-
-// PAPER
-function renderPaper(){
-  const el=document.getElementById('paper-list');el.innerHTML='';
-  DATA.paper.forEach((s,i)=>{
-    const w=s.works[0];
-    const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">${i+1}</span><span class="card-title">${esc(w.title)||'без названия'}</span><button class="move-btn" onclick="moveItem('paper',${i},-1)">↑</button><button class="move-btn" onclick="moveItem('paper',${i},1)">↓</button><button class="del-btn" onclick="deleteItem('paper',${i})">удалить</button></div>
-    <div class="card-body">
-      <div class="field">
-        <label>Изображение</label>
-        <div class="img-upload${w.image?' has-img':''}" onclick="document.getElementById('pi-f-${i}').click()">
-          <img src="${esc(w.image)}" style="${w.image?'':'display:none'}">
-          <div class="img-label">нажмите чтобы загрузить</div>
-          <input type="file" id="pi-f-${i}" accept="image/*" onchange="loadPapImg(${i},this)" onclick="event.stopPropagation()">
-          <button class="img-clear" onclick="clearPapImg(event,${i})">×</button>
-        </div>
-        <div class="img-hint">не обрезается • два пальца для увеличения</div>
-        <div style="margin-top:9px"><label>Ориентация</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(w.orient||'v')==='v'?' on':''}" onclick="setPapOrient(${i},'v')">V вертикаль</button>
-            <button class="orient-btn${w.orient==='h'?' on':''}" onclick="setPapOrient(${i},'h')">H горизонталь</button>
-          </div>
-        </div>
-        <div style="margin-top:7px"><label>Формат</label>
-          <div class="orient-btns">
-            <button class="orient-btn${(w.size||'A5')==='A5'?' on':''}" onclick="setPapSize(${i},'A5')">A5</button>
-            <button class="orient-btn${w.size==='A6'?' on':''}" onclick="setPapSize(${i},'A6')">A6</button>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div class="field"><label>Название</label><input type="text" value="${esc(w.title)}" oninput="DATA.paper[${i}].works[0].title=this.value;save()"></div>
-        <div class="field"><label>Ссылка на серию</label><input type="text" value="${esc(w.href)}" oninput="DATA.paper[${i}].works[0].href=this.value;save()"></div>
-        <div class="field"><label>Материал</label><textarea oninput="DATA.paper[${i}].works[0].desc=this.value;save()">${esc(w.desc)}</textarea></div>
-        <div class="field"><label>Формат (текст)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${i}].works[0].fmt=this.value;save()"></div>
-        <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${i}].works[0].yr=this.value;save()"></div>
-        <div class="field"><label>Цена</label><input type="text" value="${esc(w.price)}" oninput="DATA.paper[${i}].works[0].price=this.value;save()"></div>
-        <div class="field"><label>Аннотация *</label><textarea oninput="DATA.paper[${i}].works[0].ann=this.value;save()">${esc(w.ann)}</textarea></div>
-      </div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-function loadPapImg(i,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.paper[i].works[0].image=url;save();renderPaper();});}
-function clearPapImg(ev,i){ev.stopPropagation();DATA.paper[i].works[0].image='';save();renderPaper();}
-function setPapOrient(i,v){DATA.paper[i].works[0].orient=v;save();renderPaper();}
-function setPapSize(i,v){DATA.paper[i].works[0].size=v;save();renderPaper();}
-function addPaper(){DATA.paper.push({works:[{image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
-
-// DIGITAL
-function renderDigital(){
-  const el=document.getElementById('digital-list');el.innerHTML='';
-  DATA.digital.forEach((d,di)=>{
-    if(!d.blocks)d.blocks=[];
-    const c=document.createElement('div');c.className='card';
-    const blocksHtml=d.blocks.map((b,bi)=>`
-      <div class="block-item">
-        <div class="block-item-side">
-          <span class="block-type-badge">${b.type==='text'?'TXT':'IMG'}</span>
-          <button class="bmv" onclick="moveBlock(${di},${bi},-1)">↑</button>
-          <button class="bmv" onclick="moveBlock(${di},${bi},1)">↓</button>
-          <button class="bdl" onclick="delBlock(${di},${bi})">×</button>
-        </div>
-        <div class="block-item-body">
-          ${b.type==='text'
-            ?`<textarea style="min-height:80px;width:100%" oninput="DATA.digital[${di}].blocks[${bi}].content=this.value;save()">${esc(b.content)}</textarea>`
-            :`<div class="img-upload${b.src?' has-img':''}" onclick="document.getElementById('di-f-${di}-${bi}').click()">
-                <img src="${esc(b.src||'')}" style="${b.src?'':'display:none'}">
-                <div class="img-label">нажмите чтобы загрузить</div>
-                <input type="file" id="di-f-${di}-${bi}" accept="image/*" onchange="loadDigImg(${di},${bi},this)" onclick="event.stopPropagation()">
-                <button class="img-clear" onclick="clearDigImg(event,${di},${bi})">×</button>
-              </div>`
-          }
-        </div>
-      </div>`).join('');
-    c.innerHTML=`<div class="card-head"><span class="card-num">${di+1}</span><span class="card-title">${esc(d.h)||'серия'}</span><button class="del-btn" onclick="deleteItem('digital',${di})">удалить</button></div>
-    <div class="card-body single">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div class="field"><label>Название (курсив)</label><input type="text" value="${esc(d.h)}" oninput="DATA.digital[${di}].h=this.value;save()"></div>
-        <div class="field"><label>Подзаголовок</label><input type="text" value="${esc(d.sub)}" oninput="DATA.digital[${di}].sub=this.value;save()"></div>
-        <div class="field"><label>Ссылка (URL)</label><input type="text" value="${esc(d.link||'')}" placeholder="https://..." oninput="DATA.digital[${di}].link=this.value;save()"></div>
-        <div class="field"><label>Текст кнопки ссылки</label><input type="text" value="${esc(d.linkLabel||'посмотреть серию →')}" oninput="DATA.digital[${di}].linkLabel=this.value;save()"></div>
-      </div>
-      <div class="field" style="margin-bottom:11px"><label>Фон (полупрозрачный)</label>
-        <div class="img-upload${d.bg?' has-img':''}" style="min-height:70px" onclick="document.getElementById('db-f-${di}').click()">
-          <img src="${esc(d.bg||'')}" style="${d.bg?'':'display:none'}">
-          <div class="img-label">нажмите чтобы загрузить фон</div>
-          <input type="file" id="db-f-${di}" accept="image/*" onchange="loadDigBg(${di},this)" onclick="event.stopPropagation()">
-          <button class="img-clear" onclick="clearDigBg(event,${di})">×</button>
-        </div>
-      </div>
-      <label style="display:block;margin-bottom:7px">ЛЕНТА — чередуйте текст и изображения</label>
-      <div class="block-list">${blocksHtml}</div>
-      <div class="add-block-btns">
-        <button class="add-block-btn" onclick="addBlock(${di},'text')">+ текст</button>
-        <button class="add-block-btn" onclick="addBlock(${di},'image')">+ изображение</button>
-      </div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-function loadDigImg(di,bi,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].blocks[bi].src=url;save();renderDigital();});}
-function clearDigImg(ev,di,bi){ev.stopPropagation();DATA.digital[di].blocks[bi].src='';save();renderDigital();}
-function loadDigBg(di,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.digital[di].bg=url;save();renderDigital();});}
-function clearDigBg(ev,di){ev.stopPropagation();DATA.digital[di].bg='';save();renderDigital();}
-function addBlock(di,type){DATA.digital[di].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});save();renderDigital();}
-function delBlock(di,bi){DATA.digital[di].blocks.splice(bi,1);save();renderDigital();}
-function moveBlock(di,bi,d){const a=DATA.digital[di].blocks,ni=bi+d;if(ni<0||ni>=a.length)return;[a[bi],a[ni]]=[a[ni],a[bi]];save();renderDigital();}
-function addDigital(){DATA.digital.push({h:'',sub:'',bg:'',blocks:[{type:'text',content:''}],link:'',linkLabel:'посмотреть серию →'});save();renderDigital();}
-
-// STATEMENT
-function renderStatement(){
-  const el=document.getElementById('statement-list');el.innerHTML='';
-  DATA.statement.forEach((p,i)=>{
-    const c=document.createElement('div');c.className='card';
-    c.innerHTML=`<div class="card-head"><span class="card-num">§${i+1}</span><span class="card-title">абзац</span><button class="del-btn" onclick="deleteItem('statement',${i})">удалить</button></div>
-    <div class="card-body single"><textarea style="min-height:90px" oninput="DATA.statement[${i}]=this.value;save()">${esc(p)}</textarea></div>`;
-    el.appendChild(c);
-  });
-}
-function addStatementPara(){DATA.statement.push('');save();renderStatement();}
-
-// CV
-function renderCV(){
-  const el=document.getElementById('cv-list');el.innerHTML='';
-  DATA.exhibitions.forEach((ex,ei)=>{
-    const c=document.createElement('div');c.className='card';
-    const allTiles=ex.panes.flatMap(p=>p.tiles);
-    const tilesHtml=allTiles.map((t,ti)=>`
-      <div class="tile-item sz-${t.sz||'S'}">
-        ${t.image?`<img src="${t.image}">`:''}
-        <div class="tile-ph">${t.image?'':'📷'}</div>
-        <input type="file" accept="image/*" onchange="loadTileImg(${ei},${ti},this)" onclick="event.stopPropagation()">
-        <span class="tile-sz-badge" onclick="cycleTileSz(event,${ei},${ti})">${t.sz||'S'}</span>
-        <button class="tile-del" onclick="deleteTile(event,${ei},${ti})">×</button>
-      </div>`).join('');
-    c.innerHTML=`<div class="card-head"><span class="card-num">${ei+1}</span><span class="card-title">${esc(ex.name)||'выставка'}</span><button class="move-btn" onclick="moveItem('exhibitions',${ei},-1)">↑</button><button class="move-btn" onclick="moveItem('exhibitions',${ei},1)">↓</button><button class="del-btn" onclick="deleteItem('exhibitions',${ei})">удалить</button></div>
-    <div class="card-body single">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px">
-        <div class="field"><label>Название выставки</label><input type="text" value="${esc(ex.name)}" oninput="DATA.exhibitions[${ei}].name=this.value;save()"></div>
-        <div class="field"><label>Описание (место, год)</label><input type="text" value="${esc(ex.desc||'')}" oninput="DATA.exhibitions[${ei}].desc=this.value;save()"></div>
-      </div>
-      <label>Фотографии — клик на ячейку загружает фото • клик на S/M/L меняет размер</label>
-      <div class="tile-grid-preview">${tilesHtml}<button class="tile-add-btn" onclick="addTile(${ei})">+</button></div>
-    </div>`;
-    el.appendChild(c);
-  });
-}
-function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].image=url;DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();});}
-function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
-function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
-function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
-function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
-
-// BG
-function loadBg(inp){const f=inp.files[0];if(!f)return;clUpload(f,url=>{DATA.bg=url;const p=document.getElementById('bg-preview');p.src=url;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();});}
-function clearBg(ev){ev.stopPropagation();DATA.bg='';const p=document.getElementById('bg-preview');p.src='';p.style.display='none';document.getElementById('bg-upload').classList.remove('has-img');save();}
-
-function renderAll(){renderObjects();renderPaper();renderDigital();renderStatement();renderCV();if(DATA.bg){document.getElementById('bg-preview').src=DATA.bg;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-upload').classList.add('has-img');}}
-
-function generateCode(){document.getElementById('outputCode').value=`const D = ${JSON.stringify(DATA,null,2)};`;document.getElementById('outputArea').style.display='block';}
-function copyCode(){const ta=document.getElementById('outputCode');ta.select();document.execCommand('copy');const m=document.getElementById('copyMsg');m.style.display='inline';setTimeout(()=>m.style.display='none',2000);}
-function closeOutput(){document.getElementById('outputArea').style.display='none';}
-function loadFromPortfolio(){const inp=document.createElement('input');inp.type='file';inp.accept='.html';inp.onchange=function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const m=e.target.result.match(/const D = (\{[\s\S]*?\});\s*\n/);if(m){try{DATA=JSON.parse(m[1]);save();renderAll();alert('Загружено!');}catch(err){alert('Ошибка: '+err.message);}}else alert('Данные не найдены. Нужен файл portfolio_v15.html');};r.readAsText(f);};inp.click();}
-
-
-// Show admin if ?admin in URL
-if(window.ADMIN_MODE){
-  document.addEventListener('DOMContentLoaded',function(){
-    document.getElementById('ADMIN_ROOT').style.display='block';
-    if(sessionStorage.getItem('flux_auth')==='1'){
-      document.getElementById('pass-screen').style.display='none';
-      document.getElementById('app').style.display='block';
-      load(); renderAll();
-    } else {
-      document.getElementById('pass-screen').style.display='flex';
-      setTimeout(function(){
-        var inp=document.getElementById('pass-input');
-        if(inp) inp.focus();
-      },100);
-    }
-  });
-}
-</script>
 <script>
 (function(){
 var SB="https://aqmsvdkerzbivglcqixa.supabase.co",SK="sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY";
