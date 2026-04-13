@@ -93,7 +93,7 @@ img{display:block}
 #zoomOv{display:none;position:fixed;inset:0;z-index:10000;touch-action:none}
 #zoomOv.on{display:block}
 #zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-#zoomOvImg{position:absolute;display:block;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;touch-action:none}
+#zoomOvImg{position:absolute;display:block;user-select:none;-webkit-user-drag:none;touch-action:none;transform:none}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
@@ -629,6 +629,7 @@ const APP=(()=>{
     hsw($('objTrk'),d=>mvObj(d));
     hsw($('digTrk'),d=>mvDig(d));
     hsw($('papTrk'),d=>{if(curSeries<0)mvPap(d);});
+    hsw($('papSeriesTrk'),d=>mvSeries(d));
   }
 
   function setImg(s){bgImg.src=s;bgImg.style.display='block'}
@@ -1011,7 +1012,6 @@ const APP=(()=>{
     const descSlide=(s.desc&&s.desc.trim())?`<div class="pap-series-slide"><div class="pap-series-layout"><div class="pap-series-desc-block">${s.desc.replace(/\n/g,'<br>')}</div></div></div>`:'';
     trk.innerHTML=workSlides.join('')+descSlide;
     trk.style.transform='translateX(0)';
-    hsw(trk, d=>mvSeries(d));
     setTimeout(()=>trk.querySelectorAll('.pap-series-img img').forEach(attachZoom),100);
     updSA(s);
   }
@@ -1097,176 +1097,169 @@ const APP=(()=>{
   document.addEventListener('DOMContentLoaded',init);
   if(document.readyState!=='loading')init();
 
-  /* ══ LIGHTBOX ══ */
+  /* ══ LIGHTBOX ══
+     Единый модуль — работает одинаково во всех разделах.
+     Закрытие: тап вне картинки, пинч-уменьшение до fitScale, Escape, клик по фону (desktop).
+  ══ */
   const ZOOM=(()=>{
     const ov=$('zoomOv');
-    const imgEl=$('zoomOvImg');
-    const PAD=32;
+    const img=$('zoomOvImg');
+    const PAD=40;
     let srcs=[], cur=0;
-    let scale=1, tx=0, ty=0;
-    // pinch state
-    let pinching=false,startScale=1,startDist=0,startMidX=0,startMidY=0,startTx=0,startTy=0;
-    // pan state (1 finger when zoomed in)
-    let panning=false,panStartX=0,panStartY=0,panStartTx=0,panStartTy=0;
-    // swipe state (1 finger at fit scale)
-    let swipingX=false,swipeStartX=0,swipeStartY=0,swipeDx=0,swipeAxisLocked=false;
-    // tap detection
-    let touchStartX=0,touchStartY=0,touchMoved=false;
+    // transform state — img позиционируется через left/top + scale, transform-origin:center center
+    let sc=1, cx=0, cy=0; // cx/cy = центр картинки в экранных координатах
 
-    function dist2(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
-    function mid2(a,b){return{x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2};}
+    /* ─ helpers ─ */
+    function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+    function mid(a,b){return{x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2};}
 
-    function applyT(animate){
-      imgEl.style.transition=animate?'transform .22s cubic-bezier(.25,.46,.45,.94)':'none';
-      imgEl.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
-    }
-
-    function currentFitScale(){
-      const nw=imgEl.naturalWidth||1, nh=imgEl.naturalHeight||1;
+    function fitSc(){
+      const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
       return Math.min((ov.offsetWidth-PAD*2)/nw,(ov.offsetHeight-PAD*2)/nh);
     }
-
+    function clampCenter(){
+      const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
+      const W=ov.offsetWidth,H=ov.offsetHeight;
+      const hw=nw*sc/2,hh=nh*sc/2;
+      // если картинка уже экрана — центрируем; если шире — не выходим за экран
+      if(nw*sc<=W) cx=W/2; else cx=Math.max(hw,Math.min(W-hw,cx));
+      if(nh*sc<=H) cy=H/2; else cy=Math.max(hh,Math.min(H-hh,cy));
+    }
+    function applyT(animate){
+      const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
+      // left/top = верхний левый угол
+      const left=cx-nw*sc/2, top=cy-nh*sc/2;
+      img.style.transition=animate?'left .22s ease,top .22s ease,width .22s ease':'none';
+      img.style.left=left+'px';
+      img.style.top=top+'px';
+      img.style.width=nw*sc+'px';
+      img.style.height=nh*sc+'px';
+      img.style.transform='none'; // не используем transform совсем
+    }
     function doFit(animate){
-      const W=ov.offsetWidth, H=ov.offsetHeight;
-      const nw=imgEl.naturalWidth, nh=imgEl.naturalHeight;
-      if(!nw||!nh) return;
-      scale=Math.min((W-PAD*2)/nw,(H-PAD*2)/nh);
-      tx=(W-nw*scale)/2;
-      ty=(H-nh*scale)/2;
+      const nw=img.naturalWidth,nh=img.naturalHeight;
+      if(!nw||!nh)return;
+      sc=fitSc();
+      cx=ov.offsetWidth/2;
+      cy=ov.offsetHeight/2;
       applyT(!!animate);
     }
 
-    function clamp(){
-      const W=ov.offsetWidth, H=ov.offsetHeight;
-      const iw=(imgEl.naturalWidth||1)*scale, ih=(imgEl.naturalHeight||1)*scale;
-      if(iw<=W){ tx=(W-iw)/2; } else { tx=Math.max(W-iw,Math.min(0,tx)); }
-      if(ih<=H){ ty=(H-ih)/2; } else { ty=Math.max(H-ih,Math.min(0,ty)); }
-    }
-
-    function isAtFitScale(){
-      return scale <= currentFitScale()*1.08;
-    }
-
-    /* Load image and call onready when naturalWidth is available */
-    function loadSrc(src, onready){
-      imgEl.style.opacity='0';
-      imgEl.style.transition='none';
-      imgEl.style.transform='none';
-      scale=1; tx=0; ty=0;
-      // Use a temporary Image to ensure decode before display
+    /* ─ load ─ */
+    function loadSrc(src,cb){
+      img.style.opacity='0';
+      img.style.transition='none';
+      sc=1;cx=ov.offsetWidth/2;cy=ov.offsetHeight/2;
       const tmp=new Image();
-      tmp.onload=()=>{
-        imgEl.onload=()=>{
-          imgEl.onload=null;
-          onready();
-        };
-        imgEl.src=src;
-        // if browser served from cache, onload may not fire — check immediately
-        if(imgEl.complete && imgEl.naturalWidth) { imgEl.onload=null; onready(); }
-      };
-      tmp.onerror=()=>{
-        imgEl.src=src;
-        onready();
+      tmp.onload=tmp.onerror=()=>{
+        img.onload=()=>{img.onload=null;cb();};
+        img.src=src;
+        if(img.complete&&img.naturalWidth){img.onload=null;cb();}
       };
       tmp.src=src;
     }
-
-    function showFitted(){
+    function showFit(){
       doFit(false);
-      imgEl.style.transition='opacity .2s ease';
-      imgEl.style.opacity='1';
+      img.style.transition='opacity .2s';
+      img.style.opacity='1';
     }
 
-    function open(srcList, idx){
-      srcs=srcList; cur=Math.max(0,Math.min(idx,srcs.length-1));
+    /* ─ public ─ */
+    function open(list,idx){
+      srcs=list; cur=Math.max(0,Math.min(idx,list.length-1));
       ov.classList.add('on');
-      loadSrc(srcs[cur], showFitted);
+      loadSrc(srcs[cur],showFit);
     }
-
     function close(){
       ov.classList.remove('on');
-      srcs=[]; cur=0; scale=1; tx=0; ty=0;
-      pinching=false; panning=false; swipingX=false;
-      imgEl.style.opacity='0';
-      imgEl.onload=null;
-      imgEl.src='';
+      srcs=[];cur=0;sc=1;
+      img.onload=null;img.src='';
+      img.style.opacity='0';
+      // сбросить touch state
+      tp1=null;tp2=null;mode='';
     }
-
     function goTo(idx){
       cur=Math.max(0,Math.min(idx,srcs.length-1));
-      loadSrc(srcs[cur], showFitted);
+      loadSrc(srcs[cur],showFit);
     }
 
-    /* ── Desktop: click on backdrop or bg closes ── */
+    /* ─ desktop ─ */
     ov.addEventListener('click',e=>{
-      if(e.target===ov || e.target===$('zoomOvBg')) close();
+      if(e.target===ov||e.target===$('zoomOvBg'))close();
+    });
+    document.addEventListener('keydown',e=>{
+      if(!ov.classList.contains('on'))return;
+      if(e.key==='Escape')close();
+      if(e.key==='ArrowRight'&&cur<srcs.length-1)goTo(cur+1);
+      if(e.key==='ArrowLeft'&&cur>0)goTo(cur-1);
     });
 
-    /* ── Touch ── */
+    /* ─ touch ─
+       mode: '' | 'tap' | 'pan' | 'swipeX' | 'pinch'
+    */
+    let tp1=null,tp2=null,mode='';
+    let pinchStartSc,pinchStartCx,pinchStartCy,pinchStartDist,pinchMidX,pinchMidY;
+    let panStartCx,panStartCy,panStartPx,panStartPy;
+    let swipeStartX,swipeStartY,swipeDx;
+    let tapDownX,tapDownY;
+
     ov.addEventListener('touchstart',e=>{
       e.preventDefault();
-      const t=e.touches;
-
-      if(t.length===2){
-        // Begin pinch — capture both touch points
-        pinching=true; panning=false; swipingX=false;
-        const a=t[0], b=t[1];
-        startDist=dist2(a,b);
-        startScale=scale; startTx=tx; startTy=ty;
-        const m=mid2(a,b);
-        startMidX=m.x; startMidY=m.y;
-      } else if(t.length===1){
-        pinching=false;
-        touchStartX=t[0].clientX; touchStartY=t[0].clientY; touchMoved=false;
-
-        if(isAtFitScale()){
-          // Could be a tap or a swipe between images
-          panning=false; swipingX=false;
-          swipeStartX=t[0].clientX; swipeStartY=t[0].clientY;
-          swipeDx=0; swipeAxisLocked=false;
+      const tl=e.touches;
+      if(tl.length>=2){
+        // pinch start
+        mode='pinch';
+        tp1=tl[0];tp2=tl[1];
+        pinchStartDist=dist(tp1,tp2);
+        pinchStartSc=sc;
+        pinchStartCx=cx;pinchStartCy=cy;
+        const m=mid(tp1,tp2);
+        pinchMidX=m.x;pinchMidY=m.y;
+      } else {
+        tp1=tl[0];tp2=null;
+        tapDownX=tl[0].clientX;tapDownY=tl[0].clientY;
+        const atFit=(sc<=fitSc()*1.06);
+        if(atFit){
+          mode='tap'; // may become 'swipeX'
+          swipeStartX=tl[0].clientX;swipeStartY=tl[0].clientY;swipeDx=0;
         } else {
-          // Pan the zoomed image
-          panning=true; swipingX=false;
-          panStartX=t[0].clientX; panStartY=t[0].clientY;
-          panStartTx=tx; panStartTy=ty;
+          mode='pan';
+          panStartCx=cx;panStartCy=cy;
+          panStartPx=tl[0].clientX;panStartPy=tl[0].clientY;
         }
       }
     },{passive:false});
 
     ov.addEventListener('touchmove',e=>{
       e.preventDefault();
-      const t=e.touches;
-
-      if(t.length===2 && pinching){
-        const d=dist2(t[0],t[1]);
-        const m=mid2(t[0],t[1]);
-        const ns=Math.max(0.5,Math.min(8,startScale*(d/startDist)));
-        const ratio=ns/startScale;
-        // Zoom toward pinch midpoint
-        tx=m.x-(startMidX-startTx)*ratio;
-        ty=m.y-(startMidY-startTy)*ratio;
-        scale=ns;
+      const tl=e.touches;
+      if(mode==='pinch'&&tl.length>=2){
+        const d=dist(tl[0],tl[1]);
+        const m=mid(tl[0],tl[1]);
+        const ns=Math.max(0.3,Math.min(8,pinchStartSc*(d/pinchStartDist)));
+        const ratio=ns/pinchStartSc;
+        // масштабируем вокруг начальной точки пинча
+        cx=pinchMidX+(pinchStartCx-pinchMidX)*ratio;
+        cy=pinchMidY+(pinchStartCy-pinchMidY)*ratio;
+        sc=ns;
+        clampCenter();
         applyT(false);
-      } else if(t.length===1){
-        const dx=t[0].clientX-touchStartX;
-        const dy=t[0].clientY-touchStartY;
-        if(Math.abs(dx)>4||Math.abs(dy)>4) touchMoved=true;
-
-        if(panning){
-          tx=panStartTx+(t[0].clientX-panStartX);
-          ty=panStartTy+(t[0].clientY-panStartY);
-          clamp(); applyT(false);
-        } else {
-          // Determine axis lock
-          if(!swipeAxisLocked && (Math.abs(dx)>8||Math.abs(dy)>8)){
-            swipeAxisLocked=true;
-            swipingX=Math.abs(dx)>Math.abs(dy);
-          }
-          if(swipingX){
-            swipeDx=t[0].clientX-swipeStartX;
-            imgEl.style.transition='none';
-            imgEl.style.transform=`translate(${tx+swipeDx*0.35}px,${ty}px) scale(${scale})`;
-          }
+      } else if(mode==='pan'&&tl.length===1){
+        cx=panStartCx+(tl[0].clientX-panStartPx);
+        cy=panStartCy+(tl[0].clientY-panStartPy);
+        clampCenter();applyT(false);
+      } else if((mode==='tap'||mode==='swipeX')&&tl.length===1){
+        const dx=tl[0].clientX-swipeStartX;
+        const dy=tl[0].clientY-swipeStartY;
+        if(mode==='tap'&&(Math.abs(dx)>10||Math.abs(dy)>10)){
+          mode=Math.abs(dx)>=Math.abs(dy)?'swipeX':'swipeY';
+        }
+        if(mode==='swipeX'){
+          swipeDx=dx;
+          img.style.transition='none';
+          // двигаем только горизонтально с сопротивлением
+          const nw=img.naturalWidth||1,nh=img.naturalHeight||1;
+          img.style.left=(cx-nw*sc/2+swipeDx*0.4)+'px';
         }
       }
     },{passive:false});
@@ -1275,50 +1268,53 @@ const APP=(()=>{
       e.preventDefault();
       const remaining=e.touches.length;
 
-      if(remaining===0){
-        if(pinching){
-          pinching=false;
-          clamp(); applyT(true);
-        } else if(panning){
-          panning=false;
-          clamp(); applyT(true);
-        } else if(swipingX){
-          swipingX=false; swipeAxisLocked=false;
-          if(Math.abs(swipeDx)>60){
-            const next=cur+(swipeDx<0?1:-1);
-            if(next>=0&&next<srcs.length) goTo(next);
-            else applyT(true);
-          } else {
-            applyT(true);
+      if(mode==='pinch'){
+        if(remaining===0||remaining===1){
+          // закрыть если уменьшили ниже порога
+          if(sc<fitSc()*0.72){
+            close(); return;
           }
-          swipeDx=0;
-        } else {
-          // Tap — close if not moved much
-          if(!touchMoved){
-            // Use getBoundingClientRect for accurate hit test
-            const ct=e.changedTouches[0];
-            const r=imgEl.getBoundingClientRect();
-            const onImg=ct.clientX>=r.left&&ct.clientX<=r.right&&ct.clientY>=r.top&&ct.clientY<=r.bottom;
-            if(!onImg) close();
+          // иначе — snap: если чуть ниже fit — вернуть к fit; иначе оставить
+          if(sc<fitSc()){doFit(true);}else{clampCenter();applyT(true);}
+          if(remaining===1){
+            // перейти в pan одним пальцем
+            mode='pan';
+            tp1=e.touches[0];tp2=null;
+            panStartCx=cx;panStartCy=cy;
+            panStartPx=e.touches[0].clientX;panStartPy=e.touches[0].clientY;
+          } else {
+            mode='';tp1=null;tp2=null;
           }
         }
-      } else if(remaining===1 && pinching){
-        // Lift one finger from pinch → switch to pan
-        pinching=false; panning=true;
-        panStartX=e.touches[0].clientX; panStartY=e.touches[0].clientY;
-        panStartTx=tx; panStartTy=ty;
-        clamp(); applyT(false);
+      } else if(mode==='pan'&&remaining===0){
+        mode='';clampCenter();applyT(true);
+      } else if(mode==='swipeX'&&remaining===0){
+        mode='';
+        if(Math.abs(swipeDx)>65){
+          const next=cur+(swipeDx<0?1:-1);
+          if(next>=0&&next<srcs.length)goTo(next);
+          else{clampCenter();applyT(true);}
+        } else {
+          clampCenter();applyT(true);
+        }
+        swipeDx=0;
+      } else if(mode==='tap'&&remaining===0){
+        mode='';
+        // простой тап — проверить попал ли на картинку
+        const ct=e.changedTouches[0];
+        const moved=Math.hypot(ct.clientX-tapDownX,ct.clientY-tapDownY);
+        if(moved<10){
+          // попадание по картинке через реальные CSS-координаты
+          const r=img.getBoundingClientRect();
+          const onImg=ct.clientX>=r.left&&ct.clientX<=r.right&&ct.clientY>=r.top&&ct.clientY<=r.bottom;
+          if(!onImg)close();
+        }
+      } else if(remaining===0){
+        mode='';
       }
     },{passive:false});
 
-    document.addEventListener('keydown',e=>{
-      if(!ov.classList.contains('on')) return;
-      if(e.key==='Escape'){ close(); return; }
-      if(e.key==='ArrowRight'&&cur<srcs.length-1) goTo(cur+1);
-      if(e.key==='ArrowLeft'&&cur>0) goTo(cur-1);
-    });
-
-    return{open, close, isOpen:()=>ov.classList.contains('on')};
+    return{open,close,isOpen:()=>ov.classList.contains('on')};
   })();
 
   // Attach zoom to image; safe to call multiple times — removes old listener first
