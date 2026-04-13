@@ -93,7 +93,7 @@ img{display:block}
 #zoomOv{display:none;position:fixed;inset:0;z-index:10000;touch-action:none}
 #zoomOv.on{display:block}
 #zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-#zoomOvImg{position:absolute;display:block;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;pointer-events:none}
+#zoomOvImg{position:absolute;display:block;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;touch-action:none}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
@@ -1099,205 +1099,218 @@ const APP=(()=>{
   /* ══ LIGHTBOX ══ */
   const ZOOM=(()=>{
     const ov=$('zoomOv');
-    const img=$('zoomOvImg');
-    const PAD=40;
-    let srcs=[],cur=0;
-    // state
-    let ox=0,oy=0,sc=1; // origin offset (top-left of image at scale 1) + scale
-    // touch tracking
-    let mode=''; // 'tap'|'pan'|'swipeX'|'swipeY'|'pinch'
-    let t1x=0,t1y=0,t2x=0,t2y=0; // start positions
-    let ox0=0,oy0=0,sc0=1,pd0=1,pmx=0,pmy=0; // pinch start state
+    const imgEl=$('zoomOvImg');
+    const PAD=24;
+    let srcs=[], cur=0, loading=false;
+    let scale=1, tx=0, ty=0;
+    // pinch
+    let p0=null,p1=null,startScale=1,startDist=0,startMidX=0,startMidY=0,startTx=0,startTy=0;
+    // pan (1 finger when zoomed)
+    let pan1=false,pan1x=0,pan1y=0,pan1tx=0,pan1ty=0;
+    // swipe between images (1 finger at fit scale)
+    let swX=0,swY=0,swAxis=null,swDx=0,swMoved=false;
+    // tap detection
+    let tapX=0,tapY=0;
 
-    /* image natural size */
-    function nw(){return img.naturalWidth||1;}
-    function nh(){return img.naturalHeight||1;}
-    function W(){return ov.offsetWidth;}
-    function H(){return ov.offsetHeight;}
+    function dist2(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+    function mid2(a,b){return{x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2};}
 
-    function fitSc(){return Math.min((W()-PAD*2)/nw(),(H()-PAD*2)/nh());}
+    function applyT(animate){
+      imgEl.style.transition=animate?'transform .22s cubic-bezier(.25,.46,.45,.94)':'none';
+      imgEl.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+    }
 
-    /* clamp ox/oy so image doesn't wander off screen */
+    function doFit(){
+      const W=ov.offsetWidth, H=ov.offsetHeight;
+      const nw=imgEl.naturalWidth, nh=imgEl.naturalHeight;
+      if(!nw||!nh) return;
+      scale=Math.min((W-PAD*2)/nw,(H-PAD*2)/nh);
+      tx=(W-nw*scale)/2;
+      ty=(H-nh*scale)/2;
+      applyT(false);
+    }
+
+    function fitScale(){
+      const nw=imgEl.naturalWidth||1,nh=imgEl.naturalHeight||1;
+      return Math.min((ov.offsetWidth-PAD*2)/nw,(ov.offsetHeight-PAD*2)/nh);
+    }
+
     function clamp(){
-      const iw=nw()*sc, ih=nh()*sc;
-      if(iw<=W()) ox=(W()-iw)/2; else ox=Math.max(W()-iw,Math.min(0,ox));
-      if(ih<=H()) oy=(H()-ih)/2; else oy=Math.max(H()-ih,Math.min(0,oy));
+      const W=ov.offsetWidth,H=ov.offsetHeight;
+      const iw=(imgEl.naturalWidth||1)*scale,ih=(imgEl.naturalHeight||1)*scale;
+      if(iw<=W){tx=(W-iw)/2;}else{tx=Math.max(W-iw,Math.min(0,tx));}
+      if(ih<=H){ty=(H-ih)/2;}else{ty=Math.max(H-ih,Math.min(0,ty));}
     }
 
-    /* apply: img positioned at (ox,oy) with width=nw*sc via transform on a 0-sized element
-       We set img.style.left=ox, img.style.top=oy, img actual size = naturalSize,
-       then scale via transform-origin top-left */
-    function applyT(anim){
-      img.style.transition=anim?'transform .22s ease':'none';
-      img.style.transformOrigin='0 0';
-      img.style.left='0';
-      img.style.top='0';
-      img.style.width=nw()+'px';
-      img.style.height=nh()+'px';
-      img.style.transform=`translate(${ox}px,${oy}px) scale(${sc})`;
-    }
-
-    function doFit(anim){
-      sc=fitSc();
-      ox=(W()-nw()*sc)/2;
-      oy=(H()-nh()*sc)/2;
-      applyT(!!anim);
-    }
-
-    /* load src, call cb when naturalWidth is ready */
-    function loadSrc(src,cb){
-      img.style.opacity='0';
-      img.style.transition='none';
-      img.style.transform='none';
-      ox=0;oy=0;sc=1;
+    function loadSrc(src,onready){
+      if(loading) return;
+      loading=true;
+      imgEl.style.opacity='0';
+      imgEl.style.transition='none';
+      imgEl.style.transform='none';
+      scale=1; tx=0; ty=0;
+      // Preload via Image() so naturalWidth is guaranteed when we set imgEl.src
       const tmp=new Image();
       tmp.onload=tmp.onerror=()=>{
-        img.onload=()=>{img.onload=null;cb();};
-        img.src=src;
-        if(img.complete&&img.naturalWidth){img.onload=null;cb();}
+        imgEl.src=src;
+        requestAnimationFrame(()=>{
+          loading=false;
+          onready();
+        });
       };
       tmp.src=src;
     }
 
-    function showFit(){doFit(false);img.style.transition='opacity .2s';img.style.opacity='1';}
-
-    function open(list,idx){
-      srcs=list;cur=Math.max(0,Math.min(idx,list.length-1));
-      mode='';
-      ov.classList.add('on');
-      loadSrc(srcs[cur],showFit);
+    function showFitted(){
+      doFit();
+      imgEl.style.transition='opacity .18s';
+      imgEl.style.opacity='1';
     }
+
+    function open(srcList,idx){
+      srcs=srcList; cur=idx;
+      ov.classList.add('on');
+      loadSrc(srcs[cur],showFitted);
+    }
+
     function close(){
       ov.classList.remove('on');
-      mode='';srcs=[];cur=0;sc=1;ox=0;oy=0;
-      img.onload=null;img.src='';img.style.opacity='0';
-    }
-    function goTo(idx){
-      cur=Math.max(0,Math.min(idx,srcs.length-1));
-      loadSrc(srcs[cur],showFit);
+      loading=false;
+      srcs=[]; cur=0; scale=1; tx=0; ty=0;
+      imgEl.style.opacity='0';
+      imgEl.src='';
     }
 
-    /* desktop */
-    ov.addEventListener('click',e=>{if(e.target===ov||e.target===$('zoomOvBg'))close();});
-    document.addEventListener('keydown',e=>{
-      if(!ov.classList.contains('on'))return;
-      if(e.key==='Escape')close();
-      else if(e.key==='ArrowRight'&&cur<srcs.length-1)goTo(cur+1);
-      else if(e.key==='ArrowLeft'&&cur>0)goTo(cur-1);
+    function goTo(idx){
+      cur=idx;
+      loadSrc(srcs[cur],showFitted);
+    }
+
+    // Desktop: click backdrop closes
+    ov.addEventListener('click',e=>{
+      if(e.target===ov||e.target===$('zoomOvBg')) close();
     });
 
-    /* ── touch ── */
+    // Touch
     ov.addEventListener('touchstart',e=>{
-      if(!ov.classList.contains('on'))return;
       e.preventDefault();
-      e.stopPropagation();
-      const tl=e.touches;
-
-      if(tl.length>=2){
-        mode='pinch';
-        t1x=tl[0].clientX;t1y=tl[0].clientY;
-        t2x=tl[1].clientX;t2y=tl[1].clientY;
-        pd0=Math.hypot(t2x-t1x,t2y-t1y)||1;
-        pmx=(t1x+t2x)/2; pmy=(t1y+t2y)/2;
-        ox0=ox;oy0=oy;sc0=sc;
-      } else {
-        const x=tl[0].clientX,y=tl[0].clientY;
-        t1x=x;t1y=y;
-        const atFit=sc<=fitSc()*1.05;
-        if(atFit){mode='tap';}
-        else{mode='pan';ox0=ox;oy0=oy;}
+      const t=e.touches;
+      if(t.length===2){
+        pan1=false; swAxis=null; swMoved=false;
+        p0=t[0]; p1=t[1];
+        startDist=dist2(p0,p1);
+        startScale=scale; startTx=tx; startTy=ty;
+        const m=mid2(p0,p1);
+        startMidX=m.x; startMidY=m.y;
+      } else if(t.length===1){
+        p1=null;
+        tapX=t[0].clientX; tapY=t[0].clientY;
+        const atFit=scale<=(fitScale()*1.05);
+        if(atFit){
+          swX=t[0].clientX; swY=t[0].clientY;
+          swAxis=null; swDx=0; swMoved=false; pan1=false;
+        } else {
+          pan1=true;
+          pan1x=t[0].clientX; pan1y=t[0].clientY;
+          pan1tx=tx; pan1ty=ty; swAxis=null;
+        }
       }
-    },{passive:false,capture:true});
+    },{passive:false});
 
     ov.addEventListener('touchmove',e=>{
-      if(!ov.classList.contains('on'))return;
       e.preventDefault();
-      e.stopPropagation();
-      const tl=e.touches;
-
-      if(mode==='pinch'&&tl.length>=2){
-        const x1=tl[0].clientX,y1=tl[0].clientY;
-        const x2=tl[1].clientX,y2=tl[1].clientY;
-        const pd=Math.hypot(x2-x1,y2-y1)||1;
-        const mx=(x1+x2)/2,my=(y1+y2)/2;
-        const ns=Math.max(0.25,Math.min(8,sc0*(pd/pd0)));
-        const r=ns/sc0;
-        // zoom toward initial pinch midpoint
-        ox=mx-(pmx-ox0)*r;
-        oy=my-(pmy-oy0)*r;
-        sc=ns;
+      const t=e.touches;
+      if(t.length===2&&p1!==null){
+        const d=dist2(t[0],t[1]);
+        const m=mid2(t[0],t[1]);
+        const ns=Math.max(0.5,Math.min(8,startScale*(d/startDist)));
+        const r=ns/startScale;
+        tx=m.x-(startMidX-startTx)*r;
+        ty=m.y-(startMidY-startTy)*r;
+        scale=ns;
         applyT(false);
-      } else if(mode==='pan'){
-        ox=ox0+(tl[0].clientX-t1x);
-        oy=oy0+(tl[0].clientY-t1y);
-        clamp();applyT(false);
-      } else if(mode==='tap'||mode==='swipeX'||mode==='swipeY'){
-        const dx=tl[0].clientX-t1x,dy=tl[0].clientY-t1y;
-        if(mode==='tap'&&(Math.abs(dx)>8||Math.abs(dy)>8)){
-          mode=Math.abs(dx)>=Math.abs(dy)?'swipeX':'swipeY';
-        }
-        if(mode==='swipeX'){
-          img.style.transition='none';
-          img.style.transform=`translate(${ox+dx*0.4}px,${oy}px) scale(${sc})`;
+      } else if(t.length===1){
+        if(pan1){
+          tx=pan1tx+(t[0].clientX-pan1x);
+          ty=pan1ty+(t[0].clientY-pan1y);
+          clamp(); applyT(false);
+        } else {
+          const ddx=t[0].clientX-swX;
+          const ddy=t[0].clientY-swY;
+          if(!swAxis&&(Math.abs(ddx)>8||Math.abs(ddy)>8)){
+            swAxis=Math.abs(ddx)>Math.abs(ddy)?'x':'y';
+          }
+          if(swAxis==='x'){
+            swDx=ddx; swMoved=true;
+            imgEl.style.transition='none';
+            imgEl.style.transform=`translate(${tx+ddx*0.38}px,${ty}px) scale(${scale})`;
+          }
         }
       }
-    },{passive:false,capture:true});
+    },{passive:false});
 
     ov.addEventListener('touchend',e=>{
-      if(!ov.classList.contains('on'))return;
       e.preventDefault();
-      e.stopPropagation();
-      const rem=e.touches.length;
-      const ct=e.changedTouches[0];
+      if(e.touches.length===0){
+        if(pan1){
+          clamp(); applyT(true);
+          pan1=false;
+        } else if(swAxis==='x'){
+          if(swMoved&&Math.abs(swDx)>55){
+            const next=cur+(swDx<0?1:-1);
+            if(next>=0&&next<srcs.length) goTo(next);
+            else applyT(true);
+          } else {
+            applyT(true);
+          }
+          swAxis=null; swMoved=false; swDx=0;
+        } else if(p1!==null){
+          // finished pinch with both fingers lifted at once
+          if(scale<fitScale()*0.72){close();return;}
+          if(scale<fitScale()){scale=fitScale();tx=(ov.offsetWidth-(imgEl.naturalWidth||1)*scale)/2;ty=(ov.offsetHeight-(imgEl.naturalHeight||1)*scale)/2;applyT(true);}
+          else{clamp();applyT(true);}
+          p1=null;
+        } else {
+          // tap: check if moved less than 8px (genuine tap, not drift)
+          const ct=e.changedTouches[0];
+          const moved=Math.hypot(ct.clientX-tapX,ct.clientY-tapY);
+          if(moved<8){
+            // close if tap outside image bounds (computed from tx/ty/scale)
+            const nw=imgEl.naturalWidth,nh=imgEl.naturalHeight;
+            const onImg=ct.clientX>=tx&&ct.clientX<=tx+nw*scale&&ct.clientY>=ty&&ct.clientY<=ty+nh*scale;
+            if(!onImg) close();
+          }
+        }
+        p1=null;
+      } else if(e.touches.length===1&&p1!==null){
+        // one finger lifted from pinch → switch to pan
+        p1=null; pan1=true;
+        pan1x=e.touches[0].clientX; pan1y=e.touches[0].clientY;
+        pan1tx=tx; pan1ty=ty;
+        clamp(); applyT(false);
+      }
+    },{passive:false});
 
-      if(mode==='pinch'){
-        if(sc<fitSc()*0.7){close();return;}
-        if(sc<fitSc()){doFit(true);}else{clamp();applyT(true);}
-        if(rem===1){
-          mode='pan';
-          t1x=e.touches[0].clientX;t1y=e.touches[0].clientY;
-          ox0=ox;oy0=oy;
-        } else {mode='';}
-      } else if(mode==='pan'){
-        clamp();applyT(true);mode='';
-      } else if(mode==='swipeX'){
-        const dx=ct.clientX-t1x;
-        if(Math.abs(dx)>60){
-          const next=cur+(dx<0?1:-1);
-          if(next>=0&&next<srcs.length){goTo(next);mode='';return;}
-        }
-        applyT(true);mode='';
-      } else if(mode==='tap'){
-        // genuine tap — close if outside image rect
-        const moved=Math.hypot(ct.clientX-t1x,ct.clientY-t1y);
-        if(moved<10){
-          // image rect via its current transform: left=ox, top=oy, w=nw*sc, h=nh*sc
-          const il=ox,it=oy,ir=ox+nw()*sc,ib=oy+nh()*sc;
-          if(ct.clientX<il||ct.clientX>ir||ct.clientY<it||ct.clientY>ib){close();}
-        }
-        mode='';
-      } else {mode='';}
-    },{passive:false,capture:true});
+    document.addEventListener('keydown',e=>{
+      if(!ov.classList.contains('on')) return;
+      if(e.key==='Escape') close();
+      if(e.key==='ArrowRight'&&cur<srcs.length-1) goTo(cur+1);
+      if(e.key==='ArrowLeft'&&cur>0) goTo(cur-1);
+    });
 
     return{open,close,isOpen:()=>ov.classList.contains('on')};
   })();
 
-  // Attach zoom to image; safe to call multiple times — removes old listener first
   function attachZoom(imgElNode){
     if(!imgElNode||!imgElNode.src) return;
-    // Remove previous handler to avoid double-firing after rebuild
-    if(imgElNode._zoomHandler){
-      imgElNode.removeEventListener('click',imgElNode._zoomHandler);
-    }
+    if(imgElNode._zoomHandler) imgElNode.removeEventListener('click',imgElNode._zoomHandler);
     imgElNode.style.cursor='zoom-in';
     imgElNode._zoomHandler=function(e){
       e.stopPropagation();
-      // Collect all zoomable images in the current visible slide/pane only
-      const slide=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide');
-      const container=slide||imgElNode.parentElement;
+      const container=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
       const all=[...container.querySelectorAll('img')].filter(i=>i._zoomHandler&&i.src&&!i.src.endsWith('#'));
-      const idx=Math.max(0,all.indexOf(imgElNode));
-      ZOOM.open(all.map(i=>i.src), idx);
+      const idx=all.indexOf(imgElNode);
+      ZOOM.open(all.map(i=>i.src), idx<0?0:idx);
     };
     imgElNode.addEventListener('click',imgElNode._zoomHandler);
   }
