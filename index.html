@@ -1068,11 +1068,15 @@ const APP=(()=>{
   function ann(id){const el=document.getElementById(id);if(el)el.classList.toggle('on')}
 
   function hsw(el,cb){
-    let sx=0,sy=0;
+    let sx=0,sy=0,busy=false;
     el.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
     el.addEventListener('touchend',e=>{
+      if(busy)return; // debounce double-fire
       const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
-      if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40)cb(dx>0?-1:1);
+      if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40){
+        busy=true; setTimeout(()=>busy=false,400);
+        cb(dx>0?-1:1);
+      }
     },{passive:true});
   }
   function cl(v,a,b){return Math.max(a,Math.min(b,v))}
@@ -1094,12 +1098,17 @@ const APP=(()=>{
   const ZOOM=(()=>{
     const ov=$('zoomOv');
     const imgEl=$('zoomOvImg');
-    let srcs=[], cur=0;
+    const PAD=24;
+    let srcs=[], cur=0, loading=false;
     let scale=1, tx=0, ty=0;
+    // pinch
     let p0=null,p1=null,startScale=1,startDist=0,startMidX=0,startMidY=0,startTx=0,startTy=0;
-    let pan1=false,pan1x=0,pan1y=0,pan1tx=0,pan1ty=0,pan1moved=false;
+    // pan (1 finger when zoomed)
+    let pan1=false,pan1x=0,pan1y=0,pan1tx=0,pan1ty=0;
+    // swipe between images (1 finger at fit scale)
     let swX=0,swY=0,swAxis=null,swDx=0,swMoved=false;
-    let tapMoved=false;
+    // tap detection
+    let tapX=0,tapY=0;
 
     function dist2(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
     function mid2(a,b){return{x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2};}
@@ -1109,47 +1118,44 @@ const APP=(()=>{
       imgEl.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
     }
 
-    function getFitScale(){
-      const nw=imgEl.naturalWidth, nh=imgEl.naturalHeight;
-      if(!nw||!nh) return 1;
-      return Math.min(ov.offsetWidth/nw, ov.offsetHeight/nh);
-    }
-
     function doFit(){
       const W=ov.offsetWidth, H=ov.offsetHeight;
       const nw=imgEl.naturalWidth, nh=imgEl.naturalHeight;
       if(!nw||!nh) return;
-      scale=Math.min(W/nw, H/nh);
+      scale=Math.min((W-PAD*2)/nw,(H-PAD*2)/nh);
       tx=(W-nw*scale)/2;
       ty=(H-nh*scale)/2;
       applyT(false);
     }
 
-    function clamp(){
-      const W=ov.offsetWidth, H=ov.offsetHeight;
-      const nw=imgEl.naturalWidth||1, nh=imgEl.naturalHeight||1;
-      const iw=nw*scale, ih=nh*scale;
-      tx=Math.max(Math.min(0,W-iw), Math.min(Math.max(0,W-iw), tx));
-      ty=Math.max(Math.min(0,H-ih), Math.min(Math.max(0,H-ih), ty));
+    function fitScale(){
+      const nw=imgEl.naturalWidth||1,nh=imgEl.naturalHeight||1;
+      return Math.min((ov.offsetWidth-PAD*2)/nw,(ov.offsetHeight-PAD*2)/nh);
     }
 
-    // Load image reliably — handles cache by using Image() first
-    function loadSrc(src, onready){
+    function clamp(){
+      const W=ov.offsetWidth,H=ov.offsetHeight;
+      const iw=(imgEl.naturalWidth||1)*scale,ih=(imgEl.naturalHeight||1)*scale;
+      if(iw<=W){tx=(W-iw)/2;}else{tx=Math.max(W-iw,Math.min(0,tx));}
+      if(ih<=H){ty=(H-ih)/2;}else{ty=Math.max(H-ih,Math.min(0,ty));}
+    }
+
+    function loadSrc(src,onready){
+      if(loading) return;
+      loading=true;
       imgEl.style.opacity='0';
       imgEl.style.transition='none';
       imgEl.style.transform='none';
       scale=1; tx=0; ty=0;
-      if(imgEl.src===src){
-        // already same src — naturalWidth may already be set
-        if(imgEl.naturalWidth) { onready(); return; }
-      }
+      // Preload via Image() so naturalWidth is guaranteed when we set imgEl.src
       const tmp=new Image();
-      tmp.onload=()=>{
+      tmp.onload=tmp.onerror=()=>{
         imgEl.src=src;
-        // give browser one frame to apply src, then call onready
-        requestAnimationFrame(()=>requestAnimationFrame(onready));
+        requestAnimationFrame(()=>{
+          loading=false;
+          onready();
+        });
       };
-      tmp.onerror=()=>{ imgEl.src=src; requestAnimationFrame(()=>requestAnimationFrame(onready)); };
       tmp.src=src;
     }
 
@@ -1161,20 +1167,21 @@ const APP=(()=>{
 
     function open(srcList,idx){
       srcs=srcList; cur=idx;
-      scale=1; tx=0; ty=0;
       ov.classList.add('on');
-      loadSrc(srcs[cur], showFitted);
+      loadSrc(srcs[cur],showFitted);
     }
 
     function close(){
       ov.classList.remove('on');
+      loading=false;
       srcs=[]; cur=0; scale=1; tx=0; ty=0;
       imgEl.style.opacity='0';
+      imgEl.src='';
     }
 
     function goTo(idx){
       cur=idx;
-      loadSrc(srcs[cur], showFitted);
+      loadSrc(srcs[cur],showFitted);
     }
 
     // Desktop: click backdrop closes
@@ -1182,11 +1189,10 @@ const APP=(()=>{
       if(e.target===ov||e.target===$('zoomOvBg')) close();
     });
 
-    // ── All touch ──
+    // Touch
     ov.addEventListener('touchstart',e=>{
       e.preventDefault();
       const t=e.touches;
-      tapMoved=false;
       if(t.length===2){
         pan1=false; swAxis=null; swMoved=false;
         p0=t[0]; p1=t[1];
@@ -1196,12 +1202,13 @@ const APP=(()=>{
         startMidX=m.x; startMidY=m.y;
       } else if(t.length===1){
         p1=null;
-        const atFit=scale<=(getFitScale()*1.08);
+        tapX=t[0].clientX; tapY=t[0].clientY;
+        const atFit=scale<=(fitScale()*1.05);
         if(atFit){
           swX=t[0].clientX; swY=t[0].clientY;
           swAxis=null; swDx=0; swMoved=false; pan1=false;
         } else {
-          pan1=true; pan1moved=false;
+          pan1=true;
           pan1x=t[0].clientX; pan1y=t[0].clientY;
           pan1tx=tx; pan1ty=ty; swAxis=null;
         }
@@ -1211,7 +1218,6 @@ const APP=(()=>{
     ov.addEventListener('touchmove',e=>{
       e.preventDefault();
       const t=e.touches;
-      tapMoved=true;
       if(t.length===2&&p1!==null){
         const d=dist2(t[0],t[1]);
         const m=mid2(t[0],t[1]);
@@ -1225,11 +1231,11 @@ const APP=(()=>{
         if(pan1){
           tx=pan1tx+(t[0].clientX-pan1x);
           ty=pan1ty+(t[0].clientY-pan1y);
-          pan1moved=true; clamp(); applyT(false);
+          clamp(); applyT(false);
         } else {
           const ddx=t[0].clientX-swX;
           const ddy=t[0].clientY-swY;
-          if(!swAxis&&(Math.abs(ddx)>6||Math.abs(ddy)>6)){
+          if(!swAxis&&(Math.abs(ddx)>8||Math.abs(ddy)>8)){
             swAxis=Math.abs(ddx)>Math.abs(ddy)?'x':'y';
           }
           if(swAxis==='x'){
@@ -1246,7 +1252,7 @@ const APP=(()=>{
       if(e.touches.length===0){
         if(pan1){
           clamp(); applyT(true);
-          pan1=false; pan1moved=false;
+          pan1=false;
         } else if(swAxis==='x'){
           if(swMoved&&Math.abs(swDx)>55){
             const next=cur+(swDx<0?1:-1);
@@ -1256,16 +1262,21 @@ const APP=(()=>{
             applyT(true);
           }
           swAxis=null; swMoved=false; swDx=0;
-        } else if(!tapMoved){
-          // clean tap: close if finger lifted outside image rect
+        } else {
+          // tap: check if moved less than 8px (genuine tap, not drift)
           const ct=e.changedTouches[0];
-          const r=imgEl.getBoundingClientRect();
-          const onImg=ct.clientX>=r.left&&ct.clientX<=r.right&&ct.clientY>=r.top&&ct.clientY<=r.bottom;
-          if(!onImg) close();
+          const moved=Math.hypot(ct.clientX-tapX,ct.clientY-tapY);
+          if(moved<8){
+            // close if tap outside image bounds (computed from tx/ty/scale)
+            const nw=imgEl.naturalWidth,nh=imgEl.naturalHeight;
+            const onImg=ct.clientX>=tx&&ct.clientX<=tx+nw*scale&&ct.clientY>=ty&&ct.clientY<=ty+nh*scale;
+            if(!onImg) close();
+          }
         }
         p1=null;
       } else if(e.touches.length===1&&p1!==null){
-        p1=null; pan1=true; pan1moved=false;
+        // one finger lifted from pinch → switch to pan
+        p1=null; pan1=true;
         pan1x=e.touches[0].clientX; pan1y=e.touches[0].clientY;
         pan1tx=tx; pan1ty=ty;
         clamp(); applyT(false);
