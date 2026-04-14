@@ -1146,7 +1146,8 @@ const APP=(()=>{
       loading=true;
       imgEl.style.opacity='0';
       imgEl.style.transition='none';
-      imgEl.style.transform='none';
+      imgEl.style.width='';
+      imgEl.style.height='';
       scale=1; tx=0; ty=0;
       imgEl.onload=function(){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();};
       imgEl.onerror=function(){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();};
@@ -1274,9 +1275,13 @@ const APP=(()=>{
           const ct=e.changedTouches[0];
           const moved=Math.hypot(ct.clientX-tapX,ct.clientY-tapY);
           if(moved<8){
-            const r=imgEl.getBoundingClientRect();
-            const onImg=ct.clientX>=r.left&&ct.clientX<=r.right&&ct.clientY>=r.top&&ct.clientY<=r.bottom;
+            // image occupies [tx, tx+nw*scale] x [ty, ty+nh*scale] in screen coords
+            // tx/ty can be negative when image is larger than screen — that's fine
+            const nw=imgEl.naturalWidth,nh=imgEl.naturalHeight;
+            const x=ct.clientX,y=ct.clientY;
+            const onImg=x>=tx&&x<=tx+nw*scale&&y>=ty&&y<=ty+nh*scale;
             if(!onImg) close();
+            else if(scale<=fitScale()*1.05) close(); // tap on image at fit scale also closes
           }
         }
       } else if(remaining===1&&wasPinch){
