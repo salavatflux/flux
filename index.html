@@ -1197,7 +1197,7 @@ const APP=(()=>{
       if(t.length===2){
         pan1=false; swAxis=null; swMoved=false;
         p0=t[0]; p1=t[1];
-        startDist=dist2(p0,p1);
+        startDist=Math.max(dist2(p0,p1),40);
         startScale=scale; startTx=tx; startTy=ty;
         const m=mid2(p0,p1);
         startMidX=m.x; startMidY=m.y;
@@ -1227,6 +1227,7 @@ const APP=(()=>{
         tx=m.x-(startMidX-startTx)*r;
         ty=m.y-(startMidY-startTy)*r;
         scale=ns;
+        clamp();
         applyT(false);
       } else if(t.length===1){
         if(pan1){
