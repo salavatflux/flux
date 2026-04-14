@@ -1148,12 +1148,10 @@ const APP=(()=>{
       imgEl.style.transition='none';
       imgEl.style.transform='none';
       scale=1; tx=0; ty=0;
-      function ready(){loading=false;onready();}
-      imgEl.onload=function(){imgEl.onload=null;ready();};
-      imgEl.onerror=function(){imgEl.onerror=null;ready();};
+      imgEl.onload=function(){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();};
+      imgEl.onerror=function(){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();};
       imgEl.src=src;
-      // already cached — onload won't fire
-      if(imgEl.complete&&imgEl.naturalWidth){imgEl.onload=null;ready();}
+      if(imgEl.complete&&imgEl.naturalWidth){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();}
     }
 
     function showFitted(){
@@ -1259,20 +1257,13 @@ const APP=(()=>{
             applyT(true);
           }
           swAxis=null; swMoved=false; swDx=0;
-        } else if(p1!==null){
-          // finished pinch with both fingers lifted at once
-          if(scale<fitScale()*0.72){close();return;}
-          if(scale<fitScale()){scale=fitScale();tx=(ov.offsetWidth-(imgEl.naturalWidth||1)*scale)/2;ty=(ov.offsetHeight-(imgEl.naturalHeight||1)*scale)/2;applyT(true);}
-          else{clamp();applyT(true);}
-          p1=null;
         } else {
           // tap: check if moved less than 8px (genuine tap, not drift)
           const ct=e.changedTouches[0];
           const moved=Math.hypot(ct.clientX-tapX,ct.clientY-tapY);
           if(moved<8){
-            // close if tap outside image bounds (computed from tx/ty/scale)
-            const nw=imgEl.naturalWidth,nh=imgEl.naturalHeight;
-            const onImg=ct.clientX>=tx&&ct.clientX<=tx+nw*scale&&ct.clientY>=ty&&ct.clientY<=ty+nh*scale;
+            const r=imgEl.getBoundingClientRect();
+            const onImg=ct.clientX>=r.left&&ct.clientX<=r.right&&ct.clientY>=r.top&&ct.clientY<=r.bottom;
             if(!onImg) close();
           }
         }
@@ -1283,6 +1274,11 @@ const APP=(()=>{
         pan1x=e.touches[0].clientX; pan1y=e.touches[0].clientY;
         pan1tx=tx; pan1ty=ty;
         clamp(); applyT(false);
+      } else if(e.touches.length===0&&p1!==null){
+        // both fingers lifted after pinch
+        p1=null;
+        if(scale<fitScale()*0.72){close();}
+        else{if(scale<fitScale()){scale=fitScale();tx=(ov.offsetWidth-(imgEl.naturalWidth||1)*scale)/2;ty=(ov.offsetHeight-(imgEl.naturalHeight||1)*scale)/2;}else{clamp();}applyT(true);}
       }
     },{passive:false});
 
@@ -1298,32 +1294,27 @@ const APP=(()=>{
 
   function attachZoom(imgElNode){
     if(!imgElNode||!imgElNode.src) return;
-    if(imgElNode._zoomHandler) imgElNode.removeEventListener('click',imgElNode._zoomHandler);
-    if(imgElNode._zoomTouchStart) imgElNode.removeEventListener('touchstart',imgElNode._zoomTouchStart);
-    if(imgElNode._zoomTouchEnd) imgElNode.removeEventListener('touchend',imgElNode._zoomTouchEnd);
+    if(imgElNode._zh) imgElNode.removeEventListener('click',imgElNode._zh);
+    if(imgElNode._zts) imgElNode.removeEventListener('touchstart',imgElNode._zts);
+    if(imgElNode._zte) imgElNode.removeEventListener('touchend',imgElNode._zte);
     imgElNode.style.cursor='zoom-in';
-
     function doOpen(e){
       e.stopPropagation();
-      const container=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
-      const all=[...container.querySelectorAll('img')].filter(i=>i._zoomHandler&&i.src&&!i.src.endsWith('#'));
-      const idx=all.indexOf(imgElNode);
-      ZOOM.open(all.map(i=>i.src), idx<0?0:idx);
+      const c=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
+      const all=[...c.querySelectorAll('img')].filter(i=>i._zh&&i.src&&!i.src.endsWith('#'));
+      ZOOM.open(all.map(i=>i.src),Math.max(0,all.indexOf(imgElNode)));
     }
-
-    // desktop: click
-    imgElNode._zoomHandler=function(e){doOpen(e);};
-    imgElNode.addEventListener('click',imgElNode._zoomHandler);
-
-    // mobile: tap via touchstart/touchend (works even in scrollable containers)
+    imgElNode._zh=doOpen;
+    imgElNode.addEventListener('click',imgElNode._zh);
     let _tx=0,_ty=0;
-    imgElNode._zoomTouchStart=function(e){_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;};
-    imgElNode._zoomTouchEnd=function(e){
-      const dx=e.changedTouches[0].clientX-_tx,dy=e.changedTouches[0].clientY-_ty;
-      if(Math.abs(dx)<10&&Math.abs(dy)<10){e.preventDefault();doOpen(e);}
+    imgElNode._zts=e=>{_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;};
+    imgElNode._zte=e=>{
+      if(Math.abs(e.changedTouches[0].clientX-_tx)<12&&Math.abs(e.changedTouches[0].clientY-_ty)<12){
+        e.preventDefault();doOpen(e);
+      }
     };
-    imgElNode.addEventListener('touchstart',imgElNode._zoomTouchStart,{passive:true});
-    imgElNode.addEventListener('touchend',imgElNode._zoomTouchEnd,{passive:false});
+    imgElNode.addEventListener('touchstart',imgElNode._zts,{passive:true});
+    imgElNode.addEventListener('touchend',imgElNode._zte,{passive:false});
   }
 
   function resetZoom(){if(ZOOM.isOpen()) ZOOM.close();}
