@@ -1143,22 +1143,17 @@ const APP=(()=>{
     }
 
     function loadSrc(src,onready){
-      if(loading) return;
       loading=true;
       imgEl.style.opacity='0';
       imgEl.style.transition='none';
       imgEl.style.transform='none';
       scale=1; tx=0; ty=0;
-      // Preload via Image() so naturalWidth is guaranteed when we set imgEl.src
-      const tmp=new Image();
-      tmp.onload=tmp.onerror=()=>{
-        imgEl.src=src;
-        requestAnimationFrame(()=>{
-          loading=false;
-          onready();
-        });
-      };
-      tmp.src=src;
+      function ready(){loading=false;onready();}
+      imgEl.onload=function(){imgEl.onload=null;ready();};
+      imgEl.onerror=function(){imgEl.onerror=null;ready();};
+      imgEl.src=src;
+      // already cached — onload won't fire
+      if(imgEl.complete&&imgEl.naturalWidth){imgEl.onload=null;ready();}
     }
 
     function showFitted(){
@@ -1304,15 +1299,31 @@ const APP=(()=>{
   function attachZoom(imgElNode){
     if(!imgElNode||!imgElNode.src) return;
     if(imgElNode._zoomHandler) imgElNode.removeEventListener('click',imgElNode._zoomHandler);
+    if(imgElNode._zoomTouchStart) imgElNode.removeEventListener('touchstart',imgElNode._zoomTouchStart);
+    if(imgElNode._zoomTouchEnd) imgElNode.removeEventListener('touchend',imgElNode._zoomTouchEnd);
     imgElNode.style.cursor='zoom-in';
-    imgElNode._zoomHandler=function(e){
+
+    function doOpen(e){
       e.stopPropagation();
       const container=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
       const all=[...container.querySelectorAll('img')].filter(i=>i._zoomHandler&&i.src&&!i.src.endsWith('#'));
       const idx=all.indexOf(imgElNode);
       ZOOM.open(all.map(i=>i.src), idx<0?0:idx);
-    };
+    }
+
+    // desktop: click
+    imgElNode._zoomHandler=function(e){doOpen(e);};
     imgElNode.addEventListener('click',imgElNode._zoomHandler);
+
+    // mobile: tap via touchstart/touchend (works even in scrollable containers)
+    let _tx=0,_ty=0;
+    imgElNode._zoomTouchStart=function(e){_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;};
+    imgElNode._zoomTouchEnd=function(e){
+      const dx=e.changedTouches[0].clientX-_tx,dy=e.changedTouches[0].clientY-_ty;
+      if(Math.abs(dx)<10&&Math.abs(dy)<10){e.preventDefault();doOpen(e);}
+    };
+    imgElNode.addEventListener('touchstart',imgElNode._zoomTouchStart,{passive:true});
+    imgElNode.addEventListener('touchend',imgElNode._zoomTouchEnd,{passive:false});
   }
 
   function resetZoom(){if(ZOOM.isOpen()) ZOOM.close();}
