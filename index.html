@@ -1244,8 +1244,21 @@ const APP=(()=>{
 
     ov.addEventListener('touchend',e=>{
       e.preventDefault();
-      if(e.touches.length===0){
-        if(pan1){
+      const remaining=e.touches.length;
+      const wasPinch=p1!==null;
+
+      if(remaining===0){
+        if(wasPinch){
+          // both fingers lifted — pinch ended
+          p1=null; pan1=false;
+          if(scale<fitScale()*0.72){close();return;}
+          if(scale<fitScale()){
+            scale=fitScale();
+            tx=(ov.offsetWidth-(imgEl.naturalWidth||1)*scale)/2;
+            ty=(ov.offsetHeight-(imgEl.naturalHeight||1)*scale)/2;
+          } else {clamp();}
+          applyT(true);
+        } else if(pan1){
           clamp(); applyT(true);
           pan1=false;
         } else if(swAxis==='x'){
@@ -1258,7 +1271,6 @@ const APP=(()=>{
           }
           swAxis=null; swMoved=false; swDx=0;
         } else {
-          // tap: check if moved less than 8px (genuine tap, not drift)
           const ct=e.changedTouches[0];
           const moved=Math.hypot(ct.clientX-tapX,ct.clientY-tapY);
           if(moved<8){
@@ -1267,18 +1279,12 @@ const APP=(()=>{
             if(!onImg) close();
           }
         }
-        p1=null;
-      } else if(e.touches.length===1&&p1!==null){
+      } else if(remaining===1&&wasPinch){
         // one finger lifted from pinch → switch to pan
         p1=null; pan1=true;
         pan1x=e.touches[0].clientX; pan1y=e.touches[0].clientY;
         pan1tx=tx; pan1ty=ty;
         clamp(); applyT(false);
-      } else if(e.touches.length===0&&p1!==null){
-        // both fingers lifted after pinch
-        p1=null;
-        if(scale<fitScale()*0.72){close();}
-        else{if(scale<fitScale()){scale=fitScale();tx=(ov.offsetWidth-(imgEl.naturalWidth||1)*scale)/2;ty=(ov.offsetHeight-(imgEl.naturalHeight||1)*scale)/2;}else{clamp();}applyT(true);}
       }
     },{passive:false});
 
