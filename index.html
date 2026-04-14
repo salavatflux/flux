@@ -1120,10 +1120,12 @@ const APP=(()=>{
       imgEl.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
     }
 
+    function imgW(){return imgEl.naturalWidthOverride||imgEl.naturalWidth||1;}
+    function imgH(){return imgEl.naturalHeightOverride||imgEl.naturalHeight||1;}
+
     function doFit(){
       const W=ov.offsetWidth, H=ov.offsetHeight;
-      const nw=imgEl.naturalWidth, nh=imgEl.naturalHeight;
-      if(!nw||!nh) return;
+      const nw=imgW(), nh=imgH();
       scale=Math.min((W-PAD*2)/nw,(H-PAD*2)/nh);
       tx=(W-nw*scale)/2;
       ty=(H-nh*scale)/2;
@@ -1131,13 +1133,12 @@ const APP=(()=>{
     }
 
     function fitScale(){
-      const nw=imgEl.naturalWidth||1,nh=imgEl.naturalHeight||1;
-      return Math.min((ov.offsetWidth-PAD*2)/nw,(ov.offsetHeight-PAD*2)/nh);
+      return Math.min((ov.offsetWidth-PAD*2)/imgW(),(ov.offsetHeight-PAD*2)/imgH());
     }
 
     function clamp(){
       const W=ov.offsetWidth,H=ov.offsetHeight;
-      const iw=(imgEl.naturalWidth||1)*scale,ih=(imgEl.naturalHeight||1)*scale;
+      const iw=imgW()*scale,ih=imgH()*scale;
       if(iw<=W){tx=(W-iw)/2;}else{tx=Math.max(W-iw,Math.min(0,tx));}
       if(ih<=H){ty=(H-ih)/2;}else{ty=Math.max(H-ih,Math.min(0,ty));}
     }
@@ -1146,13 +1147,17 @@ const APP=(()=>{
       loading=true;
       imgEl.style.opacity='0';
       imgEl.style.transition='none';
-      imgEl.style.width='';
-      imgEl.style.height='';
       scale=1; tx=0; ty=0;
-      imgEl.onload=function(){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();};
-      imgEl.onerror=function(){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();};
-      imgEl.src=src;
-      if(imgEl.complete&&imgEl.naturalWidth){imgEl.onload=null;imgEl.onerror=null;loading=false;onready();}
+      const tmp=new Image();
+      tmp.onload=function(){
+        imgEl.src=tmp.src;
+        // naturalWidth now guaranteed via tmp
+        imgEl.naturalWidthOverride=tmp.naturalWidth;
+        imgEl.naturalHeightOverride=tmp.naturalHeight;
+        loading=false; onready();
+      };
+      tmp.onerror=function(){loading=false; onready();};
+      tmp.src=src;
     }
 
     function showFitted(){
@@ -1255,8 +1260,8 @@ const APP=(()=>{
           if(scale<fitScale()*0.72){close();return;}
           if(scale<fitScale()){
             scale=fitScale();
-            tx=(ov.offsetWidth-(imgEl.naturalWidth||1)*scale)/2;
-            ty=(ov.offsetHeight-(imgEl.naturalHeight||1)*scale)/2;
+            tx=(ov.offsetWidth-imgW()*scale)/2;
+            ty=(ov.offsetHeight-imgH()*scale)/2;
           } else {clamp();}
           applyT(true);
         } else if(pan1){
@@ -1275,13 +1280,11 @@ const APP=(()=>{
           const ct=e.changedTouches[0];
           const moved=Math.hypot(ct.clientX-tapX,ct.clientY-tapY);
           if(moved<8){
-            // image occupies [tx, tx+nw*scale] x [ty, ty+nh*scale] in screen coords
-            // tx/ty can be negative when image is larger than screen — that's fine
-            const nw=imgEl.naturalWidth,nh=imgEl.naturalHeight;
+            const nw=imgW(),nh=imgH();
             const x=ct.clientX,y=ct.clientY;
             const onImg=x>=tx&&x<=tx+nw*scale&&y>=ty&&y<=ty+nh*scale;
             if(!onImg) close();
-            else if(scale<=fitScale()*1.05) close(); // tap on image at fit scale also closes
+            else if(scale<=fitScale()*1.05) close();
           }
         }
       } else if(remaining===1&&wasPinch){
@@ -1321,11 +1324,11 @@ const APP=(()=>{
     imgElNode._zts=e=>{_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;};
     imgElNode._zte=e=>{
       if(Math.abs(e.changedTouches[0].clientX-_tx)<12&&Math.abs(e.changedTouches[0].clientY-_ty)<12){
-        e.preventDefault();doOpen(e);
+        doOpen(e);
       }
     };
     imgElNode.addEventListener('touchstart',imgElNode._zts,{passive:true});
-    imgElNode.addEventListener('touchend',imgElNode._zte,{passive:false});
+    imgElNode.addEventListener('touchend',imgElNode._zte,{passive:true});
   }
 
   function resetZoom(){if(ZOOM.isOpen()) ZOOM.close();}
