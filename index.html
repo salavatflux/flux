@@ -92,7 +92,7 @@ img{display:block}
 /* ── LIGHTBOX ── */
 #zoomOv{display:none;position:fixed;inset:0;z-index:10000;touch-action:none}
 #zoomOv.on{display:block}
-#zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);transition:backdrop-filter .1s,-webkit-backdrop-filter .1s}
 #zoomOvImg{position:absolute;display:block;will-change:transform;user-select:none;-webkit-user-drag:none;touch-action:none;transform-origin:0 0}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
@@ -1140,9 +1140,22 @@ const APP=(()=>{
       if(ih<=H){ ty=(H-ih)/2; } else { ty=Math.max(H-ih, Math.min(0, ty)); }
     }
 
+    const ovBg=$('zoomOvBg');
+    const MAX_BLUR=20;
+
+    function updateBlur(){
+      const fs=fitScale();
+      const maxS=fs*8;
+      const t=Math.max(0,Math.min(1,(scale-fs)/(maxS-fs)));
+      const blurPx=Math.round(t*MAX_BLUR*10)/10;
+      ovBg.style.backdropFilter=`blur(${blurPx}px)`;
+      ovBg.style.webkitBackdropFilter=`blur(${blurPx}px)`;
+    }
+
     function applyT(animate){
       imgEl.style.transition=animate?'transform .22s cubic-bezier(.25,.46,.45,.94)':'none';
       imgEl.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+      updateBlur();
     }
 
     function doFit(){
@@ -1188,6 +1201,8 @@ const APP=(()=>{
       srcs=[]; cur=0; scale=1; tx=0; ty=0;
       imgEl.style.opacity='0';
       imgEl.src='';
+      ovBg.style.backdropFilter='blur(0px)';
+      ovBg.style.webkitBackdropFilter='blur(0px)';
     }
 
     function goTo(idx){
@@ -1341,32 +1356,87 @@ const APP=(()=>{
       if(e.key==='ArrowLeft'&&cur>0) goTo(cur-1);
     });
 
-    return{open,close,isOpen:()=>ov.classList.contains('on')};
+    // Called by attachZoom when a pinch starts on a gallery image.
+    // srcList/idx = image set; t0/t1 = the two Touch objects from the gallery touchstart.
+    // The lightbox opens immediately and the pinch continues seamlessly inside it.
+    function openFromPinch(srcList, idx, t0, t1){
+      srcs=srcList; cur=idx;
+      ov.classList.add('on');
+      // Show immediately at fitScale with 0 opacity, then set up pinch state
+      loadSrc(srcs[cur], function(){
+        doFit();
+        imgEl.style.transition='opacity .12s';
+        imgEl.style.opacity='1';
+        // Hand off pinch state — as if touchstart happened inside lightbox
+        isPinching=true; isPanning=false; swAxis=null; swMoved=false;
+        pinchStartDist=Math.max(dist2(t0,t1),1);
+        pinchStartScale=scale;
+        pinchStartTx=tx; pinchStartTy=ty;
+        const m=mid2(t0,t1);
+        pinchStartMidX=m.x; pinchStartMidY=m.y;
+      });
+    }
+
+    return{open,close,openFromPinch,isOpen:()=>ov.classList.contains('on')};
   })();
 
   function attachZoom(imgElNode){
     if(!imgElNode||!imgElNode.src) return;
-    if(imgElNode._zh) imgElNode.removeEventListener('click',imgElNode._zh);
+    // Remove any previous handlers
+    if(imgElNode._zh)  imgElNode.removeEventListener('click',imgElNode._zh);
     if(imgElNode._zts) imgElNode.removeEventListener('touchstart',imgElNode._zts);
     if(imgElNode._zte) imgElNode.removeEventListener('touchend',imgElNode._zte);
+    if(imgElNode._ztm) imgElNode.removeEventListener('touchmove',imgElNode._ztm);
     imgElNode.style.cursor='zoom-in';
+
+    // Helper: collect sibling images for the set
+    function getSrcList(){
+      const c=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
+      return [...c.querySelectorAll('img')].filter(i=>i._zts&&i.src&&!i.src.endsWith('#'));
+    }
+
+    // Desktop: click still opens (no pinch on desktop)
     function doOpen(e){
       e.stopPropagation();
-      const c=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
-      const all=[...c.querySelectorAll('img')].filter(i=>i._zh&&i.src&&!i.src.endsWith('#'));
-      ZOOM.open(all.map(i=>i.src),Math.max(0,all.indexOf(imgElNode)));
+      const all=getSrcList();
+      ZOOM.open(all.map(i=>i.src), Math.max(0,all.indexOf(imgElNode)));
     }
     imgElNode._zh=doOpen;
     imgElNode.addEventListener('click',imgElNode._zh);
-    let _tx=0,_ty=0;
-    imgElNode._zts=e=>{_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;};
-    imgElNode._zte=e=>{
-      if(Math.abs(e.changedTouches[0].clientX-_tx)<12&&Math.abs(e.changedTouches[0].clientY-_ty)<12){
-        doOpen(e);
+
+    // Mobile: only a pinch (2-finger) opens; single-finger tap does nothing
+    let _pinchActive=false;
+    let _t0=null, _t1=null;
+
+    imgElNode._zts=e=>{
+      if(ZOOM.isOpen()) return; // already open — lightbox handles it
+      if(e.touches.length===2){
+        e.stopPropagation();
+        _pinchActive=true;
+        _t0={clientX:e.touches[0].clientX, clientY:e.touches[0].clientY};
+        _t1={clientX:e.touches[1].clientX, clientY:e.touches[1].clientY};
+      } else {
+        _pinchActive=false;
       }
     };
-    imgElNode.addEventListener('touchstart',imgElNode._zts,{passive:true});
-    imgElNode.addEventListener('touchend',imgElNode._zte,{passive:true});
+
+    imgElNode._ztm=e=>{
+      if(ZOOM.isOpen()) return;
+      if(_pinchActive&&e.touches.length===2){
+        // As soon as fingers start moving, open lightbox and hand off the pinch
+        e.stopPropagation(); e.preventDefault();
+        _pinchActive=false;
+        const all=getSrcList();
+        ZOOM.openFromPinch(all.map(i=>i.src), Math.max(0,all.indexOf(imgElNode)),
+          e.touches[0], e.touches[1]);
+      }
+    };
+
+    imgElNode._zte=e=>{ _pinchActive=false; };
+
+    imgElNode.addEventListener('touchstart', imgElNode._zts, {passive:true});
+    imgElNode.addEventListener('touchmove',  imgElNode._ztm, {passive:false});
+    imgElNode.addEventListener('touchend',   imgElNode._zte, {passive:true});
   }
 
   function resetZoom(){if(ZOOM.isOpen()) ZOOM.close();}
