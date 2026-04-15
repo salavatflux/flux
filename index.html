@@ -92,12 +92,12 @@ img{display:block}
 /* ── LIGHTBOX ── */
 #zoomOv{display:none;position:fixed;inset:0;z-index:10000;touch-action:none}
 #zoomOv.on{display:block}
-#zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);transition:backdrop-filter .1s,-webkit-backdrop-filter .1s}
+#zoomOvBg{position:absolute;inset:0;background:rgba(0,0,0,.05);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px)}
 #zoomOvImg{position:absolute;display:block;will-change:transform;user-select:none;-webkit-user-drag:none;touch-action:none;transform-origin:0 0}
 /* ── OBJECTS ── */
 #objOuter{flex:1;position:relative;overflow:hidden}
 #objTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
-.obj-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:40px 48px 80px;display:flex;flex-direction:column;align-items:center;touch-action:pan-y}
+.obj-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:40px 48px 80px;display:flex;flex-direction:column;align-items:center;touch-action:pan-y pinch-zoom}
 .obj-slide::-webkit-scrollbar{width:0}
 .obj-img{width:100%;max-width:760px;background:#eaeaea;overflow:hidden;margin-bottom:28px;flex-shrink:0}
 .obj-img img{width:100%;height:auto}
@@ -132,7 +132,7 @@ img{display:block}
 
 /* ── PAPER ── */
 #papOuter{flex:1;position:relative;overflow:hidden}
-#papTrk{display:flex;height:100%;transition:transform .52s cubic-bezier(.77,0,.175,1);touch-action:pan-x}
+#papTrk{display:flex;height:100%;transition:transform .52s cubic-bezier(.77,0,.175,1);touch-action:pan-x pinch-zoom}
 .pap-pane{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
 .pap-pane::-webkit-scrollbar{width:0}
 
@@ -179,7 +179,7 @@ img{display:block}
 /* ── DIGITAL ── */
 #digOuter{flex:1;position:relative;overflow:hidden}
 #digTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
-.dig-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;background-repeat:repeat-y;background-size:100% auto;background-position:top center}
+.dig-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;background-repeat:repeat-y;background-size:100% auto;background-position:top center;touch-action:pan-y pinch-zoom}
 .dig-slide::-webkit-scrollbar{width:0}
 .dig-bg{position:absolute;inset:0;background-size:100% auto;background-repeat:repeat-y;background-position:top center;opacity:1;pointer-events:none}
 .dig-inner{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:56px 40px 80px}
@@ -201,7 +201,7 @@ img{display:block}
 .pap-series-back:hover{opacity:1}
 #papSeriesOuter{flex:1;position:relative;overflow:hidden}
 #papSeriesTrk{display:flex;height:100%;transition:transform .5s cubic-bezier(.77,0,.175,1)}
-.pap-series-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.pap-series-slide{min-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y pinch-zoom}
 .pap-series-slide::-webkit-scrollbar{width:0}
 .pap-series-layout{width:100%;padding:40px 40px 80px;box-sizing:border-box;margin:0 auto;display:flex;flex-direction:column;align-items:center}
 @media(max-width:767px){.pap-series-layout{padding:32px 20px 64px}}
@@ -1070,10 +1070,15 @@ const APP=(()=>{
   function ann(id){const el=document.getElementById(id);if(el)el.classList.toggle('on')}
 
   function hsw(el,cb){
-    let sx=0,sy=0,busy=false;
-    el.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+    let sx=0,sy=0,busy=false,multiTouch=false;
+    el.addEventListener('touchstart',e=>{
+      if(e.touches.length>1){multiTouch=true;return;} // pinch — ignore
+      multiTouch=false;
+      sx=e.touches[0].clientX;sy=e.touches[0].clientY;
+    },{passive:true});
     el.addEventListener('touchend',e=>{
-      if(busy)return; // debounce double-fire
+      if(multiTouch){multiTouch=false;return;} // was a pinch — skip
+      if(busy)return;
       const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
       if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40){
         busy=true; setTimeout(()=>busy=false,400);
@@ -1145,11 +1150,13 @@ const APP=(()=>{
 
     function updateBlur(){
       const fs=fitScale();
+      if(!fs||fs<=0) return;
       const maxS=fs*8;
+      // 0 blur at fitScale, MAX_BLUR at maxS — clamp to [0,1]
       const t=Math.max(0,Math.min(1,(scale-fs)/(maxS-fs)));
-      const blurPx=Math.round(t*MAX_BLUR*10)/10;
-      ovBg.style.backdropFilter=`blur(${blurPx}px)`;
-      ovBg.style.webkitBackdropFilter=`blur(${blurPx}px)`;
+      const blurPx=(t*MAX_BLUR).toFixed(1);
+      ovBg.style.backdropFilter='blur('+blurPx+'px)';
+      ovBg.style.webkitBackdropFilter='blur('+blurPx+'px)';
     }
 
     function applyT(animate){
@@ -1310,7 +1317,9 @@ const APP=(()=>{
         if(isPinching){
           isPinching=false; isPanning=false;
           const fs=fitScale();
-          if(scale<fs*0.72){ close(); return; }
+          // Close if pinched down below fitScale (opened via pinch or zoomed in then pinched out)
+          if(scale<fs*0.85){ close(); return; }
+          // Snap back to fitScale if slightly below
           if(scale<fs){
             scale=fs;
             tx=(ov.offsetWidth-imgW()*scale)/2;
@@ -1356,24 +1365,32 @@ const APP=(()=>{
       if(e.key==='ArrowLeft'&&cur>0) goTo(cur-1);
     });
 
-    // Called by attachZoom when a pinch starts on a gallery image.
-    // srcList/idx = image set; t0/t1 = the two Touch objects from the gallery touchstart.
-    // The lightbox opens immediately and the pinch continues seamlessly inside it.
-    function openFromPinch(srcList, idx, t0, t1){
+    // Called by attachZoom when a pinch-out starts on a gallery image.
+    // startDist = distance between fingers at the moment of touchstart (not touchmove).
+    // t0/t1 = current Touch objects (from touchmove that triggered open).
+    function openFromPinch(srcList, idx, t0, t1, startDist, startMidX, startMidY){
       srcs=srcList; cur=idx;
       ov.classList.add('on');
-      // Show immediately at fitScale with 0 opacity, then set up pinch state
       loadSrc(srcs[cur], function(){
-        doFit();
-        imgEl.style.transition='opacity .12s';
+        doFit(); // sets scale=fitScale, tx/ty centred
+        imgEl.style.transition='opacity .08s';
         imgEl.style.opacity='1';
-        // Hand off pinch state — as if touchstart happened inside lightbox
+        // Pinch starts at fitScale. startDist is from the original touchstart,
+        // so the ratio d/startDist already reflects how far fingers have moved.
         isPinching=true; isPanning=false; swAxis=null; swMoved=false;
-        pinchStartDist=Math.max(dist2(t0,t1),1);
-        pinchStartScale=scale;
+        pinchStartDist=Math.max(startDist,1);
+        pinchStartScale=scale; // = fitScale
         pinchStartTx=tx; pinchStartTy=ty;
+        pinchStartMidX=startMidX; pinchStartMidY=startMidY;
+        // Apply current finger positions immediately so first touchmove is smooth
+        const d=dist2(t0,t1);
         const m=mid2(t0,t1);
-        pinchStartMidX=m.x; pinchStartMidY=m.y;
+        const ns=Math.max(scale*0.4, Math.min(8, pinchStartScale*(d/pinchStartDist)));
+        const r=ns/pinchStartScale;
+        tx=pinchStartMidX-(pinchStartMidX-pinchStartTx)*r+(m.x-pinchStartMidX);
+        ty=pinchStartMidY-(pinchStartMidY-pinchStartTy)*r+(m.y-pinchStartMidY);
+        scale=ns;
+        applyT(false);
       });
     }
 
@@ -1406,29 +1423,36 @@ const APP=(()=>{
 
     // Mobile: only a pinch (2-finger) opens; single-finger tap does nothing
     let _pinchActive=false;
-    let _t0=null, _t1=null;
+    let _startDist=1, _startMidX=0, _startMidY=0;
 
     imgElNode._zts=e=>{
-      if(ZOOM.isOpen()) return; // already open — lightbox handles it
+      if(ZOOM.isOpen()) return;
       if(e.touches.length===2){
         e.stopPropagation();
         _pinchActive=true;
-        _t0={clientX:e.touches[0].clientX, clientY:e.touches[0].clientY};
-        _t1={clientX:e.touches[1].clientX, clientY:e.touches[1].clientY};
+        // Record finger positions at touchstart — this is the true startDist
+        const a=e.touches[0], b=e.touches[1];
+        _startDist=Math.max(dist(a,b),1);
+        _startMidX=(a.clientX+b.clientX)/2;
+        _startMidY=(a.clientY+b.clientY)/2;
       } else {
         _pinchActive=false;
       }
     };
 
+    function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+
     imgElNode._ztm=e=>{
       if(ZOOM.isOpen()) return;
       if(_pinchActive&&e.touches.length===2){
-        // As soon as fingers start moving, open lightbox and hand off the pinch
         e.stopPropagation(); e.preventDefault();
         _pinchActive=false;
         const all=getSrcList();
-        ZOOM.openFromPinch(all.map(i=>i.src), Math.max(0,all.indexOf(imgElNode)),
-          e.touches[0], e.touches[1]);
+        ZOOM.openFromPinch(
+          all.map(i=>i.src), Math.max(0,all.indexOf(imgElNode)),
+          e.touches[0], e.touches[1],
+          _startDist, _startMidX, _startMidY
+        );
       }
     };
 
