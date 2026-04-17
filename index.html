@@ -53,7 +53,7 @@ img{display:block}
 /* HERO */
 #hero{position:fixed;inset:0;z-index:1;overflow:hidden}
 #bgWrap{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,#4a6a2a,#7a9e4a 35%,#3a6020 65%,#1a2e08)}
-#bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)}
+#bgImg{position:absolute;top:0;left:0;width:200%;height:100%;object-fit:cover;object-position:left center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)}
 
 /* BG change label (hover to reveal) */
 #bgBtn{display:none}
@@ -615,7 +615,6 @@ const APP=(()=>{
         const src=e.target.result;
         bgImg.onload=null; // clear any previous handler
         bgImg.src=src;
-        bgImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)';
         try{localStorage.setItem('flux_bg',src)}catch(_){}
       };
       r.readAsDataURL(f);
@@ -630,6 +629,7 @@ const APP=(()=>{
     hsw($('digTrk'),d=>mvDig(d));
     hsw($('papTrk'),d=>{if(curSeries<0)mvPap(d);});
     hsw($('papSeriesTrk'),d=>mvSeries(d));
+    hsw($('staScroll'),d=>secNav(d));
   }
 
   function setImg(s){bgImg.src=s;bgImg.style.display='block'}
@@ -661,8 +661,8 @@ const APP=(()=>{
     mp=Math.max(0,Math.min(1,i));
     const t=`translateX(-${mp*50}%)`;
     navMT.style.transform=t; hbMT.style.transform=t;
-    // Pan bg by shifting object-position: 0%=left half, 100%=right half
-    bgImg.style.objectPosition=mp===0?'center':'right center';
+    // Slide bg: 0% = left half visible, -50% = right half visible
+    bgImg.style.left=`${-mp*50}%`;
   }
 
   /* Sections */
@@ -677,11 +677,6 @@ const APP=(()=>{
     sec=n; stO=(n==='cv');
     if(n==='obj')updOA(); if(n==='pap')updPA();
     updLogo();
-  }
-  function close(n){
-    $('sec'+SMAP[n]).classList.remove('open');
-    document.querySelectorAll('.nb[data-s]').forEach(b=>b.classList.remove('act'));
-    sec=null;stO=false;updLogo();
   }
   function home(){
     Object.keys(SMAP).forEach(s=>$('sec'+SMAP[s]).classList.remove('open'));
@@ -699,14 +694,9 @@ const APP=(()=>{
     const i=SORD.indexOf(sec);
     if(i===-1)return;
     const ni=i+d;
-    if(ni<0){home();return;}
-    if(ni>=SORD.length){home();return;}
-    open(SORD[ni]);
+    if(ni>=0&&ni<SORD.length){open(SORD[ni]);}
+    // at edges: do nothing (don't close)
   }
-
-  /* Statement */
-  function openSt(){open('cv')}
-  function closeSt(s){if(!s){home();}}
 
   /* Build Statement text */
   function buildSta(){
@@ -724,23 +714,13 @@ const APP=(()=>{
       return`<div class="sta-section"><div class="sta-heading">${sec.heading||''}</div>${inner}</div>`;
     }).join('');
     $('staScroll').innerHTML=`<div class="sta-body">${html}</div>`;
-    hsw($('staScroll'), d=>secNav(d));
   }
 
   /* Build Statement — continuous horizontal strip */
+  let _stBuilt=false;
   function buildSt(){
     const po=$('stPO');
     const pt=$('stPT');
-
-    let curX=0; // current translateX in px
-    let startX=0,startCurX=0,dragging=false,velX=0,lastX=0,lastT=0;
-
-    function render(x,animate){
-      pt.classList.toggle('dragging',!animate);
-      pt.style.transform=`translateX(${x}px)`;
-    }
-
-    function getTotalWidth(){return pt.scrollWidth - po.offsetWidth}
 
     function buildContent(){
       pt.innerHTML='';
@@ -754,7 +734,6 @@ const APP=(()=>{
         const block=document.createElement('div');
         block.className='st-ex-block';
 
-        // Footer: desc + name at BOTTOM
         const footer=document.createElement('div');
         footer.className='st-ex-footer';
         if(ex.desc){
@@ -769,26 +748,16 @@ const APP=(()=>{
         footer.appendChild(nameEl);
         block.appendChild(footer);
 
-        // Build mosaic grid from all tiles across all panes
         const allTiles=ex.panes.flatMap(p=>p.tiles);
-
-        // Grid container
         const grid=document.createElement('div');
         grid.className='st-ex-grid';
-
-        // Determine grid width based on tile count / composition
-        // Use 4-col grid, block width = 4 * cellSize
-        // We'll set block width dynamically after layout
         grid.style.gridTemplateColumns='repeat(4,1fr)';
 
         allTiles.forEach((t,ti)=>{
-          const id=`st-${ei}-${ti}`;
           const tile=document.createElement('div');
           tile.className='st-tile';
-          tile.id=id;
           tile.dataset.sz=t.sz||'S';
 
-          // Helper to apply size styles
           function applySize(el,sz){
             if(sz==='M'){el.style.gridColumn='span 2';el.style.gridRow='';el.style.aspectRatio='2'}
             else if(sz==='L'){el.style.gridColumn='span 2';el.style.gridRow='span 2';el.style.aspectRatio='1'}
@@ -796,7 +765,6 @@ const APP=(()=>{
           }
           applySize(tile, tile.dataset.sz);
 
-          // Click: cycle size S→M→L→S
           tile.addEventListener('click',()=>{
             tile.dataset.sz={S:'M',M:'L',L:'S'}[tile.dataset.sz]||'S';
             applySize(tile, tile.dataset.sz);
@@ -804,7 +772,7 @@ const APP=(()=>{
 
           if(t.image){
             const img=document.createElement('img');
-            img.src=t.image;img.alt='';
+            img.src=t.image; img.alt='';
             img.onerror=()=>img.remove();
             tile.appendChild(img);
           } else {
@@ -823,7 +791,26 @@ const APP=(()=>{
 
     buildContent();
 
-    // Rebuild on panel open / resize
+    // Bind drag events only once
+    if(_stBuilt) return;
+    _stBuilt=true;
+
+    let curX=0,startX=0,startCurX=0,dragging=false,velX=0,lastX=0,lastT=0;
+
+    function render(x,animate){
+      pt.classList.toggle('dragging',!animate);
+      pt.style.transform=`translateX(${x}px)`;
+    }
+    function getTotalWidth(){return pt.scrollWidth - po.offsetWidth;}
+    function snap(x,vel){
+      const maxX=getTotalWidth();
+      let target=x+vel*8;
+      if(target>0)target=0;
+      if(target<-maxX)target=-maxX;
+      curX=target;
+      render(curX,true);
+    }
+
     const resizeObs=new ResizeObserver(()=>{
       const maxX=getTotalWidth();
       curX=Math.max(-maxX,Math.min(0,curX));
@@ -831,43 +818,30 @@ const APP=(()=>{
     });
     resizeObs.observe(po);
 
-    function snap(x,vel){
-      const maxX=getTotalWidth();
-      let target=x+vel*8; // momentum
-      // Rubber band at edges
-      if(target>0)target=0;
-      if(target<-maxX)target=-maxX;
-      curX=target;
-      render(curX,true);
-    }
-
-    // Touch
     po.addEventListener('touchstart',e=>{
-      startX=e.touches[0].clientX;startCurX=curX;
-      lastX=startX;lastT=Date.now();velX=0;
+      startX=e.touches[0].clientX; startCurX=curX;
+      lastX=startX; lastT=Date.now(); velX=0;
       pt.classList.add('dragging');
     },{passive:true});
     po.addEventListener('touchmove',e=>{
       const now=Date.now();
       const dx=e.touches[0].clientX-startX;
       velX=(e.touches[0].clientX-lastX)/(now-lastT||1)*16;
-      lastX=e.touches[0].clientX;lastT=now;
+      lastX=e.touches[0].clientX; lastT=now;
       const maxX=getTotalWidth();
       let nx=startCurX+dx;
-      // Rubber band
       if(nx>0)nx=nx*0.3;
       if(nx<-maxX)nx=-maxX+(nx+maxX)*0.3;
       render(nx,false);
     },{passive:true});
-    po.addEventListener('touchend',e=>{
+    po.addEventListener('touchend',()=>{
       const cur=parseFloat((pt.style.transform||'').replace('translateX(','').replace('px)',''))||0;
       snap(cur,velX);
     },{passive:true});
 
-    // Mouse
     po.addEventListener('mousedown',e=>{
-      dragging=true;startX=e.clientX;startCurX=curX;
-      lastX=startX;lastT=Date.now();velX=0;
+      dragging=true; startX=e.clientX; startCurX=curX;
+      lastX=startX; lastT=Date.now(); velX=0;
       pt.classList.add('dragging');
       e.preventDefault();
     });
@@ -876,7 +850,7 @@ const APP=(()=>{
       const now=Date.now();
       const dx=e.clientX-startX;
       velX=(e.clientX-lastX)/(now-lastT||1)*16;
-      lastX=e.clientX;lastT=now;
+      lastX=e.clientX; lastT=now;
       const maxX=getTotalWidth();
       let nx=startCurX+dx;
       if(nx>0)nx=nx*0.3;
@@ -884,7 +858,7 @@ const APP=(()=>{
       render(nx,false);
     });
     window.addEventListener('mouseup',()=>{
-      if(!dragging)return;dragging=false;
+      if(!dragging)return; dragging=false;
       const cur=parseFloat((pt.style.transform||'').replace('translateX(','').replace('px)',''))||0;
       snap(cur,velX);
     });
@@ -1111,6 +1085,7 @@ const APP=(()=>{
     let pinchStartScale=1, pinchStartDist=1;
     let pinchStartTx=0, pinchStartTy=0;
     let pinchStartMidX=0, pinchStartMidY=0;
+    let pinchLastDist=1, pinchLastT=0, pinchVel=0;
 
     // pan state (1 finger while zoomed)
     let isPanning=false;
@@ -1228,6 +1203,7 @@ const APP=(()=>{
         isPanning=false; swAxis=null; swMoved=false;
         isPinching=true;
         pinchStartDist=Math.max(dist2(t[0],t[1]),1);
+        pinchLastDist=pinchStartDist; pinchLastT=Date.now(); pinchVel=0;
         pinchStartScale=scale;
         pinchStartTx=tx; pinchStartTy=ty;
         const m=mid2(t[0],t[1]);
@@ -1256,6 +1232,10 @@ const APP=(()=>{
       const t=e.touches;
       if(t.length===2&&isPinching){
         const d=dist2(t[0],t[1]);
+        const now=Date.now();
+        const dt=now-pinchLastT||16;
+        pinchVel=(d-pinchLastDist)/dt; // px/ms, positive=expanding
+        pinchLastDist=d; pinchLastT=now;
         const m=mid2(t[0],t[1]);
         const ns=Math.max(fitScale()*0.4, Math.min(8, pinchStartScale*(d/pinchStartDist)));
         // zoom around the pinch midpoint, accounting for any midpoint drift (pan+zoom)
@@ -1295,13 +1275,17 @@ const APP=(()=>{
         if(isPinching){
           isPinching=false; isPanning=false;
           const fs=fitScale();
-          if(scale<fs*0.72){ close(); return; }
+          // Close on pinch-in: scale too small OR fast inward gesture at/near fit scale
+          const fastPinchIn = pinchVel < -0.35 && scale <= fs*1.15;
+          if(scale<fs*0.72 || fastPinchIn){ close(); return; }
           if(scale<fs){
             scale=fs;
             tx=(ov.offsetWidth-imgW()*scale)/2;
             ty=(ov.offsetHeight-imgH()*scale)/2;
-          } else { clamp(); }
-          applyT(true);
+            applyT(true);
+          } else {
+            clamp(); applyT(true);
+          }
         } else if(isPanning){
           isPanning=false;
           clamp(); applyT(true);
@@ -1376,7 +1360,7 @@ const APP=(()=>{
       buildObj(); buildPap(); buildDig(); buildSta(); buildSt();
       home();
     }
-    return{open,close,home,toggle,rebuild,openSt,closeSt,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann,togglePapOrder};
+    return{open,home,toggle,rebuild,secNav,mvObj,mvPap,mvDig,mvSeries,openSeries,closeSeries,ann,togglePapOrder};
 })();
 </script>
 
