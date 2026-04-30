@@ -630,8 +630,6 @@ const APP=(()=>{
     hsw($('digTrk'),d=>mvDig(d));
     hsw($('papTrk'),d=>{if(curSeries<0)mvPap(d);});
     hsw($('papSeriesTrk'),d=>mvSeries(d));
-    hsw($('secSta'),d=>secNav(d));
-    hsw($('secCV'),d=>secNav(d));
   }
 
   function setImg(s){bgImg.src=s;bgImg.style.display='block'}
@@ -664,7 +662,7 @@ const APP=(()=>{
     const t=`translateX(-${mp*50}%)`;
     navMT.style.transform=t; hbMT.style.transform=t;
     // Pan bg by shifting object-position: 0%=left half, 100%=right half
-    bgImg.style.objectPosition=mp===0?'center':'left center';
+    bgImg.style.objectPosition=mp===0?'center':'right center';
   }
 
   /* Sections */
@@ -726,6 +724,7 @@ const APP=(()=>{
       return`<div class="sta-section"><div class="sta-heading">${sec.heading||''}</div>${inner}</div>`;
     }).join('');
     $('staScroll').innerHTML=`<div class="sta-body">${html}</div>`;
+    hsw($('staScroll'), d=>secNav(d));
   }
 
   /* Build Statement — continuous horizontal strip */
@@ -1217,7 +1216,7 @@ const APP=(()=>{
       scale=ns;
       clamp();
       applyT(false);
-      if(scale<fs){ close(); }
+      if(scale<fs*0.72){ close(); }
     },{passive:false});
 
     // ── TOUCH ──
@@ -1296,8 +1295,12 @@ const APP=(()=>{
         if(isPinching){
           isPinching=false; isPanning=false;
           const fs=fitScale();
-          if(scale<fs){ close(); return; }
-          clamp();
+          if(scale<fs*0.72){ close(); return; }
+          if(scale<fs){
+            scale=fs;
+            tx=(ov.offsetWidth-imgW()*scale)/2;
+            ty=(ov.offsetHeight-imgH()*scale)/2;
+          } else { clamp(); }
           applyT(true);
         } else if(isPanning){
           isPanning=false;
