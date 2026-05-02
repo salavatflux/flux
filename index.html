@@ -53,7 +53,7 @@ img{display:block}
 /* HERO */
 #hero{position:fixed;inset:0;z-index:1;overflow:hidden}
 #bgWrap{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(150deg,#4a6a2a,#7a9e4a 35%,#3a6020 65%,#1a2e08)}
-#bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)}
+#bgImg{position:absolute;top:0;left:0;height:100%;width:auto;transition:transform .42s cubic-bezier(.25,.46,.45,.94)}
 
 /* BG change label (hover to reveal) */
 #bgBtn{display:none}
@@ -613,9 +613,9 @@ const APP=(()=>{
       const r=new FileReader();
       r.onload=function(e){
         const src=e.target.result;
-        bgImg.onload=null; // clear any previous handler
+        bgImg.onload=null;
         bgImg.src=src;
-        bgImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:object-position .42s cubic-bezier(.25,.46,.45,.94)';
+        bgImg.style.cssText='';
         try{localStorage.setItem('flux_bg',src)}catch(_){}
       };
       r.readAsDataURL(f);
@@ -632,7 +632,14 @@ const APP=(()=>{
     hsw($('papSeriesTrk'),d=>mvSeries(d));
   }
 
-  function setImg(s){bgImg.src=s;bgImg.style.display='block'}
+  function setImg(s){
+    bgImg.src=s;
+    bgImg.style.display='block';
+    bgImg.onload=()=>{
+      const excess=bgImg.offsetWidth-window.innerWidth;
+      bgImg.style.transform=`translateX(${excess>0?-mp*excess:0}px)`;
+    };
+  }
 
   // Set email via JS so CDN can't obfuscate it
   (function(){
@@ -661,8 +668,9 @@ const APP=(()=>{
     mp=Math.max(0,Math.min(1,i));
     const t=`translateX(-${mp*50}%)`;
     navMT.style.transform=t; hbMT.style.transform=t;
-    // Pan bg by shifting object-position: 0%=left half, 100%=right half
-    bgImg.style.objectPosition=mp===0?'center':'right center';
+    // Pan bg: translate from left edge to right edge
+    const excess=bgImg.offsetWidth-window.innerWidth;
+    bgImg.style.transform=`translateX(${excess>0?-mp*excess:0}px)`;
   }
 
   /* Sections */
@@ -1091,7 +1099,10 @@ const APP=(()=>{
       else{if(e.key==='ArrowRight')mvPap(1);if(e.key==='ArrowLeft')mvPap(-1)}
     }
   });
-  window.addEventListener('resize',()=>{bgImg.style.objectPosition='center'});
+  window.addEventListener('resize',()=>{
+    const excess=bgImg.offsetWidth-window.innerWidth;
+    bgImg.style.transform=`translateX(${excess>0?-mp*excess:0}px)`;
+  });
 
   document.addEventListener('DOMContentLoaded',init);
   if(document.readyState!=='loading')init();
