@@ -1388,36 +1388,63 @@ const APP=(()=>{
 <script>
 (function(){
 var SB="https://aqmsvdkerzbivglcqixa.supabase.co",SK="sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY";
+var CACHE_KEY='flux_content', CACHE_TTL=10*60*1000;
+
+function applyData(v){
+  if(v.objects)D.objects=v.objects;
+  if(v.paper)D.paper=v.paper;
+  if(v.digital)D.digital=v.digital;
+  if(v.statement)D.statement=v.statement;
+  if(v.exhibitions)D.exhibitions=v.exhibitions;
+  if(v.bg)D.bg=v.bg;
+}
+
+function rebuildUI(){
+  if(typeof APP==="undefined")return;
+  APP.rebuild();
+  if(D.bg){
+    var img=document.getElementById("bgImg");
+    if(img){img.src=clOpt(D.bg);img.style.display='block';}
+    try{localStorage.setItem('flux_bg',D.bg);}catch(_){}
+  }
+}
+
 async function loadFromDB(){
+  // 1. Show cached data immediately if fresh enough
   var ok=false;
+  try{
+    var cached=localStorage.getItem(CACHE_KEY);
+    if(cached){
+      var c=JSON.parse(cached);
+      if(Date.now()-c._ts<CACHE_TTL){
+        applyData(c); rebuildUI(); ok=true;
+      }
+    }
+  }catch(_){}
+
+  // 2. Fetch fresh data in background
   try{
     var r=await fetch(SB+"/rest/v1/site_data?id=eq.content&select=value",{headers:{"apikey":SK,"Authorization":"Bearer "+SK}});
     var j=await r.json();
     if(j&&j[0]&&j[0].value&&Object.keys(j[0].value).length>0){
       var v=j[0].value;
-      if(v.objects)D.objects=v.objects;
-      if(v.paper)D.paper=v.paper;
-      if(v.digital)D.digital=v.digital;
-      if(v.statement)D.statement=v.statement;
-      if(v.exhibitions)D.exhibitions=v.exhibitions;
-      if(v.bg)D.bg=v.bg;
+      applyData(v);
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify(Object.assign({},v,{_ts:Date.now()})));}catch(_){}
+      rebuildUI();
       ok=true;
+      var n=document.getElementById('vpnNotice');
+      if(n)n.remove();
     }
   }catch(e){console.log("db load error",e);}
+
+  // 3. If nothing loaded at all — show VPN notice
   if(!ok){
-    var notice=document.createElement('div');
-    notice.id='vpnNotice';
-    notice.style.cssText='position:fixed;bottom:52px;left:50%;transform:translateX(-50%);font-family:var(--f);font-size:11px;letter-spacing:.08em;color:#666;font-style:italic;z-index:9999;pointer-events:none;white-space:nowrap';
-    notice.textContent='контент недоступен — попробуйте включить vpn';
-    document.body.appendChild(notice);
-  }
-  // Rebuild all sections with fresh data
-  if(typeof APP!=="undefined"){
-    APP.rebuild();
-    if(D.bg){
-      var img=document.getElementById("bgImg");
-      if(img){img.src=clOpt(D.bg);img.style.display='block';}
-      try{localStorage.setItem('flux_bg',D.bg);}catch(_){}
+    if(!document.getElementById('vpnNotice')){
+      var notice=document.createElement('div');
+      notice.id='vpnNotice';
+      notice.style.cssText='position:fixed;bottom:52px;left:50%;transform:translateX(-50%);font-family:var(--f);font-size:11px;letter-spacing:.08em;color:#666;font-style:italic;z-index:9999;pointer-events:none;white-space:nowrap';
+      notice.textContent='контент недоступен — попробуйте включить vpn';
+      document.body.appendChild(notice);
     }
   }
 }
