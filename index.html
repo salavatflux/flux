@@ -542,39 +542,25 @@ img{display:block}
 const D = {
   bg: '',
   objects: [
-    { image:'', title:'«deconstruction»', price:'120.000₽', ann:'', meta:'бумага 200 г/м², цветные карандаши, гелевая ручка\nформат 210 x 148мм    2023 г.' },
-    { image:'', title:'«object 02»',       price:'90.000₽',  ann:'', meta:'смешанная техника\nформат 300 x 210мм    2024 г.' }
+    { image:'', title:'', price:'', ann:'', meta:'' },
+    { image:'', title:'', price:'', ann:'', meta:'' }
   ],
   paper: [
-    { name:'цвета', works:[
-      { image:'', title:'«цвета 23»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши, гелевая ручка', fmt:'формат 210 x 148мм', yr:'2023 г.', price:'40.000₽', ann:'', orient:'h', size:'A5' },
-      { image:'', title:'«цвета 24»',    href:'#', desc:'бумага 200 г/м², цветные\nкарандаши', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'45.000₽', ann:'', orient:'h', size:'A5' }
+    { name:'', works:[
+      { image:'', title:'', href:'#', desc:'', fmt:'', yr:'', price:'', ann:'', orient:'h', size:'A5' },
+      { image:'', title:'', href:'#', desc:'', fmt:'', yr:'', price:'', ann:'', orient:'h', size:'A5' }
     ]},
-    { name:'argentum', works:[
-      { image:'', title:'«argentum 01»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 210 x 148мм', yr:'2024 г.', price:'35.000₽', ann:'', orient:'v', size:'A5' },
-      { image:'', title:'«argentum 02»', href:'#', desc:'бумага 200 г/м²,\nграфитный карандаш', fmt:'формат 148 x 105мм', yr:'2024 г.', price:'28.000₽', ann:'', orient:'v', size:'A6' }
+    { name:'', works:[
+      { image:'', title:'', href:'#', desc:'', fmt:'', yr:'', price:'', ann:'', orient:'v', size:'A5' },
+      { image:'', title:'', href:'#', desc:'', fmt:'', yr:'', price:'', ann:'', orient:'v', size:'A6' }
     ]}
   ],
-  statement: [
-    { type:'section', heading:'statement', paras:[
-      'Здесь будет текст statement — авторская позиция, художественное кредо.',
-      'Второй абзац statement.'
-    ]},
-    { type:'section', heading:'education', edu:[
-      'Образование, строка 1',
-      'Образование, строка 2'
-    ]}
-  ],
+  statement: [],
   digital: [{
-    h:'Argentum', sub:'s e r i e s',
+    h:'', sub:'',
     bg:'',
-    blocks:[
-      {type:'text', content:'Argentum is a monochrome series of digital graphics, in which the form becomes a way to experience and fix internal states.'},
-      {type:'image', src:''},
-      {type:'text', content:'Each work is an independent structure born of intuitive search and contemplation.\n\nThe series refers to the alchemy of perception: through the interaction of lines and masses, through reflections and conflicts, a new symbolic language is born.'},
-      {type:'image', src:''}
-    ],
-    link:'', linkLabel:'посмотреть серию →'
+    blocks:[],
+    link:'', linkLabel:''
   }],
   /* Tile sizes: S=1×1  M=2×1  L=2×2
      Click tile to cycle S→M→L→S        */
@@ -1403,6 +1389,7 @@ const APP=(()=>{
 (function(){
 var SB="https://aqmsvdkerzbivglcqixa.supabase.co",SK="sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY";
 async function loadFromDB(){
+  var ok=false;
   try{
     var r=await fetch(SB+"/rest/v1/site_data?id=eq.content&select=value",{headers:{"apikey":SK,"Authorization":"Bearer "+SK}});
     var j=await r.json();
@@ -1414,8 +1401,16 @@ async function loadFromDB(){
       if(v.statement)D.statement=v.statement;
       if(v.exhibitions)D.exhibitions=v.exhibitions;
       if(v.bg)D.bg=v.bg;
+      ok=true;
     }
   }catch(e){console.log("db load error",e);}
+  if(!ok){
+    var notice=document.createElement('div');
+    notice.id='vpnNotice';
+    notice.style.cssText='position:fixed;bottom:52px;left:50%;transform:translateX(-50%);font-family:var(--f);font-size:11px;letter-spacing:.08em;color:#666;font-style:italic;z-index:9999;pointer-events:none;white-space:nowrap';
+    notice.textContent='контент недоступен — попробуйте включить vpn';
+    document.body.appendChild(notice);
+  }
   // Rebuild all sections with fresh data
   if(typeof APP!=="undefined"){
     APP.rebuild();
