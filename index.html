@@ -988,14 +988,24 @@ const APP=(()=>{
     // hide background arrows
     $('pPrev').style.display='none';
     $('pNext').style.display='none';
-    // Force the browser to paint the new slide content BEFORE starting the
-    // slide-open transition — otherwise on iOS Safari the transform animation
-    // can start before images/text have rendered, causing a flicker or a
-    // frame of stale content to show through mid-animation.
-    $('papSeries').offsetHeight; // force reflow
-    requestAnimationFrame(()=>{
+
+    const panel=$('papSeries');
+    // Wait for the series' images to actually finish loading/decoding
+    // before sliding the panel into view. Text renders instantly (no
+    // network needed) but images take time to fetch from Cloudinary —
+    // starting the slide-in before they're ready is what causes the
+    // image to flicker/blank while the text is already showing.
+    // Capped with a timeout so a slow/failed image never blocks opening.
+    const imgs=[...panel.querySelectorAll('img')];
+    const decodeAll=Promise.all(imgs.map(im=>
+      (im.decode?im.decode():Promise.resolve()).catch(()=>{})
+    ));
+    const timeout=new Promise(res=>setTimeout(res,1200));
+    Promise.race([decodeAll,timeout]).then(()=>{
       requestAnimationFrame(()=>{
-        $('papSeries').classList.add('open');
+        requestAnimationFrame(()=>{
+          panel.classList.add('open');
+        });
       });
     });
   }
@@ -1413,6 +1423,16 @@ const APP=(()=>{
 (function(){
 var SB="https://aqmsvdkerzbivglcqixa.supabase.co",SK="sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY";
 var CACHE_KEY='flux_content', CACHE_TTL=10*60*1000;
+var lastAppliedKey=null;
+
+function dataKey(v){
+  try{
+    return JSON.stringify({
+      objects:v.objects, paper:v.paper, digital:v.digital,
+      statement:v.statement, exhibitions:v.exhibitions, bg:v.bg
+    });
+  }catch(_){ return null; }
+}
 
 function applyData(v){
   if(v.objects)D.objects=v.objects;
@@ -1423,14 +1443,18 @@ function applyData(v){
   if(v.bg)D.bg=v.bg;
 }
 
-function rebuildUI(){
-  if(typeof APP==="undefined")return;
-  APP.rebuild();
+function applyBg(){
   if(D.bg){
     var img=document.getElementById("bgImg");
     if(img){img.src=clOpt(D.bg);img.style.display='block';}
     try{localStorage.setItem('flux_bg',D.bg);}catch(_){}
   }
+}
+
+function rebuildUI(){
+  if(typeof APP==="undefined")return;
+  APP.rebuild();
+  applyBg();
 }
 
 async function loadFromDB(){
@@ -1442,6 +1466,7 @@ async function loadFromDB(){
       var c=JSON.parse(cached);
       if(Date.now()-c._ts<CACHE_TTL){
         applyData(c); rebuildUI(); ok=true;
+        lastAppliedKey=dataKey(c);
       }
     }
   }catch(_){}
@@ -1452,9 +1477,18 @@ async function loadFromDB(){
     var j=await r.json();
     if(j&&j[0]&&j[0].value&&Object.keys(j[0].value).length>0){
       var v=j[0].value;
+      var freshKey=dataKey(v);
       applyData(v);
       try{localStorage.setItem(CACHE_KEY,JSON.stringify(Object.assign({},v,{_ts:Date.now()})));}catch(_){}
-      rebuildUI();
+      if(freshKey!==lastAppliedKey){
+        // data actually changed since what's on screen — safe/necessary to rebuild
+        rebuildUI();
+        lastAppliedKey=freshKey;
+      } else {
+        // identical to what's already rendered — just make sure bg/cache are in sync,
+        // skip re-rendering sections so already-loaded images don't flicker
+        applyBg();
+      }
       ok=true;
       var n=document.getElementById('vpnNotice');
       if(n)n.remove();
