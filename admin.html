@@ -345,6 +345,7 @@ function renderPaper(){
             <div class="field"><label>Формат (текст, напр: 210×148мм)</label><input type="text" value="${esc(w.fmt)}" oninput="DATA.paper[${si}].works[${wi}].fmt=this.value;save()"></div>
             <div class="field"><label>Год</label><input type="text" value="${esc(w.yr)}" oninput="DATA.paper[${si}].works[${wi}].yr=this.value;save()"></div>
             <div class="field"><label>Аннотация</label><textarea oninput="DATA.paper[${si}].works[${wi}].ann=this.value;save()">${esc(w.ann)}</textarea></div>
+            ${wi===0?`<div class="field"><label>Заметка (показывается в списке серий вместо цены)</label><textarea oninput="DATA.paper[${si}].works[${wi}].note=this.value;save()">${esc(w.note||'')}</textarea></div>`:''}
           </div>
         </div>
       </div>`).join('');
@@ -364,7 +365,7 @@ function renderPaper(){
           <input type="text" value="${esc(s.name)}" oninput="DATA.paper[${si}].name=this.value;save()">
         </div>
         <div class="field" style="margin-bottom:12px">
-          <label>Описание серии — необязательно (последний слайд внутри серии, пусто = не показывается)</label>
+          <label>Описание серии — необязательно (первый слайд внутри серии, пусто = не показывается)</label>
           <textarea style="min-height:80px" oninput="DATA.paper[${si}].desc=this.value;save()">${esc(s.desc||'')}</textarea>
         </div>
         <div style="border-top:1px solid var(--bd);padding-top:12px;margin-bottom:8px;font-size:9px;letter-spacing:.15em;color:var(--gy)">РАБОТЫ В СЕРИИ — первая работа = обложка</div>
@@ -384,8 +385,8 @@ function setPapOrient(si,wi,v){DATA.paper[si].works[wi].orient=v;save();renderPa
 function setPapSize(si,wi,v){DATA.paper[si].works[wi].size=v;save();renderPaper();}
 function movePapWork(si,wi,d){const a=DATA.paper[si].works,ni=wi+d;if(ni<0||ni>=a.length)return;[a[wi],a[ni]]=[a[ni],a[wi]];save();renderPaper();}
 function delPapWork(si,wi){if(!confirm('Удалить работу?'))return;DATA.paper[si].works.splice(wi,1);save();renderPaper();}
-function addPapWork(si){DATA.paper[si].works.push({image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'});save();renderPaper();}
-function addPaper(){DATA.paper.push({name:'новая серия',works:[{image:'',title:'«работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',orient:'v',size:'A5'}]});save();renderPaper();}
+function addPapWork(si){DATA.paper[si].works.push({image:'',title:'«новая работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',note:'',orient:'v',size:'A5'});save();renderPaper();}
+function addPaper(){DATA.paper.push({name:'новая серия',desc:'',works:[{image:'',title:'«работа»',href:'#',desc:'',fmt:'',yr:'',price:'',ann:'',note:'',orient:'v',size:'A5'}]});save();renderPaper();}
 
 
 // DIGITAL
@@ -453,8 +454,12 @@ function addDigital(){DATA.digital.push({h:'',sub:'',bg:'',blocks:[{type:'text',
 function renderStatement(){
   const el=document.getElementById('statement-list');el.innerHTML='';
   DATA.statement.forEach((sec,i)=>{
-    if(typeof sec==='string') sec=DATA.statement[i]={type:'section',heading:'statement',paras:[sec]};
+    if(typeof sec==='string') sec=DATA.statement[i]={type:'section',heading:'statement',blocks:[{type:'text',content:sec}]};
     const isEdu=sec.edu!=null;
+    // migrate legacy paras-only sections to blocks, once, in place
+    if(!isEdu&&!sec.blocks){
+      sec.blocks=(sec.paras&&sec.paras.length?sec.paras:['']).map(p=>({type:'text',content:p}));
+    }
     const c=document.createElement('div');c.className='card';
     let innerHtml='';
     if(isEdu){
@@ -464,14 +469,32 @@ function renderStatement(){
         <textarea style="min-height:110px" oninput="setEduLines(${i},this.value)">${esc(lines)}</textarea>
       </div>`;
     } else {
-      const paras=sec.paras||[];
-      innerHtml=paras.map((p,pi)=>`
-        <div class="field" style="position:relative">
-          <label>Абзац ${pi+1}</label>
-          <textarea style="min-height:80px" oninput="DATA.statement[${i}].paras[${pi}]=this.value;save()">${esc(p)}</textarea>
-          <button class="del-btn" style="position:absolute;top:0;right:0" onclick="delAboutPara(${i},${pi})">−</button>
-        </div>`).join('')+
-        `<button class="add-btn" style="margin-top:6px" onclick="addAboutPara(${i})">+ абзац</button>`;
+      const blocksHtml=(sec.blocks||[]).map((b,bi)=>`
+        <div class="block-item">
+          <div class="block-item-side">
+            <span class="block-type-badge">${b.type==='text'?'TXT':'IMG'}</span>
+            <button class="bmv" onclick="moveAboutBlock(${i},${bi},-1)">↑</button>
+            <button class="bmv" onclick="moveAboutBlock(${i},${bi},1)">↓</button>
+            <button class="bdl" onclick="delAboutBlock(${i},${bi})">×</button>
+          </div>
+          <div class="block-item-body">
+            ${b.type==='text'
+              ?`<textarea style="min-height:80px;width:100%" oninput="DATA.statement[${i}].blocks[${bi}].content=this.value;save()">${esc(b.content)}</textarea>`
+              :`<div class="img-upload${b.src?' has-img':''}" onclick="document.getElementById('ai-f-${i}-${bi}').click()">
+                  <img src="${esc(b.src||'')}" style="${b.src?'':'display:none'}">
+                  <div class="img-label">нажмите чтобы загрузить</div>
+                  <input type="file" id="ai-f-${i}-${bi}" accept="image/*" onchange="loadAboutImg(${i},${bi},this)" onclick="event.stopPropagation()">
+                  <button class="img-clear" onclick="clearAboutImg(event,${i},${bi})">×</button>
+                </div>`
+            }
+          </div>
+        </div>`).join('');
+      innerHtml=`<label style="display:block;margin-bottom:7px">ТЕКСТ — чередуйте абзацы и изображения</label>
+        <div class="block-list">${blocksHtml}</div>
+        <div class="add-block-btns">
+          <button class="add-block-btn" onclick="addAboutBlock(${i},'text')">+ абзац</button>
+          <button class="add-block-btn" onclick="addAboutBlock(${i},'image')">+ изображение</button>
+        </div>`;
     }
     c.innerHTML=`<div class="card-head">
       <span class="card-num">${i+1}</span>
@@ -491,24 +514,29 @@ function setEduLines(i,val){
   DATA.statement[i].edu=val.split('\n').map(s=>s.trim()).filter(Boolean);
   save();
 }
-function addAboutPara(i){
-  if(!DATA.statement[i].paras)DATA.statement[i].paras=[];
-  DATA.statement[i].paras.push('');
+async function loadAboutImg(i,bi,inp){const f=inp.files[0];if(!f)return;try{DATA.statement[i].blocks[bi].src=await uploadPhoto(f);save();renderStatement();}catch(e){alert(e.message);}}
+function clearAboutImg(ev,i,bi){ev.stopPropagation();DATA.statement[i].blocks[bi].src='';save();renderStatement();}
+function addAboutBlock(i,type){
+  if(!DATA.statement[i].blocks)DATA.statement[i].blocks=[];
+  DATA.statement[i].blocks.push(type==='text'?{type:'text',content:''}:{type:'image',src:''});
   save();renderStatement();
 }
-function delAboutPara(i,pi){
-  DATA.statement[i].paras.splice(pi,1);
+function delAboutBlock(i,bi){
+  DATA.statement[i].blocks.splice(bi,1);
   save();renderStatement();
+}
+function moveAboutBlock(i,bi,d){
+  const a=DATA.statement[i].blocks,ni=bi+d;if(ni<0||ni>=a.length)return;
+  [a[bi],a[ni]]=[a[ni],a[bi]];save();renderStatement();
 }
 function addAboutSection(type){
   if(type==='education'){
     DATA.statement.push({type:'section',heading:'education',edu:['']});
   } else {
-    DATA.statement.push({type:'section',heading:'statement',paras:['']});
+    DATA.statement.push({type:'section',heading:'statement',blocks:[{type:'text',content:''}]});
   }
   save();renderStatement();
 }
-function addStatementPara(){addAboutSection('statement');}
 
 // CV
 function renderCV(){
