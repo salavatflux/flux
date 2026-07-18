@@ -558,6 +558,10 @@ function renderCV(){
         <div class="field"><label>Название выставки</label><input type="text" value="${esc(ex.name)}" oninput="DATA.exhibitions[${ei}].name=this.value;save()"></div>
         <div class="field"><label>Описание (место, год)</label><input type="text" value="${esc(ex.desc||'')}" oninput="DATA.exhibitions[${ei}].desc=this.value;save()"></div>
       </div>
+      <div class="field" style="margin-bottom:11px">
+        <label>Кураторский текст — необязательно (открывается свайпом/кликом по названию на сайте, пусто = не открывается)</label>
+        <textarea style="min-height:80px" oninput="DATA.exhibitions[${ei}].curatorText=this.value;save()">${esc(ex.curatorText||'')}</textarea>
+      </div>
       <label>Фотографии — клик на ячейку загружает фото • клик на S/M/L меняет размер</label>
       <div class="tile-grid-preview">${tilesHtml}<button class="tile-add-btn" onclick="addTile(${ei})">+</button></div>
     </div>`;
@@ -568,7 +572,7 @@ async function loadTileImg(ei,ti,inp){const f=inp.files[0];if(!f)return;try{cons
 function cycleTileSz(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t[ti].sz={S:'M',M:'L',L:'S'}[t[ti].sz||'S'];DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
 function deleteTile(ev,ei,ti){ev.stopPropagation();const t=DATA.exhibitions[ei].panes.flatMap(p=>p.tiles);t.splice(ti,1);DATA.exhibitions[ei].panes[0].tiles=t;save();renderCV();}
 function addTile(ei){DATA.exhibitions[ei].panes[0].tiles.push({image:'',text:'фото',sz:'S'});save();renderCV();}
-function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
+function addExhibition(){DATA.exhibitions.push({name:'новая выставка',desc:'',curatorText:'',panes:[{tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'}]}]});save();renderCV();}
 
 // BG
 async function loadBg(inp){const f=inp.files[0];if(!f)return;try{const url=await uploadPhoto(f);DATA.bg=url;const p=document.getElementById('bg-preview');p.src=url;p.style.display='block';document.getElementById('bg-upload').classList.add('has-img');save();}catch(e){alert(e.message);}}
