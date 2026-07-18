@@ -200,8 +200,8 @@ img{display:block}
 .dig-link:hover{opacity:.6}
 
 /* ── PAPER SERIES VIEW ── */
-#papSeries{position:absolute;inset:0;background:#fff;transform:translateX(100%);transition:transform .5s cubic-bezier(.77,0,.175,1);overflow:hidden;display:flex;flex-direction:column}
-#papSeries.open{transform:translateX(0)}
+#papSeries{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s ease;overflow:hidden;display:flex;flex-direction:column}
+#papSeries.open{opacity:1;pointer-events:auto;z-index:10}
 #papSeriesHead{flex-shrink:0;padding:0 32px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(0,0,0,.06);height:var(--nh)}
 .pap-series-name{font-size:13px;letter-spacing:.18em;color:var(--bk)}
 .pap-series-back{font-size:18px;letter-spacing:.12em;color:var(--or);cursor:pointer;background:none;border:none;font-family:var(--f);padding:0 16px 0 0;line-height:1;opacity:.7;transition:opacity .2s}
@@ -223,7 +223,6 @@ img{display:block}
 /* info row — same as obj-row */
 .pap-series-info{width:100%;max-width:480px;position:relative}
 /* Hide papOuter arrows when series is open */
-#papSeries.open{z-index:10}
 #papSeries.open ~ #papOuter .harr,
 #papOuter:has(~ #papSeries.open) .harr{opacity:0!important;pointer-events:none!important}
 .pap-series-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
