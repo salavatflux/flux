@@ -322,7 +322,7 @@ img{display:block}
   transition:opacity .15s;
 }
 .st-tile:active{opacity:.8}
-.st-tile img{width:100%;height:100%;object-fit:cover;pointer-events:none;display:block}
+.st-tile img{width:100%;height:100%;object-fit:cover;display:block}
 .st-tile-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:.1em;color:#c0c0c0}
 
 /* Divider between exhibitions */
@@ -570,8 +570,8 @@ const D = {
     blocks:[],
     link:'', linkLabel:''
   }],
-  /* Tile sizes: S=1×1  M=2×1  L=2×2
-     Click tile to cycle S→M→L→S        */
+  /* Tile sizes: S=1×1  M=2×1  L=2×2 — set via admin panel only.
+     Visitors tap a tile to open it in the zoom viewer.        */
   exhibitions: [
     { name:'exhibition1', desc:'краткое описание выставки — место, год', panes:[
       { tiles:[{image:'',text:'фото',sz:'M'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'S'},{image:'',text:'фото',sz:'L'}] },
@@ -802,7 +802,7 @@ const APP=(()=>{
           tile.id=id;
           tile.dataset.sz=t.sz||'S';
 
-          // Helper to apply size styles
+          // Helper to apply size styles (size comes from admin data only — not user-editable)
           function applySize(el,sz){
             if(sz==='M'){el.style.gridColumn='span 2';el.style.gridRow='';el.style.aspectRatio='2'}
             else if(sz==='L'){el.style.gridColumn='span 2';el.style.gridRow='span 2';el.style.aspectRatio='1'}
@@ -810,17 +810,12 @@ const APP=(()=>{
           }
           applySize(tile, tile.dataset.sz);
 
-          // Click: cycle size S→M→L→S
-          tile.addEventListener('click',()=>{
-            tile.dataset.sz={S:'M',M:'L',L:'S'}[tile.dataset.sz]||'S';
-            applySize(tile, tile.dataset.sz);
-          });
-
           if(t.image){
             const img=document.createElement('img');
             img.src=t.image;img.alt='';
             img.onerror=()=>img.remove();
             tile.appendChild(img);
+            attachZoom(img);
           } else {
             const ph=document.createElement('div');
             ph.className='st-tile-ph';
@@ -1384,7 +1379,7 @@ const APP=(()=>{
     imgElNode.style.cursor='zoom-in';
     function doOpen(e){
       e.stopPropagation();
-      const c=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide')||document;
+      const c=imgElNode.closest('.obj-slide,.pap-pane,.pap-series-slide,.dig-slide,.st-ex-grid')||document;
       const all=[...c.querySelectorAll('img')].filter(i=>i._zh&&i.src&&!i.src.endsWith('#'));
       ZOOM.open(all.map(i=>i.src),Math.max(0,all.indexOf(imgElNode)));
     }
