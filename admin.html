@@ -254,6 +254,7 @@ function deleteItem(arr,i){if(!confirm('Удалить?'))return;DATA[arr].splic
 
 // OBJECTS
 function renderObjects(){
+  if(ensureSlugs())save();
   const el=document.getElementById('objects-list');el.innerHTML='';
   DATA.objects.forEach((o,i)=>{
     const c=document.createElement('div');c.className='card';
@@ -281,6 +282,9 @@ function renderObjects(){
         <div class="field"><label>Цена</label><input type="text" value="${esc(o.price)}" oninput="DATA.objects[${i}].price=this.value;save()"></div>
         <div class="field"><label>Материал и формат</label><textarea oninput="DATA.objects[${i}].meta=this.value;save()">${esc(o.meta)}</textarea></div>
         <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
+        <div class="field"><label>Контракт коллекции (KT1…). Когда вписан, адрес работы замораживается</label><input type="text" value="${esc(o.contract||'')}" oninput="DATA.objects[${i}].contract=this.value.trim();save()"></div>
+        <div class="field"><label>ID токена</label><input type="text" value="${esc(o.token_id===undefined?'':String(o.token_id))}" oninput="DATA.objects[${i}].token_id=this.value.trim();save()"></div>
+        <div class="field"><label>Адрес работы (для чипа)</label><div style="font-size:12px;word-break:break-all;line-height:1.6">fluxgallery.art/obj/${esc(o.slug||'')}<br><span style="color:#999">${hasContract(o)?'заморожен':'пока не заморожен: меняется вместе с названием, обновится после публикации'}</span></div></div>
       </div>
     </div>`;
     el.appendChild(c);
@@ -311,7 +315,7 @@ function hasContract(w){return !!(w&&w.contract&&String(w.contract).trim());}
 /* Пока у работы нет контракта, адрес следует за названием. Когда контракт вписан, адрес замораживается. */
 function ensureSlugs(){
   let changed=false;
-  const usedS=new Set();
+  const usedS=new Set(['obj']); // 'obj' зарезервирован под адреса объектов: /obj/название
   DATA.paper.forEach(s=>{ if(s.slug&&(s.works||[]).some(hasContract))usedS.add(s.slug); });
   DATA.paper.forEach(s=>{
     const frozenS=s.slug&&(s.works||[]).some(hasContract);
@@ -332,6 +336,17 @@ function ensureSlugs(){
       if(w.slug!==cand){w.slug=cand;changed=true;}
       usedW.add(cand);
     });
+  });
+  // объекты: адрес /obj/<slug>
+  const usedO=new Set();
+  (DATA.objects||[]).forEach(o=>{ if(o.slug&&hasContract(o))usedO.add(o.slug); });
+  (DATA.objects||[]).forEach(o=>{
+    if(o.slug&&hasContract(o))return;
+    const base=slugify(o.title)||'object';
+    let cand=base,n=2;
+    while(usedO.has(cand)){cand=base+'-'+n;n++;}
+    if(o.slug!==cand){o.slug=cand;changed=true;}
+    usedO.add(cand);
   });
   return changed;
 }
@@ -656,11 +671,14 @@ async function publishToGitHub(){
   const btn=document.getElementById('savebtn'),st=document.getElementById('saveStatus');
   btn.disabled=true; st.textContent='сохраняем данные...';
   try{
-    for(const s of DATA.paper){for(const w of (s.works||[])){
+    const allWorks=[];
+    DATA.paper.forEach(s=>(s.works||[]).forEach(w=>allWorks.push(w)));
+    (DATA.objects||[]).forEach(o=>allWorks.push(o));
+    for(const w of allWorks){
       const c=(w.contract||'').trim(), t=String(w.token_id===undefined?'':w.token_id).trim();
       if(c&&!/^KT1[1-9A-HJ-NP-Za-km-z]{33}$/.test(c))throw new Error('неверный адрес контракта у работы '+(w.title||''));
       if(c&&!/^\d+$/.test(t))throw new Error('не указан ID токена у работы '+(w.title||''));
-    }}
+    }
     ensureSlugs();
     await saveToDB();
     st.textContent='публикуем на GitHub...';
@@ -682,7 +700,7 @@ async function publishToGitHub(){
     const push=await fetch(ghUrl,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({message:'update content',content:enc,sha})});
     if(!push.ok){const e=await push.json();throw new Error(e.message||'GitHub push error');}
     st.textContent='✓ сайт обновлён! (~1 мин)';
-    renderPaper();
+    renderPaper();renderObjects();
     setTimeout(()=>{st.textContent='авто-сохранение';btn.disabled=false;},5000);
   }catch(e){
     st.textContent='✗ '+e.message;
