@@ -705,13 +705,13 @@ async function uploadPhoto(file){
   const j=await r.json();
   if(!j.secure_url)throw new Error(JSON.stringify(j));
   if(status)status.textContent='загружено ✓';
-  setTimeout(()=>{if(status)status.textContent='авто-сохранение';},2000);
+  setTimeout(()=>{save();},2000); // не опубликовано, пока не нажата кнопка «опубликовать»
   return j.secure_url;
 }
 async function loadFromSB(){
   try{
     const tok=await withAuth();
-  const r=await fetch(SB+'/rest/v1/site_data?id=eq.content&select=value',{headers:{'apikey':SK,'Authorization':'Bearer '+(tok||SK)}});
+  const r=await fetch(SB+'/rest/v1/site_data?id=eq.content&select=value',{headers:{'apikey':SK,'Authorization':'Bearer '+(tok||SK)}}); // чтение разрешено и анонимно (политика public read), поэтому запасной ключ здесь безопасен
     const j=await r.json();
     if(j&&j[0]&&j[0].value&&Object.keys(j[0].value).length>0)DATA=Object.assign(DATA,j[0].value);
     document.getElementById('saveStatus').textContent='данные загружены';
@@ -719,12 +719,19 @@ async function loadFromSB(){
 }
 async function saveToDB(){
   const tok=await withAuth();
+  if(!tok)throw new Error('вы не вошли в аккаунт — войдите заново, чтобы сохранить');
   const r=await fetch(SB+'/rest/v1/site_data?id=eq.content',{
     method:'PATCH',
-    headers:{'apikey':SK,'Authorization':'Bearer '+(tok||SK),'Content-Type':'application/json','Prefer':'return=minimal'},
+    // return=representation: просим Supabase вернуть изменённую строку,
+    // чтобы отличить настоящий успех от «0 строк обновлено» —
+    // это происходит молча, если запрос не прошёл проверку доступа (RLS),
+    // и раньше выглядело как успех, хотя ничего не сохранялось.
+    headers:{'apikey':SK,'Authorization':'Bearer '+tok,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify({value:DATA,updated_at:new Date().toISOString()})
   });
   if(!r.ok)throw new Error('Supabase error '+r.status);
+  const rows=await r.json();
+  if(!Array.isArray(rows)||rows.length===0)throw new Error('запись не сохранена (0 строк) — проверьте вход в аккаунт или политику доступа в Supabase');
 }
 async function publishToGitHub(){
   const btn=document.getElementById('savebtn'),st=document.getElementById('saveStatus');
