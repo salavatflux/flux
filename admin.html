@@ -110,7 +110,8 @@ textarea{min-height:66px;line-height:1.6}
 
 <div id="pass-screen">
   <h2>FLUX — ADMIN</h2>
-  <input id="pass-input" type="password" placeholder="пароль" autocomplete="off">
+  <input id="email-input" type="email" placeholder="email" autocomplete="username" style="margin-bottom:4px">
+  <input id="pass-input" type="password" placeholder="пароль" autocomplete="current-password">
   <input id="token-input" type="password" placeholder="github token" autocomplete="off" style="margin-top:4px;display:none">
   <button onclick="checkPassword()">войти</button>
   <span id="pass-error">неверный пароль</span>
@@ -189,9 +190,6 @@ textarea{min-height:66px;line-height:1.6}
 
 <script>
 
-const PASS_HASH_KEY = 'flux_pass_hash';
-const DEFAULT_HASH = '1f739bc090c857ebbe149dc269e993c8b6f5ba81fc4957d3916d5e6a6fec99f9';
-function getPassHash(){ return localStorage.getItem(PASS_HASH_KEY) || DEFAULT_HASH; }
 const SB = 'https://aqmsvdkerzbivglcqixa.supabase.co';
 const CL_CLOUD='dbltupggx';
 const CL_PRESET='flux_unsigned';
@@ -199,39 +197,76 @@ const SK = 'sb_publishable_NZRYhDGG3l7bOZRWQTGA1A_k7KDkiHY';
 const GH_USER = 'salavatflux';
 const GH_REPO = 'flux';
 
-async function fluxHash(s){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+/* ── Вход через Supabase Auth ──
+   Пароль больше не хранится и не проверяется в коде страницы: он
+   проверяется на сервере Supabase. Здесь хранится только выданный
+   токен сессии, который сервер потом сверяет с правами доступа. */
+let ACCESS_TOKEN=null, REFRESH_TOKEN=null, TOKEN_EXP=0, refreshTimer=null;
+
+function saveSession(tok){
+  ACCESS_TOKEN=tok.access_token; REFRESH_TOKEN=tok.refresh_token;
+  TOKEN_EXP=Date.now()+tok.expires_in*1000;
+  localStorage.setItem('flux_refresh', REFRESH_TOKEN);
+  scheduleRefresh();
+}
+function scheduleRefresh(){
+  clearTimeout(refreshTimer);
+  const ms=Math.max(TOKEN_EXP-Date.now()-5*60*1000, 10*1000); // за 5 минут до истечения
+  refreshTimer=setTimeout(refreshSession, ms);
+}
+async function refreshSession(){
+  const rt=REFRESH_TOKEN||localStorage.getItem('flux_refresh');
+  if(!rt)return false;
+  try{
+    const r=await fetch(SB+'/auth/v1/token?grant_type=refresh_token',{
+      method:'POST', headers:{'apikey':SK,'Content-Type':'application/json'},
+      body:JSON.stringify({refresh_token:rt})
+    });
+    if(!r.ok){localStorage.removeItem('flux_refresh');return false;}
+    saveSession(await r.json());
+    return true;
+  }catch(e){return false;}
+}
+async function withAuth(){
+  if(!ACCESS_TOKEN||Date.now()>TOKEN_EXP-30000)await refreshSession();
+  return ACCESS_TOKEN;
 }
 
 async function checkPassword(){
-  const input = document.getElementById('pass-input').value;
-  const hash = await fluxHash(input);
-  if(hash === getPassHash()){
-    const token = document.getElementById('token-input').value.trim();
-    if(token) localStorage.setItem('flux_gh_token', token);
-    const saved = localStorage.getItem('flux_gh_token');
-    if(!saved){document.getElementById('pass-error').style.display='block';return;}
-    sessionStorage.setItem('flux_auth','1');
-    document.getElementById('pass-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    await loadFromSB(); renderAll();
-  } else {
+  const email = document.getElementById('email-input').value.trim();
+  const pass = document.getElementById('pass-input').value;
+  try{
+    const r=await fetch(SB+'/auth/v1/token?grant_type=password',{
+      method:'POST', headers:{'apikey':SK,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass})
+    });
+    if(!r.ok)throw new Error();
+    saveSession(await r.json());
+  }catch(e){
     document.getElementById('pass-error').style.display='block';
     document.getElementById('pass-input').value='';
     document.getElementById('pass-input').focus();
+    return;
   }
+  const token = document.getElementById('token-input').value.trim();
+  if(token) localStorage.setItem('flux_gh_token', token);
+  if(!localStorage.getItem('flux_gh_token')){document.getElementById('pass-error').style.display='block';return;}
+  document.getElementById('pass-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  await loadFromSB(); renderAll();
 }
 
-// Check if already authenticated this session
-window.addEventListener('DOMContentLoaded', ()=>{
-  if(sessionStorage.getItem('flux_auth')==='1'){
+// При открытии страницы — тихая попытка войти по сохранённому токену,
+// без пароля. Если он истёк или отозван, покажется форма входа.
+window.addEventListener('DOMContentLoaded', async ()=>{
+  if(await refreshSession()){
     document.getElementById('pass-screen').style.display='none';
     document.getElementById('app').style.display='block';
-    loadFromSB().then(renderAll);
+    await loadFromSB(); renderAll();
   }
   document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
-  // Show token field if not saved yet
+  document.getElementById('email-input').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('pass-input').focus(); });
+  // Показать поле токена, если ещё не сохранён
   if(!localStorage.getItem('flux_gh_token')){
     document.getElementById('token-input').style.display='block';
   }
@@ -673,16 +708,18 @@ async function uploadPhoto(file){
 }
 async function loadFromSB(){
   try{
-    const r=await fetch(SB+'/rest/v1/site_data?id=eq.content&select=value',{headers:{'apikey':SK,'Authorization':'Bearer '+SK}});
+    const tok=await withAuth();
+  const r=await fetch(SB+'/rest/v1/site_data?id=eq.content&select=value',{headers:{'apikey':SK,'Authorization':'Bearer '+(tok||SK)}});
     const j=await r.json();
     if(j&&j[0]&&j[0].value&&Object.keys(j[0].value).length>0)DATA=Object.assign(DATA,j[0].value);
     document.getElementById('saveStatus').textContent='данные загружены';
   }catch(e){document.getElementById('saveStatus').textContent='ошибка загрузки';}
 }
 async function saveToDB(){
+  const tok=await withAuth();
   const r=await fetch(SB+'/rest/v1/site_data?id=eq.content',{
     method:'PATCH',
-    headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=minimal'},
+    headers:{'apikey':SK,'Authorization':'Bearer '+(tok||SK),'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify({value:DATA,updated_at:new Date().toISOString()})
   });
   if(!r.ok)throw new Error('Supabase error '+r.status);
@@ -710,7 +747,7 @@ async function publishToGitHub(){
     const curJ=await cur.json();
     const sha=curJ.sha;
     const rawText=new TextDecoder().decode(Uint8Array.from(atob(curJ.content.replace(/\n/g,'')),c=>c.charCodeAt(0)));
-    const newD='const D = '+JSON.stringify(DATA,null,2)+';';
+    const newD='const D = '+JSON.stringify(DATA,null,2).replace(/</g,'\\u003C')+';';
     const updated=rawText.replace(/const D = \{[\s\S]*?\n\};/,newD);
     if(updated===rawText)throw new Error('Не найден блок данных');
     const bytes=new TextEncoder().encode(updated);
