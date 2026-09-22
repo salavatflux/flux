@@ -201,12 +201,13 @@ const GH_REPO = 'flux';
    Пароль больше не хранится и не проверяется в коде страницы: он
    проверяется на сервере Supabase. Здесь хранится только выданный
    токен сессии, который сервер потом сверяет с правами доступа. */
-let ACCESS_TOKEN=null, REFRESH_TOKEN=null, TOKEN_EXP=0, refreshTimer=null;
+let ACCESS_TOKEN=null, REFRESH_TOKEN=null, TOKEN_EXP=0, refreshTimer=null, USER_EMAIL=localStorage.getItem('flux_email')||'';
 
 function saveSession(tok){
   ACCESS_TOKEN=tok.access_token; REFRESH_TOKEN=tok.refresh_token;
   TOKEN_EXP=Date.now()+tok.expires_in*1000;
   localStorage.setItem('flux_refresh', REFRESH_TOKEN);
+  if(tok.user&&tok.user.email){USER_EMAIL=tok.user.email;localStorage.setItem('flux_email',USER_EMAIL);}
   scheduleRefresh();
 }
 function scheduleRefresh(){
@@ -266,6 +267,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   }
   document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPassword(); });
   document.getElementById('email-input').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('pass-input').focus(); });
+  if(USER_EMAIL)document.getElementById('email-input').value=USER_EMAIL;
   // Показать поле токена, если ещё не сохранён
   if(!localStorage.getItem('flux_gh_token')){
     document.getElementById('token-input').style.display='block';
@@ -797,13 +799,26 @@ async function doChangePass(){
   const newVal=document.getElementById('cp-new').value;
   const new2Val=document.getElementById('cp-new2').value;
   const err=document.getElementById('cp-err');
+  err.style.color='#e8501a';
   if(!oldVal||!newVal||!new2Val){err.textContent='заполните все поля';return;}
   if(newVal!==new2Val){err.textContent='новые пароли не совпадают';return;}
-  if(newVal.length<4){err.textContent='минимум 4 символа';return;}
-  const oldHash=await fluxHash(oldVal);
-  if(oldHash!==getPassHash()){err.textContent='неверный текущий пароль';return;}
-  const newHash=await fluxHash(newVal);
-  localStorage.setItem('flux_pass_hash',newHash);
+  if(newVal.length<6){err.textContent='минимум 6 символов';return;}
+  if(!USER_EMAIL){err.textContent='войдите заново, затем повторите';return;}
+  try{
+    // проверяем текущий пароль настоящим входом в Supabase
+    const rLogin=await fetch(SB+'/auth/v1/token?grant_type=password',{
+      method:'POST', headers:{'apikey':SK,'Content-Type':'application/json'},
+      body:JSON.stringify({email:USER_EMAIL,password:oldVal})
+    });
+    if(!rLogin.ok){err.textContent='неверный текущий пароль';return;}
+    const tok=await rLogin.json();
+    saveSession(tok);
+    const rUpd=await fetch(SB+'/auth/v1/user',{
+      method:'PUT', headers:{'apikey':SK,'Authorization':'Bearer '+tok.access_token,'Content-Type':'application/json'},
+      body:JSON.stringify({password:newVal})
+    });
+    if(!rUpd.ok){err.textContent='не удалось сохранить, попробуйте ещё раз';return;}
+  }catch(e){err.textContent='ошибка сети, попробуйте ещё раз';return;}
   err.style.color='#4ade80';
   err.textContent='✓ пароль изменён';
   setTimeout(hideChangePass,1500);
