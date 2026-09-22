@@ -228,9 +228,22 @@ async function refreshSession(){
     return true;
   }catch(e){return false;}
 }
+function clearSession(){
+  ACCESS_TOKEN=null; REFRESH_TOKEN=null; TOKEN_EXP=0;
+  localStorage.removeItem('flux_refresh');
+  clearTimeout(refreshTimer);
+}
 async function withAuth(){
-  if(!ACCESS_TOKEN||Date.now()>TOKEN_EXP-30000)await refreshSession();
+  if(!ACCESS_TOKEN||Date.now()>TOKEN_EXP-30000){
+    if(!await refreshSession()){clearSession();return null;}
+  }
   return ACCESS_TOKEN;
+}
+function backToLogin(msg){
+  clearSession();
+  document.getElementById('app').style.display='none';
+  document.getElementById('pass-screen').style.display='flex';
+  if(msg){document.getElementById('pass-error').style.display='block';document.getElementById('pass-error').textContent=msg;}
 }
 
 async function checkPassword(){
@@ -717,10 +730,8 @@ async function loadFromSB(){
     document.getElementById('saveStatus').textContent='данные загружены';
   }catch(e){document.getElementById('saveStatus').textContent='ошибка загрузки';}
 }
-async function saveToDB(){
-  const tok=await withAuth();
-  if(!tok)throw new Error('вы не вошли в аккаунт — войдите заново, чтобы сохранить');
-  const r=await fetch(SB+'/rest/v1/site_data?id=eq.content',{
+async function patchSiteData(tok){
+  return fetch(SB+'/rest/v1/site_data?id=eq.content',{
     method:'PATCH',
     // return=representation: просим Supabase вернуть изменённую строку,
     // чтобы отличить настоящий успех от «0 строк обновлено» —
@@ -729,9 +740,19 @@ async function saveToDB(){
     headers:{'apikey':SK,'Authorization':'Bearer '+tok,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify({value:DATA,updated_at:new Date().toISOString()})
   });
+}
+async function saveToDB(){
+  let tok=await withAuth();
+  if(!tok){backToLogin('сессия истекла — войдите ещё раз');throw new Error('не вошли в аккаунт');}
+  let r=await patchSiteData(tok);
+  if(r.status===401){
+    // токен мог протухнуть, пока вкладка была в фоне — пробуем обновить его один раз и повторить запрос
+    if(await refreshSession()){ tok=ACCESS_TOKEN; r=await patchSiteData(tok); }
+  }
+  if(r.status===401){backToLogin('сессия истекла — войдите ещё раз');throw new Error('сессия истекла');}
   if(!r.ok)throw new Error('Supabase error '+r.status);
   const rows=await r.json();
-  if(!Array.isArray(rows)||rows.length===0)throw new Error('запись не сохранена (0 строк) — проверьте вход в аккаунт или политику доступа в Supabase');
+  if(!Array.isArray(rows)||rows.length===0)throw new Error('запись не сохранена (0 строк) — проверьте политику доступа в Supabase');
 }
 async function publishToGitHub(){
   const btn=document.getElementById('savebtn'),st=document.getElementById('saveStatus');
