@@ -284,7 +284,7 @@ function renderObjects(){
         <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
         <div class="field"><label>Контракт коллекции (KT1…). Когда вписан, адрес работы замораживается</label><input type="text" value="${esc(o.contract||'')}" oninput="DATA.objects[${i}].contract=this.value.trim();save()"></div>
         <div class="field"><label>ID токена</label><input type="text" value="${esc(o.token_id===undefined?'':String(o.token_id))}" oninput="DATA.objects[${i}].token_id=this.value.trim();save()"></div>
-        <div class="field"><label>Адрес работы (для чипа)</label><div style="font-size:12px;word-break:break-all;line-height:1.6">fluxgallery.art/obj/${esc(o.slug||'')}<br><span style="color:#999">${hasContract(o)?'заморожен':'пока не заморожен: меняется вместе с названием, обновится после публикации'}</span></div></div>
+        <div class="field"><label>Адрес работы (для чипа)</label>${hasContract(o)?`<div style="font-size:12px;word-break:break-all;line-height:1.6">fluxgallery.art/obj/${esc(o.slug||'')}<br><span style="color:#999">заморожен</span></div>`:`<input type="text" value="${esc(o.slug||'')}" placeholder="object-name" oninput="DATA.objects[${i}].slug=slugify(this.value)||'object';DATA.objects[${i}].slugManual=true;save()" onblur="renderObjects()" style="font-size:12px"><div style="font-size:11px;color:#888;margin-top:4px">fluxgallery.art/obj/${esc(o.slug||'')}<br>пока не заморожен: обновится после публикации</div>`}</div>
       </div>
     </div>`;
     el.appendChild(c);
@@ -319,17 +319,30 @@ function ensureSlugs(){
   DATA.paper.forEach(s=>{ if(s.slug&&(s.works||[]).some(hasContract))usedS.add(s.slug); });
   DATA.paper.forEach(s=>{
     const frozenS=s.slug&&(s.works||[]).some(hasContract);
-    if(!frozenS){
+    if(!frozenS&&!(s.slugManual&&s.slug)){
       const base=slugify(s.name)||'series';
       let cand=base,n=2;
       while(usedS.has(cand)){cand=base+'-'+n;n++;}
       if(s.slug!==cand){s.slug=cand;changed=true;}
       usedS.add(cand);
+    }else if(s.slug){
+      // ручной или замороженный адрес — только гарантируем уникальность
+      let cand=s.slug,n=2;
+      while(usedS.has(cand)){cand=s.slug+'-'+n;n++;}
+      if(cand!==s.slug){s.slug=cand;changed=true;}
+      usedS.add(s.slug);
     }
     const usedW=new Set();
     (s.works||[]).forEach(w=>{ if(w.slug&&hasContract(w))usedW.add(w.slug); });
     (s.works||[]).forEach(w=>{
       if(w.slug&&hasContract(w))return;
+      if(w.slugManual&&w.slug){
+        let cand=w.slug,n=2;
+        while(usedW.has(cand)){cand=w.slug+'-'+n;n++;}
+        if(cand!==w.slug){w.slug=cand;changed=true;}
+        usedW.add(w.slug);
+        return;
+      }
       const base=slugify(w.title)||'work';
       let cand=base,n=2;
       while(usedW.has(cand)){cand=base+'-'+n;n++;}
@@ -342,6 +355,13 @@ function ensureSlugs(){
   (DATA.objects||[]).forEach(o=>{ if(o.slug&&hasContract(o))usedO.add(o.slug); });
   (DATA.objects||[]).forEach(o=>{
     if(o.slug&&hasContract(o))return;
+    if(o.slugManual&&o.slug){
+      let cand=o.slug,n=2;
+      while(usedO.has(cand)){cand=o.slug+'-'+n;n++;}
+      if(cand!==o.slug){o.slug=cand;changed=true;}
+      usedO.add(o.slug);
+      return;
+    }
     const base=slugify(o.title)||'object';
     let cand=base,n=2;
     while(usedO.has(cand)){cand=base+'-'+n;n++;}
@@ -399,7 +419,7 @@ function renderPaper(){
             <div class="field"><label>Аннотация</label><textarea oninput="DATA.paper[${si}].works[${wi}].ann=this.value;save()">${esc(w.ann)}</textarea></div>
             <div class="field"><label>Контракт коллекции (KT1…). Когда вписан, адрес работы замораживается</label><input type="text" value="${esc(w.contract||'')}" oninput="DATA.paper[${si}].works[${wi}].contract=this.value.trim();save()"></div>
             <div class="field"><label>ID токена</label><input type="text" value="${esc(w.token_id===undefined?'':String(w.token_id))}" oninput="DATA.paper[${si}].works[${wi}].token_id=this.value.trim();save()"></div>
-            <div class="field"><label>Адрес работы (для чипа)</label><div style="font-size:12px;word-break:break-all;line-height:1.6">fluxgallery.art/${esc(s.slug||'')}/${esc(w.slug||'')}<br><span style="color:#999">${hasContract(w)?'заморожен':'пока не заморожен: меняется вместе с названием, обновится после публикации'}</span></div></div>
+            <div class="field"><label>Адрес работы (для чипа)</label>${hasContract(w)?`<div style="font-size:12px;word-break:break-all;line-height:1.6">fluxgallery.art/${esc(s.slug||'')}/${esc(w.slug||'')}<br><span style="color:#999">заморожен</span></div>`:`<input type="text" value="${esc(w.slug||'')}" placeholder="work-name" oninput="DATA.paper[${si}].works[${wi}].slug=slugify(this.value)||'work';DATA.paper[${si}].works[${wi}].slugManual=true;save()" onblur="renderPaper()" style="font-size:12px"><div style="font-size:11px;color:#888;margin-top:4px">fluxgallery.art/${esc(s.slug||'')}/${esc(w.slug||'')}<br>пока не заморожен: обновится после публикации</div>`}</div>
             ${wi===0?`<div class="field"><label>Заметка (показывается в списке серий вместо цены)</label><textarea oninput="DATA.paper[${si}].works[${wi}].note=this.value;save()">${esc(w.note||'')}</textarea></div>`:''}
           </div>
         </div>
@@ -419,7 +439,7 @@ function renderPaper(){
           <label>Название серии (показывается внутри серии, рядом со стрелкой назад)</label>
           <input type="text" value="${esc(s.name)}" oninput="DATA.paper[${si}].name=this.value;save()">
         </div>
-        <div style="font-size:11px;color:#888;margin:-6px 0 12px">адрес серии: /${esc(s.slug||'')}</div>
+        <div class="field"><label>Адрес серии (можно вписать своё слово, напр. перевод названия)</label><input type="text" value="${esc(s.slug||'')}" placeholder="paper-series-2023" oninput="DATA.paper[${si}].slug=slugify(this.value)||'series';DATA.paper[${si}].slugManual=true;save()" onblur="renderPaper()" style="font-size:12px"><div style="font-size:11px;color:#888;margin-top:4px">/${esc(s.slug||'')}</div></div>
         <div class="field" style="margin-bottom:12px">
           <label>Описание серии — необязательно (первый слайд внутри серии, пусто = не показывается)</label>
           <textarea style="min-height:80px" oninput="DATA.paper[${si}].desc=this.value;save()">${esc(s.desc||'')}</textarea>
