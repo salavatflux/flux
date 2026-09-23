@@ -334,6 +334,7 @@ function renderObjects(){
         <div class="field"><label>Аннотация *</label><textarea oninput="DATA.objects[${i}].ann=this.value;save()">${esc(o.ann)}</textarea></div>
         <div class="field"><label>Контракт коллекции (KT1…). Когда вписан, адрес работы замораживается</label><input type="text" value="${esc(o.contract||'')}" oninput="DATA.objects[${i}].contract=this.value.trim();save()"></div>
         <div class="field"><label>ID токена</label><input type="text" value="${esc(o.token_id===undefined?'':String(o.token_id))}" oninput="DATA.objects[${i}].token_id=this.value.trim();save()"></div>
+        ${hasContract(o)?`<div class="field"><label>Ссылка на objkt (вставь в аннотацию текстом)</label><div style="font-size:12px;word-break:break-all">https://objkt.com/tokens/${esc(o.contract)}/${esc(String(o.token_id))}</div></div>`:''}
         <div class="field"><label>Адрес работы (для чипа)</label>${hasContract(o)?`<div style="font-size:12px;word-break:break-all;line-height:1.6">fluxgallery.art/obj/${esc(o.slug||'')}<br><span style="color:#999">заморожен</span></div>`:`<input type="text" value="${esc(o.slug||'')}" placeholder="object-name" oninput="DATA.objects[${i}].slug=slugify(this.value)||'object';DATA.objects[${i}].slugManual=true;save()" onblur="renderObjects()" style="font-size:12px"><div style="font-size:11px;color:#888;margin-top:4px">fluxgallery.art/obj/${esc(o.slug||'')}<br>пока не заморожен: обновится после публикации</div>`}</div>
       </div>
     </div>`;
@@ -466,6 +467,7 @@ function renderPaper(){
             <div class="field"><label>Аннотация</label><textarea oninput="DATA.paper[${si}].works[${wi}].ann=this.value;save()">${esc(w.ann)}</textarea></div>
             <div class="field"><label>Контракт коллекции (KT1…). Когда вписан, адрес работы замораживается</label><input type="text" value="${esc(w.contract||'')}" oninput="DATA.paper[${si}].works[${wi}].contract=this.value.trim();save()"></div>
             <div class="field"><label>ID токена</label><input type="text" value="${esc(w.token_id===undefined?'':String(w.token_id))}" oninput="DATA.paper[${si}].works[${wi}].token_id=this.value.trim();save()"></div>
+            ${hasContract(w)?`<div class="field"><label>Ссылка на objkt (вставь в аннотацию текстом)</label><div style="font-size:12px;word-break:break-all">https://objkt.com/tokens/${esc(w.contract)}/${esc(String(w.token_id))}</div></div>`:''}
             <div class="field"><label>Адрес работы (для чипа)</label>${hasContract(w)?`<div style="font-size:12px;word-break:break-all;line-height:1.6">fluxgallery.art/${esc(s.slug||'')}/${esc(w.slug||'')}<br><span style="color:#999">заморожен</span></div>`:`<input type="text" value="${esc(w.slug||'')}" placeholder="work-name" oninput="DATA.paper[${si}].works[${wi}].slug=slugify(this.value)||'work';DATA.paper[${si}].works[${wi}].slugManual=true;save()" onblur="renderPaper()" style="font-size:12px"><div style="font-size:11px;color:#888;margin-top:4px">fluxgallery.art/${esc(s.slug||'')}/${esc(w.slug||'')}<br>пока не заморожен: обновится после публикации</div>`}</div>
             ${wi===0?`<div class="field"><label>Заметка (показывается в списке серий вместо цены)</label><textarea oninput="DATA.paper[${si}].works[${wi}].note=this.value;save()">${esc(w.note||'')}</textarea></div>`:''}
           </div>
@@ -775,8 +777,11 @@ async function publishToGitHub(){
     const sha=curJ.sha;
     const rawText=new TextDecoder().decode(Uint8Array.from(atob(curJ.content.replace(/\n/g,'')),c=>c.charCodeAt(0)));
     const newD='const D = '+JSON.stringify(DATA,null,2).replace(/</g,'\\u003C')+';';
-    const updated=rawText.replace(/const D = \{[\s\S]*?\n\};/,newD);
-    if(updated===rawText)throw new Error('Не найден блок данных');
+    const marker=rawText.indexOf('const D = {');
+    if(marker===-1)throw new Error('Не найден блок данных: в файле нет \'const D = {\' (длина файла '+rawText.length+' симв.)');
+    const closeIdx=rawText.indexOf('\n};', marker);
+    if(closeIdx===-1)throw new Error('Не найден блок данных: нашли начало, но не нашли закрытие \'\\n};\'. Фрагмент: '+JSON.stringify(rawText.slice(marker,marker+120)));
+    const updated=rawText.slice(0,marker)+newD+rawText.slice(closeIdx+3);
     const bytes=new TextEncoder().encode(updated);
     let enc='';
     for(let i=0;i<bytes.length;i++)enc+=String.fromCharCode(bytes[i]);
