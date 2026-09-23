@@ -366,7 +366,6 @@ function hasContract(w){return !!(w&&w.contract&&String(w.contract).trim());}
 function ensureSlugs(){
   let changed=false;
   const usedS=new Set(['obj']); // 'obj' зарезервирован под адреса объектов: /obj/название
-  DATA.paper.forEach(s=>{ if(s.slug&&(s.works||[]).some(hasContract))usedS.add(s.slug); });
   DATA.paper.forEach(s=>{
     const frozenS=s.slug&&(s.works||[]).some(hasContract);
     if(!frozenS&&!(s.slugManual&&s.slug)){
@@ -383,7 +382,6 @@ function ensureSlugs(){
       usedS.add(s.slug);
     }
     const usedW=new Set();
-    (s.works||[]).forEach(w=>{ if(w.slug&&hasContract(w))usedW.add(w.slug); });
     (s.works||[]).forEach(w=>{
       if(w.slug&&hasContract(w))return;
       if(w.slugManual&&w.slug){
@@ -402,7 +400,6 @@ function ensureSlugs(){
   });
   // объекты: адрес /obj/<slug>
   const usedO=new Set();
-  (DATA.objects||[]).forEach(o=>{ if(o.slug&&hasContract(o))usedO.add(o.slug); });
   (DATA.objects||[]).forEach(o=>{
     if(o.slug&&hasContract(o))return;
     if(o.slugManual&&o.slug){
