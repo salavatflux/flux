@@ -631,6 +631,9 @@ const APP=(()=>{
   const stPT=$('stPT');
 
   function init(){
+    // сначала превращаем ?p=/серия/работа в реальный путь и глушим запись в адрес на время сборки
+    try{readDeepPath();}catch(_){}
+    deepOpening=true;
     const sv=(()=>{try{return localStorage.getItem('flux_bg')}catch(e){return null}})();
     if(sv)setImg(sv); else if(D.bg)setImg(D.bg);
 
@@ -658,6 +661,7 @@ const APP=(()=>{
     hsw($('papTrk'),d=>{if(curSeries<0)mvPap(d);});
     hsw($('papSeriesTrk'),d=>mvSeries(d));
     hsw($('secSta'),d=>secNav(d));
+    deepOpening=false;
   }
 
   function setImg(s){
